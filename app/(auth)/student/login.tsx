@@ -1,13 +1,47 @@
-// app/login.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { auth, db } from '../firebaseConfig';
+import { auth, db } from '../../../firebaseConfig';
 import { useRouter } from 'expo-router';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Checkbox from 'expo-checkbox';
+import { Ionicons } from '@expo/vector-icons'; // Add this import
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberPassword, setRememberPassword] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    loadSavedCredentials();
+  }, []);
+
+  const loadSavedCredentials = async () => {
+    try {
+      const savedEmail = await AsyncStorage.getItem('savedEmail');
+      const savedPassword = await AsyncStorage.getItem('savedPassword');
+      if (savedEmail && savedPassword) {
+        setEmail(savedEmail);
+        setPassword(savedPassword);
+        setRememberPassword(true);
+      }
+    } catch (error) {
+      console.log('Error loading saved credentials');
+    }
+  };
+
+  const saveCredentials = async () => {
+    try {
+      if (rememberPassword) {
+        await AsyncStorage.setItem('savedEmail', email);
+        await AsyncStorage.setItem('savedPassword', password);
+      } else {
+        await AsyncStorage.removeItem('savedEmail');
+        await AsyncStorage.removeItem('savedPassword');
+      }
+    } catch (error) {
+      console.log('Error saving credentials');
+    }
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -16,7 +50,6 @@ export default function Login() {
     }
 
     try {
-      // Authenticate the user
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
      
@@ -25,7 +58,8 @@ export default function Login() {
         return;
       }
 
-      // Fetch user data from Firestore
+      await saveCredentials();
+
       const userDoc = await db.collection('users').doc(user.uid).get();
       if (!userDoc.exists) {
         Alert.alert('Login Error', 'User data not found.');
@@ -34,9 +68,8 @@ export default function Login() {
 
       const userData = userDoc.data();
 
-
       router.push({
-        pathname: '/welcome',
+        pathname: '/(tabs)/profile',
         params: {
           fullName: userData?.fullName,
           email: userData?.email,
@@ -68,6 +101,13 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.backButton}
+        onPress={() => router.push('/')}
+      >
+        <Ionicons name="arrow-back" size={24} color="#007AFF" />
+        <Text style={styles.backButtonText}>Back</Text>
+      </TouchableOpacity>
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
@@ -85,10 +125,18 @@ export default function Login() {
         secureTextEntry
         autoCapitalize="none"
       />
+      <View style={styles.checkboxContainer}>
+        <Checkbox
+          value={rememberPassword}
+          onValueChange={setRememberPassword}
+          color={rememberPassword ? '#007AFF' : undefined}
+        />
+        <Text style={styles.checkboxLabel}>Remember Password</Text>
+      </View>
       <Button title="Login" onPress={handleLogin} />
       <View style={styles.signupContainer}>
         <Text style={styles.signupText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/signup')}>
+        <TouchableOpacity onPress={() => router.push('/student/signup')}>
           <Text style={styles.signupLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
@@ -108,12 +156,35 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  backButtonText: {
+    marginLeft: 5,
+    fontSize: 16,
+    color: '#007AFF',
+  },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 16,
+    color: '#666',
   },
   signupContainer: {
     flexDirection: 'row',

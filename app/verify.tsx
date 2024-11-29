@@ -8,7 +8,7 @@ export default function Verify(): JSX.Element {
 
   const handleBackToLogin = () => {
     // Navigate back to login screen
-    router.push('/login');
+    router.push('/student/login');
   };
 
   return (

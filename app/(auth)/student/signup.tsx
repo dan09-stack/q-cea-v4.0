@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth } from '../firebaseConfig';
+import { auth } from '../../../firebaseConfig';
 import { useRouter } from 'expo-router';
-import { db } from "../firebaseConfig";
+import { db } from "../../../firebaseConfig";
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
