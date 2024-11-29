@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib",
+    "sourceMap": true,
+    "strict": true,
+    "target": "es2017",
+    "rootDir": "src", // Ensures the source files are in the "src" folder
+    "esModuleInterop": true // Helps with modules like @sendgrid/mail
+  },
+  "compileOnSave": true,
+  "include": ["src"]
+}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "885904173811",
+    "project_id": "thesis-ad543",
+    "storage_bucket": "thesis-ad543.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885904173811:android:ef336df3417631e854a586",
+        "android_client_info": {
+          "package_name": "com.thesis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsv3CsVJL4ri6Gz6I3UiCfxatoYVWoxbw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
