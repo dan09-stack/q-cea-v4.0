@@ -1,4 +1,3 @@
-// app/signup.tsx
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
@@ -6,6 +5,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/
 import { auth } from '../../../firebaseConfig';
 import { useRouter } from 'expo-router';
 import { db } from "../../../firebaseConfig";
+import { Ionicons } from '@expo/vector-icons';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -14,6 +14,7 @@ export default function Signup(): JSX.Element {
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false); // New state for password visibility
   const router = useRouter();
 
   const handleSignup = async (): Promise<void> => {
@@ -23,11 +24,9 @@ export default function Signup(): JSX.Element {
     }
   
     try {
-      // Create user
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
   
-      // Store user data in Firestore
       await db.collection('users').doc(user.uid).set({
         fullName,
         idNumber,
@@ -36,11 +35,9 @@ export default function Signup(): JSX.Element {
         email,
       });
   
-      // Send verification email
       await sendEmailVerification(user);
       Alert.alert('Verification Email Sent', 'Please check your email to verify your account.');
   
-      // Navigate to the verification page
       router.push({
         pathname: '/verify',
         params: {
@@ -100,18 +97,27 @@ export default function Signup(): JSX.Element {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.passwordInput}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword} 
+          autoCapitalize="none"
+        />
+        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+          <Ionicons
+            name={showPassword ? 'eye-off' : 'eye'} 
+            size={20}
+            color="#007AFF"
+          />
+        </TouchableOpacity>
+      </View>
       <Button title="Sign Up" onPress={handleSignup} />
       <View style={styles.loginContainer}>
         <Text style={styles.loginText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/login')}>
+        <TouchableOpacity onPress={() => router.push('./login')}>
           <Text style={styles.loginLink}>Login</Text>
         </TouchableOpacity>
       </View>
@@ -145,6 +151,25 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     height: 50,
     justifyContent: 'center',
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  passwordInput: {
+    flex: 1,
+  },
+  showPasswordButton: {
+    marginLeft: 10,
+  },
+  showPasswordText: {
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
   loginContainer: {
     flexDirection: 'row',

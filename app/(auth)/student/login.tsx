@@ -5,10 +5,12 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons'; // Add this import
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberPassword, setRememberPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);  // Add state for toggling password visibility
   const router = useRouter();
 
   useEffect(() => {
@@ -117,14 +119,26 @@ export default function Login() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-      />
+      <View style={styles.passwordContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword} // Conditionally show password based on state
+          autoCapitalize="none"
+        />
+        <TouchableOpacity 
+          style={styles.eyeIcon} 
+          onPress={() => setShowPassword(prevState => !prevState)} // Toggle password visibility
+        >
+          <Ionicons 
+            name={showPassword ? 'eye-off' : 'eye'} 
+            size={24} 
+            color="#007AFF" 
+          />
+        </TouchableOpacity>
+      </View>
       <View style={styles.checkboxContainer}>
         <Checkbox
           value={rememberPassword}
@@ -175,6 +189,14 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+  },
+  passwordContainer: {
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    top: 12,
   },
   checkboxContainer: {
     flexDirection: 'row',

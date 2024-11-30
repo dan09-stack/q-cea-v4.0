@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "strict": true,
-    "jsx": "react-native",         // Required for JSX in React Native
-    "moduleResolution": "node",    // Ensures proper resolution of modules
+    "jsx": "react-native",
+    "moduleResolution": "node",
     "paths": {
       "@/*": [
         "./*"
@@ -15,5 +15,6 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     ".expo/types/_layout.tsx"
-  ]
+  ],
+  "extends": "expo/tsconfig.base"
 }
