@@ -5,14 +5,13 @@ import 'firebase/compat/functions';
 
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCjwCicGxM9cAhEslWlx6Eq2-2P1ymELbQ",
-    authDomain: "q-cea-90f91.firebaseapp.com",
-    projectId: "q-cea-90f91",
-    storageBucket: "q-cea-90f91.firebasestorage.app",
-    messagingSenderId: "408022763213",
-    appId: "1:408022763213:web:13af141ef37c6568e58b84",
-    measurementId: "G-DJ8KTGFJDK"
-  };
+  apiKey: 'AIzaSyCsv3CsVJL4ri6Gz6I3UiCfxatoYVWoxbw',
+  authDomain: 'thesis-ad543.firebaseapp.com',
+  projectId: 'thesis-ad543',
+  storageBucket: 'thesis-ad543.appspot.com', 
+  messagingSenderId: '1836074086378738059',
+  appId: '1:885904173811:android:ef336df3417631e854a586',
+};
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
