@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -92,6 +92,11 @@ export default function Login() {
             />
           </TouchableOpacity>
         </View>
+        <TouchableOpacity 
+          onPress={() => router.push('/student/forgotPassword')} // Add navigation to Forgot Password screen
+        >
+          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        </TouchableOpacity>
         <View style={styles.checkboxContainer}>
           <Checkbox
             value={rememberPassword}
@@ -116,116 +121,237 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   signupContainer: {
+
     flexDirection: 'row',
+    
     alignItems: 'center',
-  },
-  backButton: {
+    
+    },
+    
+    backButton: {
+    
     position: 'absolute',
+    
     top: 40,
+    
     left: 20,
+    
     flexDirection: 'row',
+    
     alignItems: 'center',
+    
     zIndex: 1,
-  },
-  backButtonText: {
+    
+    },
+    
+    backButtonText: {
+    
     marginLeft: 5,
+    
     fontSize: 16,
+    
     color: 'black',
-  },
-  checkboxContainer: {
+    
+    },
+    
+    checkboxContainer: {
+    
     flexDirection: 'row',
+    
     marginBottom: 15,
+    
     width: '100%',
-  },
-  checkboxLabel: {
+    
+    },
+    
+    checkboxLabel: {
+    
     marginLeft: 8,
+    
     fontSize: 16,
+    
     color: '#666',
-  },
-  background: {
+    
+    },
+    
+    background: {
+    
     flex: 1,
+    
     justifyContent: 'center',
+    
     alignItems: 'center',
+    
     width: '100%',
+    
     height: '100%',
-  },
-  container: {
+    
+    },
+    
+    container: {
+    
     width: '90%',
+    
     maxWidth: 600,
+    
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    
     padding: 20,
+    
     borderRadius: 12,
+    
     alignItems: 'center',
+    
     marginTop: 50,
-  },
-  heading: {
+    
+    },
+    
+    heading: {
+    
     fontSize: 28,
+    
     fontFamily: 'Roboto',
+    
     color: '#000000',
+    
     marginBottom: 30,
-  },
-  input: {
+    
+    },
+    
+    input: {
+    
     width: '100%',
+    
     height: 45,
+    
     borderColor: '#000',
+    
     borderWidth: 1,
+    
     marginBottom: 15,
+    
     paddingLeft: 10,
+    
     borderRadius: 5,
-  },
-  passwordContainer: {
+    
+    },
+    
+    passwordContainer: {
+    
     width: '100%',
+    
     flexDirection: 'row',
+    
     alignItems: 'center',
+    
     marginBottom: 15,
+    
     position: 'relative',
-  },
-  passwordInput: {
+    
+    },
+    
+    passwordInput: {
+    
     width: '100%',
+    
     height: 45,
+    
     borderColor: '#000',
+    
     borderWidth: 1,
+    
     paddingLeft: 10,
+    
     borderRadius: 5,
+    
     paddingRight: 50,
-  },
-  eyeIcon: {
+    
+    },
+    
+    eyeIcon: {
+    
     position: 'absolute',
+    
     right: 12,
+    
     height: '100%',
+    
     justifyContent: 'center',
-  },
-  button: {
+    
+    },
+    
+    button: {
+    
     backgroundColor: '#2c6b2f',
+    
     width: '30%',
+    
     padding: 12,
+    
     alignItems: 'center',
+    
     borderRadius: 5,
+    
     marginBottom: 15,
-  },
-  buttonText: {
+    
+    },
+    
+    buttonText: {
+    
     color: 'white',
+    
     fontWeight: 'bold',
+    
     fontSize: 16,
-  },
-  linkText: {
+    
+    },
+    
+    linkText: {
+    
     color: '#2c6b2f',
-  },
-  goBackButton: {
+    
+    },
+    
+    goBackButton: {
+    
     marginTop: 20,
+    
     paddingVertical: 6,
+    
     paddingHorizontal: 12,
+    
     backgroundColor: '#2c6b2f',
+    
     borderRadius: 5,
-  },
-  goBackText: {
+    
+    },
+    
+    goBackText: {
+    
     color: '#FFFFFF',
+    
     fontSize: 14,
+    
     fontWeight: 'bold',
-  },
-  errorText: {
+    
+    },
+    
+    errorText: {
+    
     color: 'red',
+    
     fontSize: 12,
+    
+    marginBottom: 10,
+    
+    },
+    
+    
+  forgotPasswordText: {
+    color: '#007AFF',
+    fontSize: 14,
+    textAlign: 'right',
+    width: '100%',
     marginBottom: 10,
   },
 });
