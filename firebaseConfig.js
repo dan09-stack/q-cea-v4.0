@@ -5,14 +5,14 @@ import 'firebase/compat/functions';
 
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCjwCicGxM9cAhEslWlx6Eq2-2P1ymELbQ",
-    authDomain: "q-cea-90f91.firebaseapp.com",
-    projectId: "q-cea-90f91",
-    storageBucket: "q-cea-90f91.firebasestorage.app",
-    messagingSenderId: "408022763213",
-    appId: "1:408022763213:web:13af141ef37c6568e58b84",
-    measurementId: "G-DJ8KTGFJDK"
-  };
+  apiKey: "AIzaSyDcKfJFItkmdiQciOrXWvTyakr9y0ZAiWA",
+  authDomain: "queueingsystem64.firebaseapp.com",
+  projectId: "queueingsystem64",
+  storageBucket: "queueingsystem64.firebasestorage.app",
+  messagingSenderId: "121289375714",
+  appId: "1:121289375714:web:d8ee348254d4a4f7dac3bb",
+  measurementId: "G-4MJYD1Z409"
+};
 
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);

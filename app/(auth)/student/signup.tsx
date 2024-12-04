@@ -111,7 +111,7 @@ export default function Signup(): JSX.Element {
       <Button title="Sign Up" onPress={handleSignup} />
       <View style={styles.loginContainer}>
         <Text style={styles.loginText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/login')}>
+        <TouchableOpacity onPress={() => router.push('./login')}>
           <Text style={styles.loginLink}>Login</Text>
         </TouchableOpacity>
       </View>
