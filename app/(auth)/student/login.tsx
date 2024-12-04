@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
-import { auth, db } from '../../../firebaseConfig';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
-import { Ionicons } from '@expo/vector-icons'; // Add this import
+import { Ionicons } from '@expo/vector-icons';
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberPassword, setRememberPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,118 +45,79 @@ export default function Login() {
     }
   };
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Validation Error', 'Please fill in both email and password.');
-      return;
-    }
-
-    try {
-      const userCredential = await auth.signInWithEmailAndPassword(email, password);
-      const user = userCredential.user;
-     
-      if (!user) {
-        Alert.alert('Login Error', 'User authentication failed.');
-        return;
-      }
-
-      await saveCredentials();
-
-      const userDoc = await db.collection('users').doc(user.uid).get();
-      if (!userDoc.exists) {
-        Alert.alert('Login Error', 'User data not found.');
-        return;
-      }
-
-      const userData = userDoc.data();
-
-      router.push({
-        pathname: '/(tabs)/profile',
-        params: {
-          fullName: userData?.fullName,
-          email: userData?.email,
-          idNumber: userData?.idNumber,
-          course: userData?.course,
-          phoneNumber: userData?.phoneNumber,
-        },
-      });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        let errorMessage = 'An error occurred while logging in.';
-        switch (error.message) {
-          case 'Firebase: Error (auth/invalid-email).':
-            errorMessage = 'The email address is not valid.';
-            break;
-          case 'Firebase: Error (auth/user-not-found).':
-            errorMessage = 'No user found with this email.';
-            break;
-          case 'Firebase: Error (auth/wrong-password).':
-            errorMessage = 'Incorrect password.';
-            break;
-          default:
-            errorMessage = error.message;
-        }
-        Alert.alert('Login Error', errorMessage);
-      }
-    }
+  const handleLogin = () => {
+    handleUserLogin(email, password, router, saveCredentials);
   };
 
   return (
-    <View style={styles.container}>
+    <ImageBackground
+      source={require('../../../assets/green p2.jpg')}
+      style={styles.background}
+      imageStyle={{ resizeMode: 'cover' }}
+    >
       <TouchableOpacity 
         style={styles.backButton}
         onPress={() => router.push('/')}
       >
-        <Ionicons name="arrow-back" size={24} color="#007AFF" />
+        <Ionicons name="arrow-back" size={24} color="black" />
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
-      <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-      />
-      <View style={styles.checkboxContainer}>
-        <Checkbox
-          value={rememberPassword}
-          onValueChange={setRememberPassword}
-          color={rememberPassword ? '#007AFF' : undefined}
+      <View style={styles.container}>
+        <Text style={styles.heading}>Student Login</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
         />
-        <Text style={styles.checkboxLabel}>Remember Password</Text>
-      </View>
-      <Button title="Login" onPress={handleLogin} />
-      <View style={styles.signupContainer}>
-        <Text style={styles.signupText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/student/signup')}>
-          <Text style={styles.signupLink}>Sign Up</Text>
+        <View style={styles.passwordContainer}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity 
+            style={styles.eyeIcon} 
+            onPress={() => setShowPassword(!showPassword)}
+          >
+            <Ionicons 
+              name={showPassword ? "eye-outline" : "eye-off-outline"} 
+              size={24} 
+              color="#666"
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.checkboxContainer}>
+          <Checkbox
+            value={rememberPassword}
+            onValueChange={setRememberPassword}
+            color={rememberPassword ? '#007AFF' : undefined}
+          />
+          <Text style={styles.checkboxLabel}>Remember Password</Text>
+        </View>
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>SIGN IN</Text>
         </TouchableOpacity>
+        <View style={styles.signupContainer}>
+          <Text>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => router.push('/student/signup')}>
+            <Text style={styles.linkText}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+  signupContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   backButton: {
     position: 'absolute',
@@ -167,37 +130,102 @@ const styles = StyleSheet.create({
   backButtonText: {
     marginLeft: 5,
     fontSize: 16,
-    color: '#007AFF',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
+    color: 'black',
   },
   checkboxContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 15,
+    width: '100%',
   },
   checkboxLabel: {
     marginLeft: 8,
     fontSize: 16,
     color: '#666',
   },
-  signupContainer: {
-    flexDirection: 'row',
+  background: {
+    flex: 1,
     justifyContent: 'center',
-    marginTop: 20,
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
-  signupText: {
-    fontSize: 16,
-    color: '#666',
+  container: {
+    width: '90%',
+    maxWidth: 600,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 50,
   },
-  signupLink: {
-    fontSize: 16,
-    color: '#007AFF',
+  heading: {
+    fontSize: 28,
+    fontFamily: 'Roboto',
+    color: '#000000',
+    marginBottom: 30,
+  },
+  input: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingLeft: 10,
+    borderRadius: 5,
+  },
+  passwordContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    position: 'relative',
+  },
+  passwordInput: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    paddingLeft: 10,
+    borderRadius: 5,
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+  },
+  button: {
+    backgroundColor: '#2c6b2f',
+    width: '30%',
+    padding: 12,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  buttonText: {
+    color: 'white',
     fontWeight: 'bold',
+    fontSize: 16,
+  },
+  linkText: {
+    color: '#2c6b2f',
+  },
+  goBackButton: {
+    marginTop: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#2c6b2f',
+    borderRadius: 5,
+  },
+  goBackText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 12,
+    marginBottom: 10,
   },
 });

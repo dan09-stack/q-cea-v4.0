@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Button } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { auth } from '@/firebaseConfig';
+import { signOut } from '@/services/auth';
 
 export default function Profile(): JSX.Element {
   const params = useLocalSearchParams();
@@ -57,14 +58,9 @@ export default function Profile(): JSX.Element {
         <Text style={styles.infoText}>Course: {userInfo.course}</Text>
         <Text style={styles.infoText}>Phone Number: {userInfo.phoneNumber}</Text>
       </View>
-      <Button title="Log Out" onPress={async () => {
-        try {
-          await auth.signOut();
-          router.push('/student/login');
-        } catch (error) {
-          alert('Logout Failed');
-        }
-      }} />
+      <Button title="Log Out" onPress={() => signOut(router)} />
+
+
     </View>
   );
 }

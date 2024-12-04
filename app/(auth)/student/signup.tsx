@@ -1,11 +1,8 @@
-// app/signup.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, ImageBackground, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
-import { auth } from '../../../firebaseConfig';
 import { useRouter } from 'expo-router';
-import { db } from "../../../firebaseConfig";
+import { handleSignup } from '../../../services/auth';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -16,148 +13,169 @@ export default function Signup(): JSX.Element {
   const [password, setPassword] = useState<string>('');
   const router = useRouter();
 
-  const handleSignup = async (): Promise<void> => {
-    if (!fullName || !idNumber || !phoneNumber || !selectedCourse || !email || !password) {
-      Alert.alert('Validation Error', 'Please fill in all fields.');
-      return;
-    }
-  
-    try {
-      // Create user
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-  
-      // Store user data in Firestore
-      await db.collection('users').doc(user.uid).set({
-        fullName,
-        idNumber,
-        phoneNumber,
-        course: selectedCourse,
-        email,
-      });
-  
-      // Send verification email
-      await sendEmailVerification(user);
-      Alert.alert('Verification Email Sent', 'Please check your email to verify your account.');
-  
-      // Navigate to the verification page
-      router.push({
-        pathname: '/verify',
-        params: {
-          fullName,
-          email,
-          idNumber,
-          course: selectedCourse,
-        },
-      });
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      Alert.alert('Signup Error', errorMessage);
-    }
+  const onSignup = () => {
+    handleSignup({
+      fullName,
+      idNumber,
+      phoneNumber,
+      selectedCourse,
+      email,
+      password,
+      router
+    });
   };
-  
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Signup</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Full Name (Last Name, First Name MI)"
-        value={fullName}
-        onChangeText={setFullName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="ID Number"
-        value={idNumber}
-        onChangeText={setIdNumber}
-        keyboardType="numeric"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Phone Number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="phone-pad"
-      />
-      <Picker
-        selectedValue={selectedCourse}
-        onValueChange={(itemValue) => setSelectedCourse(itemValue)}
-        style={styles.picker}
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardView}
+    >
+      <ImageBackground
+        source={require('../../../assets/green p2.jpg')}
+        style={styles.background}
       >
-        <Picker.Item label="Select Your Course" value="" />
-        <Picker.Item label="Course A" value="A" />
-        <Picker.Item label="Course B" value="B" />
-        <Picker.Item label="Course C" value="C" />
-        <Picker.Item label="Course D" value="D" />
-        <Picker.Item label="Course E" value="E" />
-        <Picker.Item label="Course F" value="F" />
-      </Picker>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        autoCapitalize="none"
-      />
-      <Button title="Sign Up" onPress={handleSignup} />
-      <View style={styles.loginContainer}>
-        <Text style={styles.loginText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => router.push('/login')}>
-          <Text style={styles.loginLink}>Login</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.container}>
+            <Text style={styles.heading}>Signup</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Full Name (Last Name, First Name MI)"
+              value={fullName}
+              onChangeText={setFullName}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="ID Number"
+              value={idNumber}
+              onChangeText={setIdNumber}
+              keyboardType="numeric"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone Number"
+              value={phoneNumber}
+              onChangeText={setPhoneNumber}
+              keyboardType="phone-pad"
+            />
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={selectedCourse}
+                onValueChange={(itemValue) => setSelectedCourse(itemValue)}
+                style={styles.picker}
+                placeholder='Select Your Course'
+              >
+                <Picker.Item label="Select Your Course" value=""  />
+                <Picker.Item label="Course A" value="A" />
+                <Picker.Item label="Course B" value="B" />
+                <Picker.Item label="Course C" value="C" />
+                <Picker.Item label="Course D" value="D" />
+                <Picker.Item label="Course E" value="E" />
+                <Picker.Item label="Course F" value="F" />
+              </Picker>
+            </View>
+            
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+            />
+            <TouchableOpacity style={styles.button} onPress={onSignup}>
+              <Text style={styles.buttonText}>CREATE</Text>
+            </TouchableOpacity>
+            <View style={styles.loginContainer}>
+              <Text>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.push('/student/login')}>
+                <Text style={styles.loginText}>Login</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </ImageBackground>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
+  button: {
+    backgroundColor: '#2c6b2f',
+    width: '30%',
+    padding: 12,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginBottom: 15,
   },
-  title: {
-    fontSize: 24,
+  buttonText: {
+    color: 'white',
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    fontSize: 16,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 5,
+  keyboardView: {
+    flex: 1,
   },
-  picker: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    marginBottom: 10,
-    height: 50,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 20,
   },
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 20,
   },
+  background: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  container: {
+    width: '90%',
+    maxWidth: 600,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  heading: {
+    fontSize: 28,
+    color: '#000',
+    marginBottom: 30,
+  },
+  input: {
+    width: '100%',
+    height: 40,
+    borderColor: '#000',
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingLeft: 10,
+    borderRadius: 5,
+  },
+  pickerContainer: {
+    width: '100%',
+    height: 40,
+    borderWidth: 1,
+    marginBottom: 15,
+    borderRadius: 5,
+    justifyContent: 'center',
+  },
+  picker: {
+    width: '100%',
+    height:100,
+    marginTop: Platform.OS === 'ios' ? 0 : 0,
+  },
   loginText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  loginLink: {
-    fontSize: 16,
-    color: '#007AFF',
+    color: '#2c6b2f',
     fontWeight: 'bold',
-  },
+    fontSize: 16,
+  }
 });
