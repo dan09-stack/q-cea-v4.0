@@ -1,57 +1,93 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, TextInput } from 'react-native';
-import { db } from '../../firebaseConfig'; // Update with the correct path to your Firebase config
-import { doc, updateDoc, increment, collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { View, Text, Button, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
+import { db } from '../../firebaseConfig';
+import { collection, getDocs, doc, updateDoc, increment, addDoc, serverTimestamp, getDoc, onSnapshot } from 'firebase/firestore';
 import { Picker } from '@react-native-picker/picker';
-import { serverTimestamp } from 'firebase/firestore';
+import FacultyUnavailableScreen from './FacultyUnavailableScreen';
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }: any) => {
   const [counter, setCounter] = useState<number | null>(null);
   const [selectedFaculty, setSelectedFaculty] = useState('');
   const [selectedConcern, setSelectedConcern] = useState('');
   const [otherConcern, setOtherConcern] = useState('');
+  const [facultyList, setFacultyList] = useState<{ name: string; status: string }[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isFacultyUnavailable, setIsFacultyUnavailable] = useState<boolean>(false);
 
-  // Fetch the universal counter value initially and listen for updates in real-time
+  // Real-time fetch of faculty data
   useEffect(() => {
-    const docRef = doc(db, 'queueCounters', 'ticketCounter');
+    const unsubscribe = onSnapshot(collection(db, 'faculty'), (querySnapshot) => {
+      const facultyNames: { name: string; status: string }[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        facultyNames.push({ name: data.name, status: data.status });
+      });
+      setFacultyList(facultyNames);
+      setLoading(false);
+    });
 
-    const unsubscribe = onSnapshot(docRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setCounter(docSnap.data()?.counter || 0);
-      } else {
-        console.error('Document does not exist!');
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time fetch of ticket counter and implement reset logic
+  useEffect(() => {
+    const unsubscribe = onSnapshot(doc(db, 'queueCounters', 'ticketCounter'), async (counterDoc) => {
+      if (counterDoc.exists()) {
+        const data = counterDoc.data();
+        const lastReset = data?.lastReset?.seconds;
+        const currentTime = Math.floor(Date.now() / 1000);  // Current time in seconds
+
+        // Check if 24 hours have passed (86400 seconds = 24 hours)
+        if (lastReset && (currentTime - lastReset) >= 86400) {
+          // Reset the counter and update the last reset time
+          await updateDoc(counterDoc.ref, {
+            counter: 1,
+            lastReset: serverTimestamp(),
+          });
+          setCounter(1);
+        } else {
+          setCounter(data?.counter || 1); // Default to 1 if the counter is undefined
+        }
       }
     });
 
-    return () => unsubscribe(); // Cleanup the listener on unmount
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
   }, []);
 
-  // Handle request submission
+  // Handle request
   const handleRequest = async () => {
+    const faculty = facultyList.find(faculty => faculty.name === selectedFaculty);
+
+    if (!faculty) {
+      alert('Please select a valid faculty');
+      return;
+    }
+
+    if (faculty.status !== 'Active') {
+      setIsFacultyUnavailable(true);
+      return;
+    }
+
     const counterDocRef = doc(db, 'queueCounters', 'ticketCounter');
     const userRequestsCollection = collection(db, 'userRequests');
 
     try {
-      // Increment the universal counter
-      await updateDoc(counterDocRef, {
-        counter: increment(1),
-      });
+      // Increment the counter
+      const newCounter = counter !== null ? counter + 1 : 1;
+      await updateDoc(counterDocRef, { counter: newCounter });
 
-      // Save user-specific request data
+      // Add user request
       await addDoc(userRequestsCollection, {
         faculty: selectedFaculty,
         concern: selectedConcern,
         otherConcern: otherConcern || null,
-        requestID: counter, // Use the current counter value
+        requestID: newCounter,
         createdAt: serverTimestamp(),
       });
 
       console.log('User request saved to Firestore!');
-      console.log('Selected Faculty:', selectedFaculty);
-      console.log('Selected Concern:', selectedConcern);
-      console.log('Other Concern:', otherConcern);
-
-      // Clear user inputs after submission
       setSelectedFaculty('');
       setSelectedConcern('');
       setOtherConcern('');
@@ -59,6 +95,18 @@ const HomeScreen = () => {
       console.error('Error saving data to Firestore:', error);
     }
   };
+
+  if (isFacultyUnavailable) {
+    return <FacultyUnavailableScreen goBack={() => setIsFacultyUnavailable(false)} />;
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -74,8 +122,9 @@ const HomeScreen = () => {
           onValueChange={(value) => setSelectedFaculty(value)}
         >
           <Picker.Item label="Select Faculty" value="" />
-          <Picker.Item label="Faculty A" value="Faculty A" />
-          <Picker.Item label="Faculty B" value="Faculty B" />
+          {facultyList.map((faculty, index) => (
+            <Picker.Item key={index} label={faculty.name} value={faculty.name} />
+          ))}
         </Picker>
 
         <Text>Concern:</Text>
@@ -131,6 +180,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
     width: '100%',
+    height: 100,
   },
   counter: {
     fontSize: 20,

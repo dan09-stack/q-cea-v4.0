@@ -1,71 +1,104 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, Button, StyleSheet, ScrollView } from 'react-native';
+import { db } from '../../firebaseConfig';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
-const facultyData = [
-  { id: '1', name: 'Faculty A', status: 'Inactive' },
-  { id: '2', name: 'Faculty B', status: 'Inactive' },
-  { id: '3', name: 'Faculty C', status: 'Inactive' },
-];
+type Faculty = {
+  id: string; // The document ID
+  name: string; // The name field
+  status: string; // The status field
+};
 
-const ListScreen = () => {
-  const [faculties, setFaculties] = useState(facultyData);
+const FacultyList = () => {
+  const [facultyData, setFacultyData] = useState<Faculty[]>([]);
 
-  // Function to toggle status
-  const toggleStatus = (id: string) => {
-    const updatedFaculties = faculties.map(faculty => {
-      if (faculty.id === id) {
-        // Toggle between 'Active' and 'Inactive'
-        return { ...faculty, status: faculty.status === 'Active' ? 'Inactive' : 'Active' };
-      }
-      return faculty;
-    });
-    setFaculties(updatedFaculties);
+  // Fetch data from Firestore
+  useEffect(() => {
+    const fetchFacultyData = async () => {
+      const facultyCollection = collection(db, 'faculty');
+      const querySnapshot = await getDocs(facultyCollection);
+
+      const data: Faculty[] = querySnapshot.docs.map((docSnap) => ({
+        id: docSnap.id, // Use the document ID as 'id'
+        name: docSnap.data().name, // Fetch the 'name' field
+        status: docSnap.data().status, // Fetch the 'status' field
+      }));
+
+      setFacultyData(data);
+    };
+
+    fetchFacultyData();
+  }, []);
+
+  // Toggle the status of a faculty member
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+    const facultyDocRef = doc(db, 'faculty', id);
+
+    await updateDoc(facultyDocRef, { status: newStatus });
+
+    setFacultyData((prev: Faculty[]) =>
+      prev.map((faculty) =>
+        faculty.id === id ? { ...faculty, status: newStatus } : faculty
+      )
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={faculties}
-        renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.status}>{item.status}</Text>
-            <Button
-              title={item.status === 'Active' ? 'Set Inactive' : 'Set Active'}
-              onPress={() => toggleStatus(item.id)}
-            />
+    <ScrollView>
+      <View style={styles.tableContainer}>
+        {/* Table Header */}
+        <View style={[styles.row, styles.header]}>
+          <Text style={[styles.cell, styles.headerText]}>Name</Text>
+          <Text style={[styles.cell, styles.headerText]}>Status</Text>
+          <Text style={[styles.cell, styles.headerText]}>Dev Action</Text>
+        </View>
+
+        {/* Table Rows */}
+        {facultyData.map((faculty) => (
+          <View key={faculty.id} style={styles.row}>
+            <Text style={styles.cell}>{faculty.name}</Text>
+            <Text style={styles.cell}>{faculty.status}</Text>
+            <View style={styles.buttonCell}>
+              <Button
+                title={faculty.status === 'Active' ? 'Deactivate' : 'Activate'}
+                onPress={() => toggleStatus(faculty.id, faculty.status)}
+              />
+            </View>
           </View>
-        )}
-        keyExtractor={(item) => item.id}
-      />
-    </View>
+        ))}
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
+  tableContainer: {
+    padding: 10,
+    marginTop: 20,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
     alignItems: 'center',
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 5,
+    paddingVertical: 10,
   },
-  name: {
-    fontSize: 16,
+  header: {
+    backgroundColor: '#f4f4f4',
+  },
+  cell: {
+    flex: 1,
+    textAlign: 'center',
+    paddingHorizontal: 5,
+  },
+  buttonCell: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerText: {
     fontWeight: 'bold',
-  },
-  status: {
-    fontSize: 16,
-    color: '#666',
   },
 });
 
-export default ListScreen;
-
-
+export default FacultyList;

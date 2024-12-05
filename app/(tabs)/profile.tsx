@@ -10,6 +10,7 @@ export default function Profile(): JSX.Element {
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userRequest, setUserRequest] = useState<any>(null); // State to store user request data
+  const [error, setError] = useState<string | null>(null); // For error handling
   const router = useRouter();
 
   const userInfo = {
@@ -32,8 +33,7 @@ export default function Profile(): JSX.Element {
     } else {
       router.push('/student/login');
     }
-    
-    // Fetch the user request data
+
     const fetchUserRequest = async () => {
       try {
         const docRef = doc(db, 'userRequests', userInfo.idNumber); // Assuming idNumber is unique for the user
@@ -42,18 +42,22 @@ export default function Profile(): JSX.Element {
         if (docSnap.exists()) {
           setUserRequest(docSnap.data());
         } else {
-          console.log('No request found for this user.');
+          setError('No request found for this user.');
+          setUserRequest(null); // Ensure userRequest is null if no data
         }
       } catch (error) {
+        setError('Error fetching user request.');
         console.error('Error fetching user request:', error);
+      } finally {
+        setLoading(false); // Set loading to false once done
       }
     };
 
     if (userInfo.idNumber) {
       fetchUserRequest();
+    } else {
+      setLoading(false); // If no idNumber, stop loading
     }
-
-    setLoading(false);
   }, [router, userInfo.idNumber]);
 
   if (loading) {
@@ -82,7 +86,9 @@ export default function Profile(): JSX.Element {
         <Text style={styles.infoText}>Phone Number: {userInfo.phoneNumber}</Text>
       </View>
       
-      {userRequest ? (
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : userRequest ? (
         <View style={styles.requestContainer}>
           <Text style={styles.requestTitle}>Your Request Info</Text>
           <Text style={styles.infoText}>Faculty: {userRequest.faculty}</Text>
@@ -136,5 +142,10 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     marginBottom: 10,
-  }
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    marginBottom: 20,
+  },
 });
