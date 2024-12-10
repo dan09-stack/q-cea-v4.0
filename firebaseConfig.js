@@ -2,16 +2,16 @@ import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore'; 
 import 'firebase/compat/functions';
-
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCjwCicGxM9cAhEslWlx6Eq2-2P1ymELbQ",
-    authDomain: "q-cea-90f91.firebaseapp.com",
-    projectId: "q-cea-90f91",
-    storageBucket: "q-cea-90f91.firebasestorage.app",
-    messagingSenderId: "408022763213",
-    appId: "1:408022763213:web:13af141ef37c6568e58b84",
-    measurementId: "G-DJ8KTGFJDK"
+    apiKey: "AIzaSyBLudO4g_NIo09Q-r-54-bIhcKXs84Wdk4",
+    authDomain: "q-cea-3b4bf.firebaseapp.com",
+    projectId: "q-cea-3b4bf",
+    storageBucket: "q-cea-3b4bf.firebasestorage.app",
+    messagingSenderId: "318731421747",
+    appId: "1:318731421747:web:1e0ab1e07c6db9f5e3fb46",
+    measurementId: "G-S64DNW6KP1"
   };
 
 if (!firebase.apps.length) {
@@ -19,5 +19,6 @@ if (!firebase.apps.length) {
 }
 
 export const auth = firebase.auth();
-export const db = firebase.firestore(); 
+export const db = firebase.firestore();
+export const storage = getStorage(firebase.app());
 export default firebase;

@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { sendPasswordResetEmail } from 'firebase/auth'; // Adjust this for your auth setup
 import { auth } from '../../../firebaseConfig'; // Ensure your Firebase config is imported
+import { router } from 'expo-router';
 
 type ForgotPasswordProps = NativeStackScreenProps<any, 'ForgotPassword'>;
 
 export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
+  
   const [email, setEmail] = useState<string>('');
 
   const handlePasswordReset = async () => {
@@ -20,7 +22,7 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
       Alert.alert(
         'Success',
         'Password reset email sent. Please check your inbox.',
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
+        [{ text: 'OK', onPress: () =>  router.back()}]
       );
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Something went wrong.');
@@ -44,7 +46,7 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
       <TouchableOpacity style={styles.button} onPress={handlePasswordReset}>
         <Text style={styles.buttonText}>Send Reset Link</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backLink}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backLink}>
         <Text style={styles.backLinkText}>Back to Login</Text>
       </TouchableOpacity>
     </View>
@@ -95,7 +97,6 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   backLinkText: {
-    color: '#007AFF',
     fontSize: 14,
   },
 });

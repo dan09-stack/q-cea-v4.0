@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,7 +12,8 @@ export default function Login() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
-
+  const [isLoading, setIsLoading] = useState(false);
+  
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -45,8 +46,15 @@ export default function Login() {
     }
   };
 
-  const handleLogin = () => {
-    handleUserLogin(email, password, router, saveCredentials);
+  const handleLogin = async () => {
+    setIsLoading(true);
+    try {
+      await handleUserLogin(email, password, router, saveCredentials);
+    } catch (error) {
+      console.log('Login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -92,21 +100,33 @@ export default function Login() {
             />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          onPress={() => router.push('/student/forgotPassword')} // Add navigation to Forgot Password screen
+        
+        
+        <View style={styles.checkboxContainer}>
+          <View style={{flexDirection: 'row'}}>
+            <Checkbox
+              value={rememberPassword}
+              onValueChange={setRememberPassword}
+              color={rememberPassword ? '#2c6b2f' : undefined}
+            />
+            <Text style={styles.checkboxLabel}>Remember Password</Text>
+          </View>
+          <TouchableOpacity  style={styles.forgotPasswordContainer}
+          onPress={() => router.push('/student/forgotPassword')} 
         >
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
-        <View style={styles.checkboxContainer}>
-          <Checkbox
-            value={rememberPassword}
-            onValueChange={setRememberPassword}
-            color={rememberPassword ? '#007AFF' : undefined}
-          />
-          <Text style={styles.checkboxLabel}>Remember Password</Text>
         </View>
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>SIGN IN</Text>
+        <TouchableOpacity 
+          style={styles.button} 
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Text style={styles.buttonText}>SIGN IN</Text>
+          )}
         </TouchableOpacity>
         <View style={styles.signupContainer}>
           <Text>Don't have an account? </Text>
@@ -120,60 +140,38 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
-  signupContainer: {
-
-    flexDirection: 'row',
-    
-    alignItems: 'center',
-    
+    forgotPasswordContainer: {
+      alignSelf: 'flex-end',
+      marginBottom: 10,
     },
-    
+    signupContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    },
     backButton: {
-    
     position: 'absolute',
-    
     top: 40,
-    
     left: 20,
-    
     flexDirection: 'row',
-    
     alignItems: 'center',
-    
     zIndex: 1,
-    
     },
-    
     backButtonText: {
-    
     marginLeft: 5,
-    
     fontSize: 16,
-    
     color: 'black',
-    
     },
-    
     checkboxContainer: {
-    
     flexDirection: 'row',
-    
+    justifyContent: 'space-between',
     marginBottom: 15,
-    
     width: '100%',
-    
     },
-    
     checkboxLabel: {
-    
     marginLeft: 8,
-    
-    fontSize: 16,
-    
-    color: '#666',
-    
+    fontSize: 15,
+    color: '#000',
     },
-    
     background: {
     
     flex: 1,
@@ -215,45 +213,25 @@ const styles = StyleSheet.create({
     color: '#000000',
     
     marginBottom: 30,
-    
     },
-    
     input: {
-    
     width: '100%',
-    
     height: 45,
-    
     borderColor: '#000',
-    
     borderWidth: 1,
-    
     marginBottom: 15,
-    
     paddingLeft: 10,
-    
     borderRadius: 5,
-    
     },
-    
     passwordContainer: {
-    
     width: '100%',
-    
     flexDirection: 'row',
-    
     alignItems: 'center',
-    
     marginBottom: 15,
-    
     position: 'relative',
-    
     },
-    
     passwordInput: {
-    
     width: '100%',
-    
     height: 45,
     
     borderColor: '#000',
@@ -297,13 +275,9 @@ const styles = StyleSheet.create({
     },
     
     buttonText: {
-    
     color: 'white',
-    
     fontWeight: 'bold',
-    
     fontSize: 16,
-    
     },
     
     linkText: {
@@ -337,18 +311,12 @@ const styles = StyleSheet.create({
     },
     
     errorText: {
-    
     color: 'red',
-    
     fontSize: 12,
-    
     marginBottom: 10,
-    
     },
-    
-    
   forgotPasswordText: {
-    color: '#007AFF',
+    color: 'gray',
     fontSize: 14,
     textAlign: 'right',
     width: '100%',

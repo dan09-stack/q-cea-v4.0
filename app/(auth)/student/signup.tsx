@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, ImageBackground, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, ImageBackground, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { handleSignup } from '../../../services/auth';
@@ -12,29 +12,35 @@ export default function Signup(): JSX.Element {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const router = useRouter();
-
-  const onSignup = () => {
-    handleSignup({
-      fullName,
-      idNumber,
-      phoneNumber,
-      selectedCourse,
-      email,
-      password,
-      router
-    });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  const onSignup = async () => {
+    setIsLoading(true);
+    try {
+      await handleSignup({
+        fullName,
+        idNumber,
+        phoneNumber,
+        selectedCourse,
+        email,
+        password,
+        router
+      });
+    }
+    catch{
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
+     finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.keyboardView}
-    >
       <ImageBackground
         source={require('../../../assets/green p2.jpg')}
         style={styles.background}
       >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>   
           <View style={styles.container}>
             <Text style={styles.heading}>Signup</Text>
             <TextInput
@@ -89,8 +95,14 @@ export default function Signup(): JSX.Element {
               onChangeText={setPassword}
               autoCapitalize="none"
             />
-            <TouchableOpacity style={styles.button} onPress={onSignup}>
-              <Text style={styles.buttonText}>CREATE</Text>
+            <TouchableOpacity 
+              style={[styles.button, isLoading && styles.buttonDisabled]} 
+              onPress={onSignup}
+              disabled={isLoading}
+            >
+              <Text style={styles.buttonText}>
+                {isLoading ? 'CREATING...' : 'CREATE'}
+              </Text>
             </TouchableOpacity>
             <View style={styles.loginContainer}>
               <Text>Already have an account? </Text>
@@ -101,7 +113,6 @@ export default function Signup(): JSX.Element {
           </View>
         </ScrollView>
       </ImageBackground>
-    </KeyboardAvoidingView>
   );
 }
 
@@ -113,6 +124,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 5,
     marginBottom: 15,
+  },
+  buttonDisabled: {
+    backgroundColor: '#84a886',
   },
   buttonText: {
     color: 'white',

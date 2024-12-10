@@ -21,16 +21,35 @@ export const handleUserLogin = async (email, password, router, saveCredentials) 
 
     await saveCredentials();
 
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    if (!userDoc.exists) {
+    // Check student collection
+    const studentDoc = await db.collection('student').doc(user.uid).get();
+    // Check faculty collection
+    const facultyDoc = await db.collection('faculty').doc(user.uid).get();
+
+    // If user exists in faculty collection but trying to login as student
+    if (!studentDoc.exists && facultyDoc.exists) {
+      Alert.alert(
+        'Invalid Login', 
+        'This account belongs to faculty. Please use the faculty login page.'
+      );
+      await auth.signOut(); // Sign out the user
+      return;
+    }
+
+    // Continue with existing student validation
+    if (!studentDoc.exists) {
       Alert.alert('Login Error', 'User data not found.');
       return;
     }
 
-    const userData = userDoc.data();
+    const userData = studentDoc.data();
+    if (!user.emailVerified) {
+      Alert.alert('Email Verification Required', 'Please verify your email address to continue.');
+      return;
+    }
 
     router.push({
-      pathname: '/(tabs)/profile',
+      pathname: '/(tabs)/home',
       params: {
         fullName: userData?.fullName,
         email: userData?.email,
@@ -78,26 +97,28 @@ export const handleSignup = async ({
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
 
-    await db.collection('users').doc(user.uid).set({
+    await db.collection('student').doc(user.uid).set({
       fullName,
       idNumber,
       phoneNumber,
       course: selectedCourse,
       email,
+      userType: 'student'
     });
 
     await sendEmailVerification(user);
-    Alert.alert('Verification Email Sent', 'Please check your email to verify your account.');
+    // Alert.alert('Verification Email Sent', 'Please check your email to verify your account.');
 
-    router.push({
-      pathname: '/verify',
-      params: {
-        fullName,
-        email,
-        idNumber,
-        course: selectedCourse,
-      },
-    });
+    // router.push({
+    //   pathname: '/verify',
+    //   params: {
+    //     fullName,
+    //     email,
+    //     idNumber,
+    //     course: selectedCourse,
+    //      userType: 'student'
+    //   },
+    // });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     Alert.alert('Signup Error', errorMessage);
@@ -105,10 +126,10 @@ export const handleSignup = async ({
 };
 //signOut function
 export const signOut = async (router) => {
-    try {
-      await auth.signOut();
-      router.push('/student/login');
-    } catch (error) {
-      alert('Logout Failed');
-    }
-  };
+  try {
+    await auth.signOut();
+    router.push('/student/login');
+  } catch (error) {
+    alert('Logout Failed');
+  }
+};

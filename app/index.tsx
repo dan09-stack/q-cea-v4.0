@@ -89,9 +89,9 @@ const styles = StyleSheet.create({
   },
   logo: {
     maxWidth: '100%',
-    height: undefined,
+    height: 200,
     aspectRatio: 1,
-    marginBottom: 20,
+    marginBottom: 2,
     resizeMode: 'contain',
   },
   heading: {
@@ -113,7 +113,9 @@ const styles = StyleSheet.create({
   btnText: {
     fontFamily: 'Poppins',
     fontSize: 16,
+    width: '100%',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,
