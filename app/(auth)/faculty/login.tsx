@@ -69,7 +69,7 @@ export default function Login() {
       const userData = userDoc.data();
 
       router.push({
-        pathname: '/(tabs)/profile',
+        pathname: '/(tabs)/home',
         params: {
           fullName: userData?.fullName,
           email: userData?.email,

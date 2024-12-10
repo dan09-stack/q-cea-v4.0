@@ -1,4 +1,4 @@
-import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, Image, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
@@ -15,61 +15,112 @@ export default function Index() {
 
   if (isLoading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#007AFF" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#008000" />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
   return (
+    <ImageBackground
+      source={require('../assets/green.jpg')}
+      style={styles.backgroundImage}
+      imageStyle={{ resizeMode: 'cover' }}
+    >
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to the app!</Text>
-      
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.push('/student/login')}
+        <Image source={require('../assets/finale.png')} style={styles.logo} />
+      <Text style={styles.heading}>Welcome to Q-CEA App</Text>
+
+      <TouchableOpacity
+          style={styles.btn}
+          onPress={() => router.push('/student/login')}
       >
-        <Text style={styles.buttonText}>Student Login</Text>
+        <Text style={styles.btnText}>Student</Text>
       </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.button}
-        onPress={() => router.push('/faculty/login')}
+      
+      <TouchableOpacity
+          style={styles.btn}
+          onPress={() => router.push('/faculty/login')}
       >
-        <Text style={styles.buttonText}>Teacher Login</Text>
+        <Text style={styles.btnText}>Faculty</Text>
       </TouchableOpacity>
     </View>
+    </ImageBackground>
   );
 }
 
+
 const styles = StyleSheet.create({
-  container: {
+  loadingText: {
+  marginTop: 10,
+  fontSize: 16,
+  color: '#008000',
+},
+  splashScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    backgroundColor: '#ffffff',
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 30,
-    fontWeight: 'bold',
-  },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 10,
-    width: '80%',
-    marginVertical: 10,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  loadingText: {
+  splashText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#007AFF',
+    fontFamily: 'Roboto',
+    color: '#008000',
+  },
+  backgroundImage: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  container: {
+    width: '90%',
+    maxWidth: 600,
+    textAlign: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 20,
+    borderRadius: 12,
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginTop: 50,  
+  },
+  logo: {
+    maxWidth: '100%',
+    height: 200,
+    aspectRatio: 1,
+    marginBottom: 2,
+    resizeMode: 'contain',
+  },
+  heading: {
+    fontSize: 28,
+    fontFamily: 'Roboto',
+    color: '#000000',
+    marginBottom: 30,
+  },
+  btn: {
+    width: '100%',
+    padding: 15,
+    fontSize: 16,
+    backgroundColor: '#008000',
+    borderRadius: 8,
+    marginVertical: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnText: {
+    fontFamily: 'Poppins',
+    fontSize: 16,
+    width: '100%',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
   }
 });
