@@ -10,19 +10,19 @@ export default function ConsultationScreen() {
     const db = getDatabase();
 
     // Fetch the student in line number from Firebase Realtime Database
-    const studentInLineRef = ref(db, 'studentInLine');
+    const studentInLineRef = ref(db, 'ticketNumberCounter'); // Update the reference to 'studentInLine'
     onValue(studentInLineRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
+      if (data !== null) {
         setStudentInLine(data);
       }
     });
 
     // Fetch the current table from Firebase Realtime Database
-    const tableNumberRef = ref(db, 'tableNumber');
+    const tableNumberRef = ref(db, 'tableNumber'); // Update the reference to 'tableNumber'
     onValue(tableNumberRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
+      if (data !== null) {
         setTableNumber(data);
       }
     });
@@ -40,26 +40,26 @@ export default function ConsultationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f4b3b',
+    backgroundColor: '#0f4b3b',  // Updated to dark green as per request
     justifyContent: 'center',
     padding: 10,
   },
   header: {
     fontSize: 28,
-    color: '#fff',
+    color: '#fff',  // White text color
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
   },
   subHeader: {
     fontSize: 18,
-    color: '#fff',
+    color: '#fff',  // White text color
     textAlign: 'center',
     marginBottom: 10,
   },
   tableInfo: {
     fontSize: 24,
-    color: '#fff',
+    color: '#fff',  // White text color
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 30,

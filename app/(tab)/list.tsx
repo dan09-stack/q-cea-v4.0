@@ -1,42 +1,73 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { getDatabase, ref, onValue } from 'firebase/database';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import app from '../../firebaseConfig';  // Correct default import
 
-export default function FacultyScreen() {
-  const [studentsData, setStudentsData] = useState<any[]>([]);
+interface Student {
+  fullName: string;
+  idNumber: string;
+  concern: string;
+}
+
+export default function ConsultationScreen() {
+  const [studentsData, setStudentsData] = useState<Student[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);  
+  const [error, setError] = useState<string | null>(null);  
 
   useEffect(() => {
-    const db = getDatabase();
+    const db = getFirestore(); // Get Firestore instance without passing app
 
-    // Fetch the students data from Firebase Realtime Database
-    const studentsRef = ref(db, 'students'); // 'students' is the key in your Firebase Realtime Database
-    onValue(studentsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const formattedData = Object.keys(data).map((key) => ({
-          id: key,
-          ...data[key],
+    // Fetch the students data from Firestore
+    const studentsRef = collection(db, 'student');  // Ensure the collection name is correct
+    getDocs(studentsRef)
+      .then((querySnapshot) => {
+        const studentsList: Student[] = querySnapshot.docs.map((doc) => ({
+          idNumber: doc.data().idNumber || 'Unknown ID',  // Access idNumber from doc.data()
+          fullName: doc.data().fullName || 'Unknown Name',  // Default name if missing
+          concern: doc.data().concern || 'No concern provided',  // Default concern if missing
         }));
-        setStudentsData(formattedData);
-      }
-    });
+        setStudentsData(studentsList);
+        setLoading(false);  // Stop loading after data is fetched
+      })
+      .catch((error) => {
+        setError('Error fetching data. Please try again later.');
+        setLoading(false);
+        console.error("Error fetching student data:", error);
+      });
   }, []);
-
-  const renderItem = ({ item }: any) => (
-    <View style={styles.card}>
-      <Text style={styles.studentName}>{item.name}</Text>
-      <Text style={styles.studentCourse}>{item.course}</Text>
-      <Text style={styles.concern}>{item.concern}</Text>
+  
+  const renderItem = ({ item }: { item: Student }) => (
+    <View style={styles.row}>
+      <Text style={styles.cell}>{item.fullName || 'No Name'}</Text> {/* Safeguard empty names */}
+      <Text style={styles.cell}>{item.idNumber || 'No ID'}</Text> {/* Safeguard empty ID */}
+      <Text style={styles.cell}>{item.concern || 'No concern provided'}</Text> {/* Safeguard empty concern */}
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text style={styles.subHeader}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>FACULTY</Text>
+      <Text style={styles.header}>Student Concerns</Text>
       <FlatList
         data={studentsData}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.idNumber}-${index}`}  // Key is a combination of idNumber and index
         style={styles.list}
       />
     </View>
@@ -46,41 +77,51 @@ export default function FacultyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f4b3b',
-    justifyContent: 'space-between',
+    backgroundColor: '#0f4b3b',  // Updated to dark green as per request
+    justifyContent: 'center',
     padding: 10,
   },
   header: {
-    fontSize: 24,
-    color: '#fff',
+    fontSize: 28,
+    color: '#fff',  // White text color
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
   },
+  subHeader: {
+    fontSize: 18,
+    color: '#fff',  // White text color
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  tableInfo: {
+    fontSize: 24,
+    color: '#fff',  // White text color
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 30,
+    borderRadius: 10,
+  },
   list: {
     flex: 1,
+    borderRadius: 5,
   },
-  card: {
-    backgroundColor: '#fff',
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',  // White background for rows
     padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
-  studentName: {
+  cell: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',  // Black text color for cells
+  },
+  errorText: {
+    color: 'red',
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  studentCourse: {
-    fontSize: 14,
-    color: '#777',
-  },
-  concern: {
-    fontSize: 14,
-    color: '#555',
+    textAlign: 'center',
   },
 });
