@@ -50,6 +50,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       await handleUserLogin(email, password, router, saveCredentials);
+      router.push('/(tabs)/profile'); 
     } catch (error) {
       console.log('Login error:', error);
     } finally {
