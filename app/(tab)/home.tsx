@@ -10,7 +10,7 @@ export default function ConsultationScreen() {
     const db = getDatabase();
 
     // Fetch the student in line number from Firebase Realtime Database
-    const studentInLineRef = ref(db, 'ticketNumberCounter'); // Update the reference to 'studentInLine'
+    const studentInLineRef = ref(db, 'ticketNumberCounter'); 
     onValue(studentInLineRef, (snapshot) => {
       const data = snapshot.val();
       if (data !== null) {
@@ -19,7 +19,7 @@ export default function ConsultationScreen() {
     });
 
     // Fetch the current table from Firebase Realtime Database
-    const tableNumberRef = ref(db, 'tableNumber'); // Update the reference to 'tableNumber'
+    const tableNumberRef = ref(db, 'ticketNumberCounter'); 
     onValue(tableNumberRef, (snapshot) => {
       const data = snapshot.val();
       if (data !== null) {
