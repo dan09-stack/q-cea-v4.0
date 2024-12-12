@@ -11,7 +11,8 @@ export default function Signup(): JSX.Element {
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [showPassword, setShowPassword] = useState<boolean>(false); // New state for password visibility
+  const [userType, setUserType] = useState<string>(''); // New state for userType
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   
@@ -25,95 +26,107 @@ export default function Signup(): JSX.Element {
         selectedCourse,
         email,
         password,
+        userType, // Pass userType to Firebase
         router
       });
     }
-    catch{
+    catch {
       Alert.alert('Error', 'Something went wrong. Please try again.');
     }
-     finally {
+    finally {
       setIsLoading(false);
     }
   };
 
   return (
-      <ImageBackground
-        source={require('../../../assets/green p2.jpg')}
-        style={styles.background}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>   
-          <View style={styles.container}>
-            <Text style={styles.heading}>Signup</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name (Last Name, First Name MI)"
-              value={fullName}
-              onChangeText={setFullName}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="ID Number"
-              value={idNumber}
-              onChangeText={setIdNumber}
-              keyboardType="numeric"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone Number"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-            />
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedCourse}
-                onValueChange={(itemValue) => setSelectedCourse(itemValue)}
-                style={styles.picker}
-                placeholder='Select Your Course'
-              >
-                <Picker.Item label="Select Your Course" value=""  />
-                <Picker.Item label="Course A" value="A" />
-                <Picker.Item label="Course B" value="B" />
-                <Picker.Item label="Course C" value="C" />
-                <Picker.Item label="Course D" value="D" />
-                <Picker.Item label="Course E" value="E" />
-                <Picker.Item label="Course F" value="F" />
-              </Picker>
-            </View>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={password}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity 
-              style={[styles.button, isLoading && styles.buttonDisabled]} 
-              onPress={onSignup}
-              disabled={isLoading}
+    <ImageBackground
+      source={require('../../../assets/green p2.jpg')}
+      style={styles.background}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>   
+        <View style={styles.container}>
+          <Text style={styles.heading}>Signup</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name (Last Name, First Name MI)"
+            value={fullName}
+            onChangeText={setFullName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="ID Number"
+            value={idNumber}
+            onChangeText={setIdNumber}
+            keyboardType="numeric"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone Number"
+            value={phoneNumber}
+            onChangeText={setPhoneNumber}
+            keyboardType="phone-pad"
+          />
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={selectedCourse}
+              onValueChange={(itemValue) => setSelectedCourse(itemValue)}
+              style={styles.picker}
             >
-              <Text style={styles.buttonText}>
-                {isLoading ? 'CREATING...' : 'CREATE'}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.loginContainer}>
-              <Text>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/student/login')}>
-                <Text style={styles.loginText}>Login</Text>
-              </TouchableOpacity>
-            </View>
+              <Picker.Item label="Select Your Course" value=""  />
+              <Picker.Item label="Course A" value="A" />
+              <Picker.Item label="Course B" value="B" />
+              <Picker.Item label="Course C" value="C" />
+              <Picker.Item label="Course D" value="D" />
+              <Picker.Item label="Course E" value="E" />
+              <Picker.Item label="Course F" value="F" />
+            </Picker>
           </View>
-        </ScrollView>
-      </ImageBackground>
+          
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={userType}
+              onValueChange={(itemValue) => setUserType(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select User Type" value="" />
+              <Picker.Item label="Student" value="student" />
+              <Picker.Item label="Faculty" value="faculty" />
+            </Picker>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            autoCapitalize="none"
+          />
+          <TouchableOpacity 
+            style={[styles.button, isLoading && styles.buttonDisabled]} 
+            onPress={onSignup}
+            disabled={isLoading}
+          >
+            <Text style={styles.buttonText}>
+              {isLoading ? 'CREATING...' : 'CREATE'}
+            </Text>
+          </TouchableOpacity>
+          <View style={styles.loginContainer}>
+            <Text>Already have an account? </Text>
+            <TouchableOpacity onPress={() => router.push('/student/login')}>
+              <Text style={styles.loginText}>Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
@@ -132,7 +145,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
   },
   keyboardView: {
     flex: 1,
@@ -142,25 +155,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
-  },
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 10,
-  },
-  passwordInput: {
-    flex: 1,
-  },
-  showPasswordButton: {
-    marginLeft: 10,
-  },
-  showPasswordText: {
-    color: '#007AFF',
-    fontWeight: 'bold',
   },
   loginContainer: {
     flexDirection: 'row',
@@ -204,8 +198,7 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: '100%',
-    height:100,
-    marginTop: Platform.OS === 'ios' ? 0 : 0,
+    height: 100,
   },
   loginText: {
     color: '#2c6b2f',

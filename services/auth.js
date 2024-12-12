@@ -86,6 +86,7 @@ export const handleSignup = async ({
   selectedCourse,
   email,
   password,
+  userType,
   router
 }) => {
   if (!fullName || !idNumber || !phoneNumber || !selectedCourse || !email || !password) {
@@ -103,7 +104,7 @@ export const handleSignup = async ({
       phoneNumber,
       course: selectedCourse,
       email,
-      userType: 'student'
+      usertype:userType,
     });
 
     await sendEmailVerification(user);
