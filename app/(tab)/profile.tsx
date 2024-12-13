@@ -89,7 +89,7 @@ export default function Profile(): JSX.Element {
       if (user) {
         if (!user.emailVerified) {
           setIsVerified(false);
-          router.push('/faculty/login');
+          router.push('/student/login');
         } else {
           setIsVerified(true);
           const userDoc = await db.collection('faculty').doc(user.uid).get();
@@ -100,7 +100,7 @@ export default function Profile(): JSX.Element {
           }
         }
       } else {
-        router.push('/faculty/login');
+        router.push('/student/login');
       }
       setLoading(false);
     };
