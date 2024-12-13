@@ -3,6 +3,7 @@
     "strict": true,
     "jsx": "react-native",
     "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "@/*": [
         "./*"
