@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../../../firebaseConfig';  // Assuming you've exported firestore in firebaseConfig
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -49,8 +50,24 @@ export default function Login() {
   const handleLogin = async () => {
     setIsLoading(true);
     try {
+      // Call your login function (assuming `handleUserLogin` authenticates the user)
       await handleUserLogin(email, password, router, saveCredentials);
-      router.push('/(tabs)/profile'); 
+
+      // After login, fetch the user document from Firestore to check userType
+      const userDoc = await db.collection('students').where("email", "==", email).get();
+
+if (!userDoc.empty) {
+  const userData = userDoc.docs[0].data(); // Assuming email is unique
+  const userType = userData?.userType;
+  if (userType === 'student') {
+    router.push('/(tabs)/profile');
+  } else if (userType === 'faculty') {
+    router.push('/(tabs)/home');
+  } else {
+    alert('User type is undefined');
+  }
+}
+
     } catch (error) {
       console.log('Login error:', error);
     } finally {
@@ -72,7 +89,7 @@ export default function Login() {
         <Text style={styles.backButtonText}>Back</Text>
       </TouchableOpacity>
       <View style={styles.container}>
-        <Text style={styles.heading}>Student Login</Text>
+        <Text style={styles.heading}>Login</Text>
         <TextInput
           style={styles.input}
           placeholder="Email"
@@ -101,7 +118,6 @@ export default function Login() {
             />
           </TouchableOpacity>
         </View>
-        
         
         <View style={styles.checkboxContainer}>
           <View style={{flexDirection: 'row'}}>
