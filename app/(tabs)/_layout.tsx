@@ -7,10 +7,7 @@ import { View } from 'react-native';
 export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
-      <LinearGradient
-        colors={['#2c6b2f', '#1a4d1c']}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-      />
+      
       <Tabs screenOptions={{ 
         headerShown: false,
         tabBarHideOnKeyboard: true,

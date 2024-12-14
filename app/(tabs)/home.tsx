@@ -1,74 +1,72 @@
-import { View, Text, TextInput, StyleSheet, Button, ActivityIndicator, Alert, ImageBackground } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { Picker } from '@react-native-picker/picker';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc } from 'firebase/firestore';
+
 export default function Home() {
   const [selectedFaculty, setSelectedFaculty] = useState('');
   const [selectedConcern, setSelectedConcern] = useState('');
   const [otherConcern, setOtherConcern] = useState('');
-  const [isRequested, setIsRequested] = useState(false); // Track whether the request was made
+  const [isRequested, setIsRequested] = useState(false);
   const [ticketNumber, setTicketNumber] = useState('');
   const [userTicketNumber, setUserTicketNumber] = useState('');
   const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingRequest, setIsCheckingRequest] = useState(true);
+  const [facultyModalVisible, setFacultyModalVisible] = useState(false);
+  const [concernModalVisible, setConcernModalVisible] = useState(false);
+  const [isTicketLoading, setIsTicketLoading] = useState(true);
 
   useEffect(() => {
-    const currentUser = auth.currentUser;
-    setIsCheckingRequest(true);
-    // Replace the fetchFaculty function with real-time listener
-    const facultyCollectionRef = collection(db, 'faculty');
-    const unsubscribeFaculty = onSnapshot(facultyCollectionRef, (snapshot) => {
-      const faculty = snapshot.docs.map(doc => ({
-        id: doc.id,
-        fullName: doc.data().fullName || '',
-        status: doc.data().status || 'OFFLINE'
-      }));
-      setFacultyList(faculty);
+    const unsubscribeAuth = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setIsCheckingRequest(true);
+        const facultyCollectionRef = collection(db, 'faculty');
+        
+        const userRef = doc(db, 'student', user.uid);
+        const userUnsubscribe = onSnapshot(userRef, (doc) => {
+          if (doc.exists()) {
+            const userData = doc.data();
+            if (userData.status === 'waiting') {
+              setIsRequested(true);
+              setUserTicketNumber(userData.userTicketNumber);
+            } else {
+              setIsRequested(false);
+            }
+          }
+          setIsTicketLoading(false);
+          setIsCheckingRequest(false);
+        });
+  
+        const facultyUnsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
+          const faculty = snapshot.docs.map(doc => ({
+            id: doc.id,
+            fullName: doc.data().fullName || '',
+            status: doc.data().status || 'OFFLINE'
+          }));
+          setFacultyList(faculty);
+        });
+  
+        const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
+        const ticketUnsubscribe = onSnapshot(ticketRef, (doc) => {
+          if (doc.exists()) {
+            setTicketNumber(doc.data().ticketNum);
+          }
+        });
+  
+        return () => {
+          userUnsubscribe();
+          facultyUnsubscribe();
+          ticketUnsubscribe();
+        };
+      } else {
+        setIsCheckingRequest(false);
+      }
     });
   
-    // Existing ticket number listeners...
-    if (currentUser) {
-      // Add this listener to check ticket status
-      const userRef = doc(db, 'student', currentUser.uid);
-      const userUnsubscribe = onSnapshot(userRef, (doc) => {
-        if (doc.exists()) {
-          const userData = doc.data();
-          // If user has an active ticket (status is 'waiting'), show ticket container
-          if (userData.status === 'waiting') {
-            setIsRequested(true);
-          } else {
-            setIsRequested(false);
-          }
-          setUserTicketNumber(userData.userTicketNumber);
-        }
-        setIsCheckingRequest(false);
-      });
-  
-      const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
-      const ticketUnsubscribe = onSnapshot(ticketRef, (doc) => {
-        if (doc.exists()) {
-          setTicketNumber(doc.data().ticketNum);
-        }
-      });
-  
-      // Clean up all listeners
-      return () => {
-        userUnsubscribe();
-        unsubscribeFaculty();
-        userUnsubscribe();
-        ticketUnsubscribe();
-      };
-    }else {
-      setIsCheckingRequest(false); // Stop loading if no user
-    }
-    
-    // Clean up faculty listener if no user
-    return () => unsubscribeFaculty();
+    return () => unsubscribeAuth();
   }, []);
-  
   
 
   const handleRequest = async () => {
@@ -84,14 +82,12 @@ export default function Home() {
   
     setIsLoading(true);
     try {
-      // Get current user ID from Firebase Auth
       const currentUser = auth.currentUser;
       if (!currentUser) {
         Alert.alert('Error', 'User not authenticated');
         return;
       }
   
-      // Update ticket counter
       const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
       const ticketSnap = await getDoc(ticketRef);
       
@@ -99,12 +95,10 @@ export default function Home() {
         const currentNumber = ticketSnap.data().ticketNum;
         const newNumber = currentNumber + 1;
         
-        // Update ticket counter
         await updateDoc(ticketRef, {
           ticketNum: newNumber
         });
   
-        // Add ticket data to user's document
         const userRef = doc(db, 'student', currentUser.uid);
         await updateDoc(userRef, {
           userTicketNumber: newNumber,
@@ -125,9 +119,7 @@ export default function Home() {
       setIsLoading(false);
     }
   };
-  
-  
-  
+
   const handleCancel = async () => {
     try {
       const currentUser = auth.currentUser;
@@ -144,11 +136,10 @@ export default function Home() {
       Alert.alert('Error', 'Failed to cancel ticket');
     }
   };
-  
 
   return (
     <ImageBackground
-      source={require('../../assets/green p2.jpg')}
+      source={require('../../assets/images/green.png')}
       style={styles.background}
     >
       <View style={styles.container}>
@@ -180,36 +171,24 @@ export default function Home() {
             </View>
           ) : (
             <View style={styles.formGroup}>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedFaculty}
-                  onValueChange={(itemValue) => setSelectedFaculty(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Select Faculty" value="" />
-                  {facultyList
-                    .sort((a, b) => a.fullName.localeCompare(b.fullName))
-                    .map((faculty) => (
-                      <Picker.Item 
-                        key={faculty.id}
-                        label={faculty.fullName}
-                        value={faculty.fullName}
-                        color={faculty.status === 'ONLINE' ? '#4CAF50' : '#757575'}
-                      />
-                    ))}
-                </Picker>
-              </View>
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={selectedConcern}
-                  onValueChange={(itemValue) => setSelectedConcern(itemValue)}
-                  style={styles.picker}
-                >
-                  <Picker.Item label="Select your concern" value="" />
-                  <Picker.Item label="Concern A" value="concernA" />
-                  <Picker.Item label="Concern B" value="concernB" />
-                </Picker>
-              </View>
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => setFacultyModalVisible(true)}
+              >
+                <Text style={styles.pickerButtonText}>
+                  {selectedFaculty || "Select Faculty"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => setConcernModalVisible(true)}
+              >
+                <Text style={styles.pickerButtonText}>
+                  {selectedConcern || "Select your concern"}
+                </Text>
+              </TouchableOpacity>
+
               <TextInput
                 style={styles.input}
                 placeholder="Other concern:"
@@ -229,13 +208,79 @@ export default function Home() {
                   />
                 )}
               </View>
+
+              {/* Faculty Modal */}
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={facultyModalVisible}
+                onRequestClose={() => setFacultyModalVisible(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Select Faculty</Text>
+                    {facultyList
+                      .sort((a, b) => a.fullName.localeCompare(b.fullName))
+                      .map((faculty) => (
+                        <Pressable
+                          key={faculty.id}
+                          style={styles.modalItem}
+                          onPress={() => {
+                            setSelectedFaculty(faculty.fullName);
+                            setFacultyModalVisible(false);
+                          }}
+                        >
+                          <Text style={[
+                            styles.modalItemText,
+                            { color: faculty.status === 'ONLINE' ? '#4CAF50' : '#757575' }
+                          ]}>
+                            {faculty.fullName}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    <Button title="Close" onPress={() => setFacultyModalVisible(false)} color="#004000" />
+                  </View>
+                </View>
+              </Modal>
+
+              {/* Concern Modal */}
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={concernModalVisible}
+                onRequestClose={() => setConcernModalVisible(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Select Concern</Text>
+                    <Pressable
+                      style={styles.modalItem}
+                      onPress={() => {
+                        setSelectedConcern('concernA');
+                        setConcernModalVisible(false);
+                      }}
+                    >
+                      <Text style={styles.modalItemText}>Concern A</Text>
+                    </Pressable>
+                    <Pressable
+                      style={styles.modalItem}
+                      onPress={() => {
+                        setSelectedConcern('concernB');
+                        setConcernModalVisible(false);
+                      }}
+                    >
+                      <Text style={styles.modalItemText}>Concern B</Text>
+                    </Pressable>
+                    <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
+                  </View>
+                </View>
+              </Modal>
             </View>
           )
         )}
       </View>
     </ImageBackground>
   );
-  
 }
 
 const styles = StyleSheet.create({
@@ -243,12 +288,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
   ticketInfoContainer: {
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-between',
-    
   },
   container: {
     flex: 1,
@@ -263,15 +309,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: '#ffffff',
   },
-  pickerContainer: {
+  pickerButton: {
     backgroundColor: '#004000',
+    padding: 15,
     borderRadius: 5,
-    overflow: 'hidden',
     marginVertical: 5,
   },
-  picker: {
-    width: '100%',
+  pickerButtonText: {
     color: '#ffffff',
+    fontSize: 16,
   },
   input: {
     backgroundColor: '#004000',
@@ -289,13 +335,11 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   ticketContainer: {
-    
     alignItems: 'center',
     backgroundColor: '#ffffff',
     padding: 20,
     borderRadius: 10,
     width: 360,
-
   },
   headerText: {
     fontSize: 16,
@@ -333,5 +377,33 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#004000',
     marginTop: 15,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#004000',
+  },
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: {
+    fontSize: 16,
   },
 });
