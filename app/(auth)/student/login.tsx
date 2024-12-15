@@ -62,7 +62,7 @@ if (!userDoc.empty) {
   if (userType === 'student') {
     router.push('/(tabs)/profile');
   } else if (userType === 'faculty') {
-    router.push('/(tabs)/home');
+    router.push('/(tab)/home');
   } else {
     alert('User type is undefined');
   }
