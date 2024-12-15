@@ -92,7 +92,7 @@ export default function Profile(): JSX.Element {
           router.push('/student/login');
         } else {
           setIsVerified(true);
-          const userDoc = await db.collection('faculty').doc(user.uid).get();
+          const userDoc = await db.collection('student').doc(user.uid).get();
           if (userDoc.exists) {
             const data = userDoc.data() as UserData;
             setUserData(data);
