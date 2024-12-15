@@ -23,40 +23,31 @@ export default function Index() {
   }
 
   return (
-    <ImageBackground
-      source={require('../assets/green.jpg')}
-      style={styles.backgroundImage}
-      imageStyle={{ resizeMode: 'cover' }}
+    <TouchableOpacity
+      style={styles.fullScreenTouchable}
+      onPress={() => router.push('/student/login')}
     >
-    <View style={styles.container}>
-        <Image source={require('../assets/finale.png')} style={styles.logo} />
-      <Text style={styles.heading}>Welcome to Q-CEA App</Text>
-
-      <TouchableOpacity
-          style={styles.btn}
-          onPress={() => router.push('/student/login')}
+      <ImageBackground
+        source={require('../assets/green.jpg')}
+        style={styles.backgroundImage}
+        imageStyle={{ resizeMode: 'cover' }}
       >
-        <Text style={styles.btnText}>Student</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-          style={styles.btn}
-          onPress={() => router.push('/faculty/login')}
-      >
-        <Text style={styles.btnText}>Faculty</Text>
-      </TouchableOpacity>
-    </View>
-    </ImageBackground>
+        <View style={styles.container}>
+          <Image source={require('../assets/finale.png')} style={styles.logo} />
+          <Text style={styles.heading}>Welcome to Q-CEA App</Text>
+          <Text style={styles.tapText}>Tap anywhere to continue</Text>
+        </View>
+      </ImageBackground>
+    </TouchableOpacity>
   );
 }
 
-
 const styles = StyleSheet.create({
   loadingText: {
-  marginTop: 10,
-  fontSize: 16,
-  color: '#008000',
-},
+    marginTop: 10,
+    fontSize: 16,
+    color: '#008000',
+  },
   splashScreen: {
     flex: 1,
     justifyContent: 'center',
@@ -76,6 +67,9 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  fullScreenTouchable: {
+    flex: 1,
+  },
   container: {
     width: '90%',
     maxWidth: 600,
@@ -85,7 +79,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     flexDirection: 'column',
     alignItems: 'center',
-    marginTop: 50,  
+    marginTop: 50,
   },
   logo: {
     maxWidth: '100%',
@@ -98,29 +92,17 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontFamily: 'Roboto',
     color: '#000000',
-    marginBottom: 30,
+    marginBottom: 20,
   },
-  btn: {
-    width: '100%',
-    padding: 15,
+  tapText: {
     fontSize: 16,
-    backgroundColor: '#008000',
-    borderRadius: 8,
-    marginVertical: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnText: {
-    fontFamily: 'Poppins',
-    fontSize: 16,
-    width: '100%',
-    color: '#FFFFFF',
-    textAlign: 'center',
+    color: '#555555',
+    fontFamily: 'Roboto',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-  }
+  },
 });
