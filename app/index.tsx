@@ -89,9 +89,13 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   heading: {
+    textAlign: 'center',
+    alignSelf: 'center',
+    maxWidth: 200,
     fontSize: 28,
     fontFamily: 'Roboto',
     color: '#000000',
+    alignItems: 'center',
     marginBottom: 20,
   },
   tapText: {
