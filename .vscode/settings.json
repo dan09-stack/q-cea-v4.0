@@ -1,0 +1,7 @@
+{
+    "cody.autocomplete.languages": {
+        
+        "*": true
+    },
+    "cody.agentic.context.experimentalShell": true,
+}

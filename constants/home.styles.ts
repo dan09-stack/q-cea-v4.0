@@ -1,6 +1,26 @@
 import { StyleSheet } from 'react-native';
 
 export const homeStyles = StyleSheet.create({
+    disabledButton: {
+        opacity: 0.5,
+        backgroundColor: '#808080'
+      },
+    notificationContainer: {
+        backgroundColor: '#f8d7da',
+        borderRadius: 5,
+        padding: 10,
+        margin: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#f5c6cb'
+      },
+      notificationText: {
+        color: '#721c24',
+        fontSize: 16,
+        fontWeight: '500',
+        textAlign: 'center'
+      },
 details:{
     fontSize: 18,
     },

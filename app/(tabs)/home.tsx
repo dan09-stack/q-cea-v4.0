@@ -1,8 +1,9 @@
-import { View, Text, TextInput, StyleSheet, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable, Platform } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function Home() {
   const [selectedFaculty, setSelectedFaculty] = useState('');
   const [selectedConcern, setSelectedConcern] = useState('');
@@ -21,18 +22,69 @@ export default function Home() {
   const [allTickets, setAllTickets] = useState<string[]>([]);
   const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
   const [currentQueue, setCurrentQueue] = useState(0);
+  const [servingTickets, setServingTickets] = useState<string[]>([]);
 
-  const handleBack = () => {
-    setCurrentTicketIndex(prev => 
-      prev > 0 ? prev - 1 : allTickets.length - 1
-    );
+  useEffect(() => {
+    const loadSavedIndex = async () => {
+      const savedIndex = await AsyncStorage.getItem('currentTicketIndex');
+      if (savedIndex) {
+        setCurrentTicketIndex(parseInt(savedIndex));
+      }
+    };
+    loadSavedIndex();
+  }, []);
+
+  const showAlert = (message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+    } else {
+      Alert.alert('Queue Status', message);
+    }
   };
   
-  const handleNext = () => {
-    setCurrentTicketIndex(prev => 
-      prev < allTickets.length - 1 ? prev + 1 : 0
-    );
+  const handleNext = async () => {
+    if (allTickets.length === 0) {
+      showAlert('No ticket on queue');
+      return;
+    }
+  
+    const newIndex = currentTicketIndex < allTickets.length - 1 ? currentTicketIndex + 1 : currentTicketIndex;
+    
+    if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
+      showAlert('No ticket on queue');
+      return;
+    }
+    
+    setCurrentTicketIndex(newIndex);
+    await AsyncStorage.setItem('currentTicketIndex', newIndex.toString());
   };
+  
+  const handleBack = async () => {
+    const newIndex = currentTicketIndex > 0 ? currentTicketIndex - 1 : allTickets.length - 1;
+    setCurrentTicketIndex(newIndex);
+    await AsyncStorage.setItem('currentTicketIndex', newIndex.toString());
+  };
+
+  useEffect(() => {
+    if (currentStudent.name) {
+      const ticketsUnsubscribe = onSnapshot(
+        query(
+          collection(db, 'student'),
+          where('faculty', '==', currentStudent.name),
+          orderBy('userTicketNumber', 'asc'),
+        ), 
+        (snapshot) => {
+          const tickets = snapshot.docs
+            .filter(doc => doc.data().userTicketNumber)
+            .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
+          setAllTickets(tickets);
+          setCurrentQueue(tickets.length);
+        }
+      );
+  
+      return () => ticketsUnsubscribe();
+    }
+  }, [currentStudent.name]);
 
   useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
@@ -67,6 +119,8 @@ export default function Home() {
             setCurrentQueue(tickets.length);
           }
         );
+        
+        
 
         // Listen for user's ticket status
         const userRef = doc(db, 'student', user.uid);
@@ -196,11 +250,24 @@ export default function Home() {
               <Text style={styles.boldText}>Student in line:</Text> 10
             </Text>
             <Text style={styles.ticketNumber}>STUDENT TICKET NUMBER</Text>
-                        {allTickets.length > 0 && (
-                        <Text style={styles.ticketCode}>
-                              {allTickets[currentTicketIndex]}
-                        </Text>
-                      )}
+            {allTickets.length === 0 ? (
+              <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
+                <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
+                  No ticket on queue
+                </Text>
+              </View>
+            ) : allTickets[currentTicketIndex] ? (
+              <Text style={styles.ticketCode}>
+                {allTickets[currentTicketIndex]}
+              </Text>
+            ) : (
+              <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
+                <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
+                  Ticket Number has been cancelled by student. Please click next to view available tickets
+                </Text>
+              </View>
+            )}
+
 
             <Text style={styles.boldText}>Student Name</Text>
             <Text style={styles.details}>{currentStudent.name}</Text>
