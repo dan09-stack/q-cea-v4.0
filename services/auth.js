@@ -80,6 +80,7 @@ export const handleUserLogin = async (email, password, router, saveCredentials) 
 };
 //handleSignup function
 export const handleSignup = async ({
+  userType,
   fullName,
   idNumber,
   phoneNumber,
@@ -103,7 +104,9 @@ export const handleSignup = async ({
       phoneNumber,
       course: selectedCourse,
       email,
-      userType: 'student'
+      userType,
+      isVerified: userType === 'FACULTY' ? false : true,
+      status: userType === 'FACULTY' ? false : true
     });
 
     await sendEmailVerification(user);

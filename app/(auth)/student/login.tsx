@@ -63,13 +63,6 @@ export default function Login() {
       style={styles.background}
       imageStyle={{ resizeMode: 'cover' }}
     >
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => router.push('/')}
-      >
-        <Ionicons name="arrow-back" size={24} color="black" />
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
       <View style={styles.container}>
         <Text style={styles.heading}>Student Login</Text>
         <TextInput
@@ -173,17 +166,11 @@ const styles = StyleSheet.create({
     color: '#000',
     },
     background: {
-    
     flex: 1,
-    
     justifyContent: 'center',
-    
     alignItems: 'center',
-    
     width: '100%',
-    
     height: '100%',
-    
     },
     
     container: {
