@@ -23,7 +23,30 @@ export default function Home() {
   const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
   const [currentQueue, setCurrentQueue] = useState(0);
   const [servingTickets, setServingTickets] = useState<string[]>([]);
+  const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '' });
 
+  useEffect(() => {
+    const fetchStudentData = async () => {
+      if (allTickets[currentTicketIndex]) {
+        const studentQuery = query(
+          collection(db, 'student'),
+          where('userTicketNumber', '==', parseInt(allTickets[currentTicketIndex].replace('CPE-', '')))
+        );
+        const querySnapshot = await getDocs(studentQuery);
+        if (!querySnapshot.empty) {
+          const studentData = querySnapshot.docs[0].data();
+          setTicketStudentData({
+            name: studentData.fullName,
+            concern: studentData.concern || studentData.otherConcern
+          });
+        }
+      }
+    };
+    fetchStudentData();
+    
+    
+    
+  }, [currentTicketIndex, allTickets]);
   useEffect(() => {
     const loadSavedIndex = async () => {
       const savedIndex = await AsyncStorage.getItem('currentTicketIndex');
@@ -32,6 +55,8 @@ export default function Home() {
       }
     };
     loadSavedIndex();
+    console.log('User ticket:', userTicketNumber);
+    console.log('Current ticket:', loadSavedIndex);
   }, []);
 
   const showAlert = (message: string) => {
@@ -57,6 +82,7 @@ export default function Home() {
     
     setCurrentTicketIndex(newIndex);
     await AsyncStorage.setItem('currentTicketIndex', newIndex.toString());
+   
   };
   
   const handleBack = async () => {
@@ -115,6 +141,7 @@ export default function Home() {
             const tickets = snapshot.docs
               .filter(doc => doc.data().userTicketNumber)
               .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
+             
             setAllTickets(tickets);
             setCurrentQueue(tickets.length);
           }
@@ -155,7 +182,7 @@ export default function Home() {
             setTicketNumber(doc.data().ticketNum);
           }
         });
-
+        
         return () => {
           userUnsubscribe();
           facultyUnsubscribe();
@@ -268,11 +295,11 @@ export default function Home() {
               </View>
             )}
 
-
             <Text style={styles.boldText}>Student Name</Text>
-            <Text style={styles.details}>{currentStudent.name}</Text>
-            <Text style={styles.boldText}>Concern</Text> 
-            <Text style={styles.details}>{currentStudent.concern}</Text>
+            <Text style={styles.details}>{allTickets.length === 0 ? 'No student in queue' : ticketStudentData.name}</Text>
+            <Text style={styles.boldText}>Concern</Text>
+            <Text style={styles.details}>{allTickets.length === 0 ? 'No concern to display' : ticketStudentData.concern}</Text>
+
             <View style={styles.buttonContainer}>
               <TouchableOpacity style={styles.button} onPress={handleBack}>
                 <Text style={styles.buttonText}>BACK</Text>
@@ -304,7 +331,13 @@ export default function Home() {
                       <Text style={styles.ticketInfo}>ARC-0008</Text>
                     </View>
                   </View>
-                  <Text style={styles.waitText}>PLEASE WAIT</Text>
+                  <Text style={styles.waitText}>
+                    {userTicketNumber === allTickets[1]
+                      ? "YOUR TURN"
+                      : "PLEASE WAIT"
+                    }
+                  </Text>
+                  
                 </View>
                 <View style={styles.buttonContainer}>
                   <Button title="Cancel" onPress={handleCancel} color="#004000" />
