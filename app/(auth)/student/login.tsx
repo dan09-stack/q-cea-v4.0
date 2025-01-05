@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
+import { CustomButton } from '@/components/ui/CustomButton';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -65,23 +66,26 @@ export default function Login() {
     >
       <View style={styles.container}>
         <Text style={styles.heading}>Student Login</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <View style={styles.passwordContainer}>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
           <TextInput
-            style={styles.passwordInput}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
+            style={styles.input}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
             autoCapitalize="none"
           />
+          <Text style={styles.label}>Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+            />
           <TouchableOpacity 
             style={styles.eyeIcon} 
             onPress={() => setShowPassword(!showPassword)}
@@ -93,34 +97,30 @@ export default function Login() {
             />
           </TouchableOpacity>
         </View>
-        
-        
-        <View style={styles.checkboxContainer}>
-          <View style={{flexDirection: 'row'}}>
-            <Checkbox
-              value={rememberPassword}
-              onValueChange={setRememberPassword}
-              color={rememberPassword ? '#2c6b2f' : undefined}
-            />
-            <Text style={styles.checkboxLabel}>Remember Password</Text>
-          </View>
-          <TouchableOpacity  style={styles.forgotPasswordContainer}
-          onPress={() => router.push('/student/forgotPassword')} 
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={styles.button} 
+        <View style={styles.checkboxContainer}>
+          <View style={styles.rememberPasswordContainer}>
+            <TouchableOpacity 
+              style={styles.checkboxWrapper} 
+              onPress={() => setRememberPassword(!rememberPassword)}
+            >
+              <Checkbox
+                value={rememberPassword}
+                onValueChange={setRememberPassword}
+                color={rememberPassword ? '#2c6b2f' : undefined}
+              />
+              <Text style={styles.checkboxLabel}>Remember Password</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={() => router.push('/student/forgotPassword')}>
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
+
+        <CustomButton
+          title={isLoading ? "Loading..." : "SIGN IN"}
           onPress={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Text style={styles.buttonText}>SIGN IN</Text>
-          )}
-        </TouchableOpacity>
+          />
         <View style={styles.signupContainer}>
           <Text>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
@@ -133,11 +133,50 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  checkboxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 15,
+  },
+  checkboxWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  rememberPasswordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 15,
+    color: '#000',
+  },
+  forgotPasswordText: {
+    marginBottom:1,
+    color: 'gray',
+    fontSize: 14,
+  }
+,  
+  inputContainer: {
+    width: '100%',
+    marginBottom: 1,
+  },
+  label: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 1,
+    fontWeight: '500',
+  },
     forgotPasswordContainer: {
-      alignSelf: 'flex-end',
       marginBottom: 10,
+      backgroundColor: 'red',
+      height:"100%",
     },
+
     signupContainer: {
+      marginTop: 10,
     flexDirection: 'row',
     alignItems: 'center',
     },
@@ -154,17 +193,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'black',
     },
-    checkboxContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    width: '100%',
-    },
-    checkboxLabel: {
-    marginLeft: 8,
-    fontSize: 15,
-    color: '#000',
-    },
+    
     background: {
     flex: 1,
     justifyContent: 'center',
@@ -206,7 +235,7 @@ const styles = StyleSheet.create({
     height: 45,
     borderColor: '#000',
     borderWidth: 1,
-    marginBottom: 15,
+    marginBottom: 5,
     paddingLeft: 10,
     borderRadius: 5,
     },
@@ -302,11 +331,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 10,
     },
-  forgotPasswordText: {
-    color: 'gray',
-    fontSize: 14,
-    textAlign: 'right',
-    width: '100%',
-    marginBottom: 10,
-  },
+    
 });

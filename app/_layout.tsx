@@ -42,8 +42,8 @@ export default function Layout() {
             setIsAuthenticated(false);
             router.replace('/student/login'  );
           }
-          console.log('Last route:', await AsyncStorage.getItem('lastRoute'));
-          console.log('Current auth state:', auth.currentUser);
+          // console.log('Last route:', await AsyncStorage.getItem('lastRoute'));
+          // console.log('Current auth state:', auth.currentUser);
 
         });
         return unsubscribe;

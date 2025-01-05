@@ -4,6 +4,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { sendPasswordResetEmail } from 'firebase/auth'; // Adjust this for your auth setup
 import { auth } from '../../../firebaseConfig'; // Ensure your Firebase config is imported
 import { router } from 'expo-router';
+import { CustomButton } from '@/components/ui/CustomButton';
 
 type ForgotPasswordProps = NativeStackScreenProps<any, 'ForgotPassword'>;
 
@@ -43,9 +44,7 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <TouchableOpacity style={styles.button} onPress={handlePasswordReset}>
-        <Text style={styles.buttonText}>Send Reset Link</Text>
-      </TouchableOpacity>
+      <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
       <TouchableOpacity onPress={() => router.back()} style={styles.backLink}>
         <Text style={styles.backLinkText}>Back to Login</Text>
       </TouchableOpacity>

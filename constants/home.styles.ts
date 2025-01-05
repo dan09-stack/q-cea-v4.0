@@ -90,7 +90,7 @@ details:{
     backgroundColor: '#ffffff',
     },
     pickerButton: {
-    backgroundColor: '#004000',
+    backgroundColor: '#005000',
     padding: 15,
     borderRadius: 5,
     marginVertical: 5,
@@ -100,7 +100,7 @@ details:{
     fontSize: 16,
     },
     input: {
-    backgroundColor: '#004000',
+    backgroundColor: '#005000',
     color: '#ffffff',
     padding: 10,
     marginTop: 5,

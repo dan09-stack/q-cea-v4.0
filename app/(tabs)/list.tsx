@@ -1,19 +1,13 @@
 import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { collection, onSnapshot } from 'firebase/firestore' // Update import
+import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '@/firebaseConfig';
-
-
-
-interface FacultyItem {
-  name: string;
-  status: 'ONLINE' | 'OFFLINE';
-}
+import { Ionicons } from '@expo/vector-icons';
 
 export default function List() {
-
   const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [activeSearch, setActiveSearch] = useState(false);
 
   interface FacultyItem {
     id: string;
@@ -21,9 +15,20 @@ export default function List() {
     status: 'ONLINE' | 'OFFLINE';
   }
 
-  const filteredFacultyData = facultyData.filter(faculty =>
-    faculty.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const handleSearch = () => {
+    setActiveSearch(true);
+  };
+  const NoResults = () => (
+    <View style={styles.noResultsContainer}>
+      <Text style={styles.noResultsText}>No faculty members found</Text>
+    </View>
   );
+  const filteredFacultyData = !activeSearch 
+    ? facultyData 
+    : facultyData.filter(faculty =>
+        faculty.name.toLowerCase().includes(inputValue.toLowerCase())
+      );
+
   const renderFaculty = ({ item }: { item: FacultyItem }) => (
     <View style={styles.row}>
       <Text style={styles.name}>{item.name}</Text>
@@ -37,15 +42,19 @@ export default function List() {
       </Text>
     </View>
   );
+
   useEffect(() => {
-    const facultyCollectionRef = collection(db, 'faculty');
+    const facultyCollectionRef = collection(db, 'student');
     const unsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
-      const faculty: FacultyItem[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().fullName || '',
-        status: doc.data().status || 'OFFLINE'
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
+      const faculty: FacultyItem[] = snapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          name: doc.data().fullName || '',
+          status: doc.data().status || 'OFFLINE',
+          userType: doc.data().userType || ''
+        }))
+        .filter(user => user.userType === 'FACULTY')
+        .sort((a, b) => a.name.localeCompare(b.name));
       
       setFacultyData(faculty);
     });
@@ -54,45 +63,74 @@ export default function List() {
   }, []);
 
   return (
-      <ImageBackground
-        source={require('../../assets/green p2.jpg')}
-        style={styles.background}
-      >
-        <View style={styles.listContainer}>
-          <Text style={styles.title}>LIST OF FACULTY</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search faculty..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-
-
-          <View style={styles.header}>
-            <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
-            <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
-          </View>
-          <FlatList
-            data={filteredFacultyData}
-            keyExtractor={(item) => item.id}
-            renderItem={renderFaculty}
-            style={styles.list}
-          />
+    <ImageBackground
+      source={require('../../assets/green p2.jpg')}
+      style={styles.background}
+    >
+      <View style={styles.listContainer}>
+        <Text style={styles.title}>LIST OF FACULTY</Text>
+        <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search faculty..."
+              placeholderTextColor="#999"
+              value={inputValue}
+              onChangeText={(text) => {
+                setInputValue(text);
+                if (text === '') {
+                  setActiveSearch(false);
+                }
+              }}
+              onSubmitEditing={handleSearch}
+              returnKeyType="search"
+            />
+          <TouchableOpacity onPress={handleSearch}>
+            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          </TouchableOpacity>
         </View>
-      </ImageBackground>
-    
+        <View style={styles.header}>
+          <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
+        </View>
+        <FlatList
+          data={filteredFacultyData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderFaculty}
+          style={styles.list}
+          ListEmptyComponent={NoResults}
+        />
+      </View>
+    </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
-  searchInput: {
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  noResultsText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'white',
     borderRadius: 5,
-    padding: 10,
     marginBottom: 10,
-    color: '#000',
     width: '100%',
+  },
+  searchIcon: {
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    padding: 10,
+    color: '#000',
   },
   background: {
     flex: 1,

@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ScrollView, Modal, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { handleSignup } from '../../../services/auth';
+import { CustomButton } from '@/components/ui/CustomButton';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
   const [idNumber, setIdNumber] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
-  const [selectedCourse, setSelectedCourse] = useState<string>('');
+  const [selectedProgram, setSelectedProgram] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const router = useRouter();
@@ -16,17 +17,17 @@ export default function Signup(): JSX.Element {
   const [userType, setUserType] = useState<'STUDENT' | 'FACULTY'>('STUDENT');
 
   const courses = [
-    { label: "Select Your Course", value: "" },
-    { label: "Course A", value: "A" },
-    { label: "Course B", value: "B" },
-    { label: "Course C", value: "C" },
-    { label: "Course D", value: "D" },
-    { label: "Course E", value: "E" },
-    { label: "Course F", value: "F" },
+    { label: "Select Program", value: "" },
+    { label: "BS Architecture", value: "ARCH" },
+    { label: "BS Civil Engineering", value: "CE" },
+    { label: "BS Computer Engineering", value: "CPE" },
+    { label: "BS Electrical Engineering", value: "EE" },
+    { label: "BS Electronics Engineering", value: "ECE" },
+    { label: "BS Mechanical Engineering", value: "ME" }
   ];
 
   const selectCourse = (course: string) => {
-    setSelectedCourse(course);
+    setSelectedProgram(course);
     setModalVisible(false);
   };
   
@@ -38,7 +39,7 @@ export default function Signup(): JSX.Element {
         fullName,
         idNumber,
         phoneNumber,
-        selectedCourse,
+        selectedProgram,
         email,
         password,
         router
@@ -128,8 +129,8 @@ export default function Signup(): JSX.Element {
               style={styles.input}
               onPress={() => setModalVisible(true)}
             >
-              <Text style={selectedCourse ? styles.selectedText : styles.placeholderText}>
-                {selectedCourse ? courses.find(c => c.value === selectedCourse)?.label : "Select Your Course"}
+              <Text style={selectedProgram ? styles.selectedText : styles.placeholderText}>
+                {selectedProgram ? courses.find(c => c.value === selectedProgram)?.label : "Select Your Course"}
               </Text>
             </TouchableOpacity>
           </View>
@@ -186,15 +187,11 @@ export default function Signup(): JSX.Element {
             </View>
           </Modal>
 
-          <TouchableOpacity 
-            style={[styles.button, isLoading && styles.buttonDisabled]} 
+          <CustomButton
+            title={isLoading ? 'CREATING...' : 'CREATE'}
             onPress={onSignup}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'CREATING...' : 'CREATE'}
-            </Text>
-          </TouchableOpacity>
+            color="#2c6b2f"
+          />
 
           <View style={styles.loginContainer}>
             <Text>Already have an account? </Text>

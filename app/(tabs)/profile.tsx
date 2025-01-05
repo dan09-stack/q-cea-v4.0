@@ -8,6 +8,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { CustomButton } from '@/components/ui/CustomButton';
+import { EditProfileModal } from '../components/profile/EditProfileModal';
 interface UserData {
   fullName: string;
   email: string;
@@ -85,29 +87,33 @@ export default function Profile(): JSX.Element {
   
   useEffect(() => {
     const fetchUserData = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        if (!user.emailVerified) {
-          setIsVerified(false);
-          router.push('/student/login');
-        } else {
-          setIsVerified(true);
-          const userDoc = await db.collection('student').doc(user.uid).get();
-          if (userDoc.exists) {
-            const data = userDoc.data() as UserData;
-            setUserData(data);
-            setEditableData(data);
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          if (!user.emailVerified) {
+            setIsVerified(false);
+            // Use replace instead of push for auth flows
+            router.replace('/student/login');
+          } else {
+            setIsVerified(true);
+            const userDoc = await db.collection('student').doc(user.uid).get();
+            if (userDoc.exists) {
+              const data = userDoc.data() as UserData;
+              setUserData(data);
+              setEditableData(data);
+            }
           }
+        } else {
+          router.replace('/student/login');
         }
-      } else {
-        router.push('/student/login');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
-
+  
     fetchUserData();
-  }, [router]);
-
+  }, []);
+  
   const handleUpdateProfile = async () => {
     try {
       const user = auth.currentUser;
@@ -117,7 +123,7 @@ export default function Profile(): JSX.Element {
           fullName: editableData.fullName,
           email: editableData.email,
           idNumber: editableData.idNumber,
-          course: editableData.program,
+          program: editableData.program,
           phoneNumber: editableData.phoneNumber,
         });
 
@@ -182,9 +188,9 @@ export default function Profile(): JSX.Element {
                 ) : (
                   <MaterialIcons name="account-circle" size={120} color="white" />
                 )}
-                <View style={styles.editIconContainer}>
+                {/* <View style={styles.editIconContainer}>
                   <MaterialIcons name="edit" size={24} color="white" />
-                </View>
+                </View> */}
               </TouchableOpacity>
             </View>
             <Text style={styles.title}>{userData.fullName}</Text>
@@ -202,61 +208,21 @@ export default function Profile(): JSX.Element {
                 <Text style={styles.infoValue}>{userData.idNumber}</Text>
               </View>
               <View style={styles.infoText}>
-                <Text style={styles.infoLabel}>Course:</Text>
+                <Text style={styles.infoLabel}>Program:</Text>
                 <Text style={styles.infoValue}>{userData.program}</Text>
               </View>
             </View>
-            <Button title="Edit Profile" onPress={() => setModalVisible(true)} />
+            <CustomButton title="Edit Profile" onPress={() => setModalVisible(true)} />
 
-            <Modal
-              animationType="slide"
-              transparent={true}
-              visible={modalVisible}
-              onRequestClose={() => setModalVisible(false)}
-            >
-              <View style={styles.modalView}>
-                <ScrollView style={styles.modalScroll}>
-                  <Text style={styles.modalTitle}>Edit Profile</Text>
-                  
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Full Name"
-                    value={editableData.fullName}
-                    onChangeText={(text) => setEditableData({...editableData, fullName: text})}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="ID Number"
-                    value={editableData.idNumber}
-                    onChangeText={(text) => setEditableData({...editableData, idNumber: text})}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Course"
-                    value={editableData.program}
-                    onChangeText={(text) => setEditableData({...editableData, program: text})}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Phone Number"
-                    value={editableData.phoneNumber}
-                    onChangeText={(text) => setEditableData({...editableData, phoneNumber: text})}
-                  />
-                  <TextInput
-                    style={styles.input}
-                    placeholder="New Password (optional)"
-                    secureTextEntry
-                    value={newPassword}
-                    onChangeText={setNewPassword}
-                  />
-                  
-                  <View style={styles.buttonContainer}>
-                    <Button title="Save Changes" onPress={handleUpdateProfile} />
-                    <Button title="Cancel" onPress={() => setModalVisible(false)} color="red" />
-                  </View>
-                </ScrollView>
-              </View>
-            </Modal>
+            <EditProfileModal 
+              modalVisible={modalVisible}
+              setModalVisible={setModalVisible}
+              editableData={editableData}
+              setEditableData={setEditableData}
+              newPassword={newPassword}
+              setNewPassword={setNewPassword}
+              handleUpdateProfile={handleUpdateProfile}
+            />
           </View>
         )}
         </View>
@@ -297,10 +263,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
+    alignSelf: 'flex-end', // Add this line
     padding: 40,
     marginTop: 10,
   },
-  
   container: {
     width: '100%',
     flex: 1,
@@ -342,13 +308,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     borderRadius: 20,
     padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+     boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
     elevation: 5,
     maxHeight: '80%', // This ensures the modal doesn't take up the full screen
 },
@@ -373,5 +333,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginTop: 20,
+    marginBottom: 10,
   },
 });

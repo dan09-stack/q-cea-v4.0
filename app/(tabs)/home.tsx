@@ -3,96 +3,59 @@ import React, { useEffect, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CustomButton } from '@/components/ui/CustomButton';
+
 export default function Home() {
-  const [selectedFaculty, setSelectedFaculty] = useState('');
-  const [selectedConcern, setSelectedConcern] = useState('');
-  const [otherConcern, setOtherConcern] = useState('');
-  const [isRequested, setIsRequested] = useState(false);
-  const [ticketNumber, setTicketNumber] = useState('');
-  const [userTicketNumber, setUserTicketNumber] = useState('');
-  const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isCheckingRequest, setIsCheckingRequest] = useState(true);
-  const [facultyModalVisible, setFacultyModalVisible] = useState(false);
-  const [concernModalVisible, setConcernModalVisible] = useState(false);
-  const [isTicketLoading, setIsTicketLoading] = useState(true);
-  const [userType, setUserType] = useState('');
-  const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '' });
-  const [allTickets, setAllTickets] = useState<string[]>([]);
-  const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
-  const [currentQueue, setCurrentQueue] = useState(0);
-  const [servingTickets, setServingTickets] = useState<string[]>([]);
-  const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '' });
+// User related states
+const [userType, setUserType] = useState('');
+const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '' });
 
-  useEffect(() => {
-    const fetchStudentData = async () => {
-      if (allTickets[currentTicketIndex]) {
-        const studentQuery = query(
-          collection(db, 'student'),
-          where('userTicketNumber', '==', parseInt(allTickets[currentTicketIndex].replace('CPE-', '')))
-        );
-        const querySnapshot = await getDocs(studentQuery);
-        if (!querySnapshot.empty) {
-          const studentData = querySnapshot.docs[0].data();
-          setTicketStudentData({
-            name: studentData.fullName,
-            concern: studentData.concern || studentData.otherConcern
-          });
-        }
+// Queue and ticket states
+const [ticketNumber, setTicketNumber] = useState('');
+const [userTicketNumber, setUserTicketNumber] = useState('');
+const [allTickets, setAllTickets] = useState<string[]>([]);
+const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
+const [currentQueue, setCurrentQueue] = useState(0);
+const [servingTickets, setServingTickets] = useState<string[]>([]);
+const [currentDisplayedTicket, setCurrentDisplayedTicket] = useState('');
+
+// Form states
+const [selectedFaculty, setSelectedFaculty] = useState('');
+const [selectedConcern, setSelectedConcern] = useState('');
+const [otherConcern, setOtherConcern] = useState('');
+
+// UI states
+const [isRequested, setIsRequested] = useState(false);
+const [isLoading, setIsLoading] = useState(false);
+const [isCheckingRequest, setIsCheckingRequest] = useState(true);
+const [isTicketLoading, setIsTicketLoading] = useState(true);
+const [facultyModalVisible, setFacultyModalVisible] = useState(false);
+const [concernModalVisible, setConcernModalVisible] = useState(false);
+
+// Data states
+const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
+const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '' });
+
+// Authentication and user data effect
+useEffect(() => {
+  const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      const userDoc = await getDoc(doc(db, 'student', user.uid));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUserType(userData.userType);
+        setCurrentStudent(prevState => ({
+          ...prevState,
+          name: userData.fullName
+        }));
       }
-    };
-    fetchStudentData();
-    
-    
-    
-  }, [currentTicketIndex, allTickets]);
-  useEffect(() => {
-    const loadSavedIndex = async () => {
-      const savedIndex = await AsyncStorage.getItem('currentTicketIndex');
-      if (savedIndex) {
-        setCurrentTicketIndex(parseInt(savedIndex));
-      }
-    };
-    loadSavedIndex();
-    console.log('User ticket:', userTicketNumber);
-    console.log('Current ticket:', loadSavedIndex);
-  }, []);
 
-  const showAlert = (message: string) => {
-    if (Platform.OS === 'web') {
-      window.alert(message);
-    } else {
-      Alert.alert('Queue Status', message);
-    }
-  };
-  
-  const handleNext = async () => {
-    if (allTickets.length === 0) {
-      showAlert('No ticket on queue');
-      return;
-    }
-  
-    const newIndex = currentTicketIndex < allTickets.length - 1 ? currentTicketIndex + 1 : currentTicketIndex;
-    
-    if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
-      showAlert('No ticket on queue');
-      return;
-    }
-    
-    setCurrentTicketIndex(newIndex);
-    await AsyncStorage.setItem('currentTicketIndex', newIndex.toString());
-   
-  };
-  
-  const handleBack = async () => {
-    const newIndex = currentTicketIndex > 0 ? currentTicketIndex - 1 : allTickets.length - 1;
-    setCurrentTicketIndex(newIndex);
-    await AsyncStorage.setItem('currentTicketIndex', newIndex.toString());
-  };
+      // Query for waiting tickets
+      const ticketsQuery = query(
+        collection(db, 'student'),
+      );
 
-  useEffect(() => {
-    if (currentStudent.name) {
+      // Listen for ticket updates
       const ticketsUnsubscribe = onSnapshot(
         query(
           collection(db, 'student'),
@@ -103,175 +66,307 @@ export default function Home() {
           const tickets = snapshot.docs
             .filter(doc => doc.data().userTicketNumber)
             .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
+           
           setAllTickets(tickets);
           setCurrentQueue(tickets.length);
         }
       );
-  
-      return () => ticketsUnsubscribe();
-    }
-  }, [currentStudent.name]);
+      
+      
 
-  useEffect(() => {
-    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        const userDoc = await getDoc(doc(db, 'student', user.uid));
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserType(userData.userType);
-          setCurrentStudent(prevState => ({
-            ...prevState,
-            name: userData.fullName
-          }));
+      // Listen for user's ticket status
+      const userRef = doc(db, 'student', user.uid);
+      const userUnsubscribe = onSnapshot(userRef, (doc) => {
+        if (doc.exists()) {
+          const userData = doc.data();
+          // Only set isRequested to true if status is not cancelled and there's a ticket number
+          setIsRequested(userData.status !== 'cancelled' && userData.userTicketNumber != null);
+          setUserTicketNumber(userData.userTicketNumber);
         }
+        setIsTicketLoading(false);
+        setIsCheckingRequest(false);  
+      });
 
-        // Query for waiting tickets
-        const ticketsQuery = query(
-          collection(db, 'student'),
-        );
+      // Get faculty list
+      const facultyCollectionRef = collection(db, 'student');
+      const facultyUnsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
+        const faculty = snapshot.docs
+          .filter(doc => doc.data().userType === 'FACULTY')
+          .map(doc => ({
+            id: doc.id,
+            fullName: doc.data().fullName || '',
+            status: doc.data().status || 'OFFLINE'
+          }));
+        setFacultyList(faculty);
+      });
 
-        // Listen for ticket updates
-        const ticketsUnsubscribe = onSnapshot(
-          query(
-            collection(db, 'student'),
-            where('faculty', '==', currentStudent.name),
-            orderBy('userTicketNumber', 'asc'),
-          ), 
-          (snapshot) => {
-            const tickets = snapshot.docs
-              .filter(doc => doc.data().userTicketNumber)
-              .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
-             
-            setAllTickets(tickets);
-            setCurrentQueue(tickets.length);
-          }
-        );
-        
-        
+      // Track ticket counter
+      const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
+      const ticketUnsubscribe = onSnapshot(ticketRef, (doc) => {
+        if (doc.exists()) {
+          setTicketNumber(doc.data().ticketNum);
+        }
+      });
+      
+      return () => {
+        userUnsubscribe();
+        facultyUnsubscribe();
+        ticketUnsubscribe();
+        ticketsUnsubscribe();
+      };
+    } else {
+      setIsCheckingRequest(false);
+    }
+  });
 
-        // Listen for user's ticket status
-        const userRef = doc(db, 'student', user.uid);
-        const userUnsubscribe = onSnapshot(userRef, (doc) => {
-          if (doc.exists()) {
-            const userData = doc.data();
-              setIsRequested(true);
-              setUserTicketNumber(userData.userTicketNumber);
-           
-          }
-          setIsTicketLoading(false);
-          setIsCheckingRequest(false);  
+  return () => unsubscribeAuth();
+}, []);
+useEffect(() => {
+  const fetchStudentData = async () => {
+    if (allTickets[currentTicketIndex]) {
+      const studentQuery = query(
+        collection(db, 'student'),
+        where('userTicketNumber', '==', parseInt(allTickets[currentTicketIndex].replace('CPE-', '')))
+      );
+      const querySnapshot = await getDocs(studentQuery);
+      if (!querySnapshot.empty) {
+        const studentData = querySnapshot.docs[0].data();
+        setTicketStudentData({
+          name: studentData.fullName,
+          concern: studentData.concern || studentData.otherConcern
         });
+      }
+    }
+  };
+  fetchStudentData();
+  
+  
+  
+}, [currentTicketIndex, allTickets]);
+useEffect(() => {
+  const loadSavedIndex = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser && userType === 'FACULTY') {
+      const userDoc = await getDoc(doc(db, 'student', currentUser.uid));
+      if (userDoc.exists() && userDoc.data().currentTicketIndex !== undefined) {
+        setCurrentTicketIndex(userDoc.data().currentTicketIndex);
+      }
+    }
+  };
+  loadSavedIndex();
+}, [userType]);
+useEffect(() => {
+  if (currentStudent.name) {
+    const ticketsUnsubscribe = onSnapshot(
+      query(
+        collection(db, 'student'),
+        where('faculty', '==', currentStudent.name),
+        orderBy('userTicketNumber', 'asc'),
+      ), 
+      (snapshot) => {
+        const tickets = snapshot.docs
+          .filter(doc => doc.data().userTicketNumber)
+          .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
+        setAllTickets(tickets);
+        setCurrentQueue(tickets.length);
+      }
+    );
 
-        // Get faculty list
-        const facultyCollectionRef = collection(db, 'student');
-        const facultyUnsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
-          const faculty = snapshot.docs
-            .filter(doc => doc.data().userType === 'FACULTY')
-            .map(doc => ({
-              id: doc.id,
-              fullName: doc.data().fullName || '',
-              status: doc.data().status || 'OFFLINE'
-            }));
-          setFacultyList(faculty);
-        });
+    return () => ticketsUnsubscribe();
+  }
+}, [currentStudent.name]);
 
-        // Track ticket counter
-        const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
-        const ticketUnsubscribe = onSnapshot(ticketRef, (doc) => {
-          if (doc.exists()) {
-            setTicketNumber(doc.data().ticketNum);
-          }
-        });
-        
-        return () => {
-          userUnsubscribe();
-          facultyUnsubscribe();
-          ticketUnsubscribe();
-          ticketsUnsubscribe();
-        };
-      } else {
-        setIsCheckingRequest(false);
+// Ticket display effects
+useEffect(() => {
+  const facultyQuery = query(
+    collection(db, 'student'),
+    where('userType', '==', 'FACULTY')
+  );
+
+  const unsubscribe = onSnapshot(facultyQuery, (snapshot) => {
+    snapshot.docs.forEach(doc => {
+      if (doc.data().displayedTicket) {
+        setCurrentDisplayedTicket(doc.data().displayedTicket);
       }
     });
+  });
 
-    return () => unsubscribeAuth();
-  }, []);
+  return () => unsubscribe();
+}, []);
 
-  const handleRequest = async () => {
-    if (!selectedFaculty) {
-      Alert.alert('Error', 'Please select a faculty');
-      return;
-    }
-  
-    if (!selectedConcern && !otherConcern) {
-      Alert.alert('Error', 'Please select a concern or provide details in Other field');
-      return;
-    }
-  
-    setIsLoading(true);
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        Alert.alert('Error', 'User not authenticated');
-        return;
+// Student data effects
+useEffect(() => {
+  if (allTickets[currentTicketIndex]) {
+    const fetchStudentData = async () => {
+      const studentQuery = query(
+        collection(db, 'student'),
+        where('userTicketNumber', '==', parseInt(allTickets[currentTicketIndex].replace('CPE-', '')))
+      );
+      const querySnapshot = await getDocs(studentQuery);
+      if (!querySnapshot.empty) {
+        const studentData = querySnapshot.docs[0].data();
+        setTicketStudentData({
+          name: studentData.fullName,
+          concern: studentData.concern || studentData.otherConcern
+        });
+
+        // Save displayed ticket number as integer
+        const currentUser = auth.currentUser;
+        if (currentUser && userType === 'FACULTY') {
+          const userRef = doc(db, 'student', currentUser.uid);
+          const numberOnly = parseInt(allTickets[currentTicketIndex].replace('CPE-', ''));
+          await updateDoc(userRef, {
+            displayedTicket: numberOnly,
+          });
+        }
       }
+    };
+    fetchStudentData();
+  }
+}, [currentTicketIndex, allTickets]);
+
+// Queue control handlers
+const handleNext = async () => {
+  if (allTickets.length === 0) {
+    showAlert('No ticket on queue');
+    return;
+  }
+
+  const newIndex = currentTicketIndex < allTickets.length - 1 ? currentTicketIndex + 1 : currentTicketIndex;
   
-      const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
-      const ticketSnap = await getDoc(ticketRef);
+  if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
+    showAlert('No ticket on queue');
+    return;
+  }
+
+  const ticketToSave = allTickets[newIndex];
+  const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
+  
+  const currentUser = auth.currentUser;
+  if (currentUser && userType === 'FACULTY' && ticketToSave) {
+    const userRef = doc(db, 'student', currentUser.uid);
+    await updateDoc(userRef, {
+      displayedTicket: numberOnly,
+    });
+  }
+  
+  setCurrentTicketIndex(newIndex);
+  await updateFacultyTicketIndex(newIndex);
+};
+const handleBack = async () => {
+  const newIndex = currentTicketIndex > 0 ? currentTicketIndex - 1 : allTickets.length - 1;
+  
+  const ticketToSave = allTickets[newIndex];
+  const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
+  
+  const currentUser = auth.currentUser;
+  if (currentUser && userType === 'FACULTY' && ticketToSave) {
+    const userRef = doc(db, 'student', currentUser.uid);
+    await updateDoc(userRef, {
+      displayedTicket: numberOnly,
+    });
+  }
+
+  setCurrentTicketIndex(newIndex);
+  await updateFacultyTicketIndex(newIndex);
+};
+
+// Ticket management handlers
+const handleRequest = async () => {
+  if (!selectedFaculty) {
+    Alert.alert('Error', 'Please select a faculty');
+    return;
+  }
+
+  if (!selectedConcern && !otherConcern) {
+    Alert.alert('Error', 'Please select a concern or provide details in Other field');
+    return;
+  }
+
+  setIsLoading(true);
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      Alert.alert('Error', 'User not authenticated');
+      return;
+    }
+
+    const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
+    const ticketSnap = await getDoc(ticketRef);
+    
+    if (ticketSnap.exists()) {
+      const currentNumber = ticketSnap.data().ticketNum;
+      const newNumber = currentNumber + 1;
       
-      if (ticketSnap.exists()) {
-        const currentNumber = ticketSnap.data().ticketNum;
-        const newNumber = currentNumber + 1;
-        
-        await updateDoc(ticketRef, {
-          ticketNum: newNumber
-        });
-  
-        const userRef = doc(db, 'student', currentUser.uid);
-        await updateDoc(userRef, {
-          userTicketNumber: newNumber,
-          faculty: selectedFaculty,
-          concern: selectedConcern,
-          otherConcern: otherConcern,
-          requestDate: new Date(),
-          status: 'waiting'
-        });
-        
-        setTicketNumber(newNumber);
-        setIsRequested(true);
-      }
-    } catch (error) {
-      console.log('Error updating ticket number:', error);
-      Alert.alert('Error', 'Failed to create ticket request');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      await updateDoc(ticketRef, {
+        ticketNum: newNumber
+      });
 
-  const handleCancel = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userRef = doc(db, 'student', currentUser.uid);
-        await updateDoc(userRef, {
-          status: 'cancelled',
-          userTicketNumber: null
-        });
-      }
-      setIsRequested(false);
-    } catch (error) {
-      console.error('Error cancelling ticket:', error);
-      Alert.alert('Error', 'Failed to cancel ticket');
+      const userRef = doc(db, 'student', currentUser.uid);
+      await updateDoc(userRef, {
+        userTicketNumber: newNumber,
+        faculty: selectedFaculty,
+        concern: selectedConcern,
+        otherConcern: otherConcern,
+        requestDate: new Date(),
+        status: 'waiting'
+      });
+      
+      setTicketNumber(newNumber);
+      setIsRequested(true);
     }
-  };
+  } catch (error) {
+    console.log('Error updating ticket number:', error);
+    Alert.alert('Error', 'Failed to create ticket request');
+  } finally {
+    setIsLoading(false);
+  }
+};
+const handleCancel = async () => {
+  try {
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      const userRef = doc(db, 'student', currentUser.uid);
+      await updateDoc(userRef, {
+        status: 'cancelled',
+        userTicketNumber: null
+      });
+    }
+    setIsRequested(false);
+  } catch (error) {
+    console.error('Error cancelling ticket:', error);
+    Alert.alert('Error', 'Failed to cancel ticket');
+  }
+};
 
-  return (
-    <ImageBackground
-      source={require('../../assets/images/green.png')}
-      style={styles.background}
-    >
-      {userType === 'FACULTY' ? (
-        <View style={styles.container}>
+// Helper functions
+const saveDisplayedTicket = async () => {
+    const currentUser = auth.currentUser;
+    if (currentUser && userType === 'FACULTY' && allTickets[currentTicketIndex]) {
+      const userRef = doc(db, 'student', currentUser.uid);
+      await updateDoc(userRef, {
+        displayedTicket: allTickets[currentTicketIndex],
+      });
+    }
+};
+const updateFacultyTicketIndex = async (newIndex: number) => {
+  const currentUser = auth.currentUser;
+  if (currentUser && userType === 'FACULTY') {
+    const userRef = doc(db, 'student', currentUser.uid);
+    await updateDoc(userRef, {
+      currentTicketIndex: newIndex
+    });
+  }
+};
+const showAlert = (message: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(message);
+  } else {
+    Alert.alert('Queue Status', message);
+  }
+};
+const FacultyView = () => (
+  <View style={styles.container}>
           <View style={styles.ticketBox}>
             <Text style={styles.queueText}>
               <Text style={styles.boldText}>Student in line:</Text> 10
@@ -301,16 +396,14 @@ export default function Home() {
             <Text style={styles.details}>{allTickets.length === 0 ? 'No concern to display' : ticketStudentData.concern}</Text>
 
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.button} onPress={handleBack}>
-                <Text style={styles.buttonText}>BACK</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={handleNext}>
-                <Text style={styles.buttonText}>NEXT</Text>
-              </TouchableOpacity>
+              <CustomButton title="BACK" onPress={handleBack} color="white" />
+              <CustomButton title="NEXT" onPress={handleNext}  />
             </View>
           </View>
-        </View>) : (
-        <View style={styles.container}>
+        </View>
+);
+const StudentView = () => (
+  <View style={styles.container}>
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
           ) : (
@@ -324,15 +417,15 @@ export default function Home() {
                   <View style={styles.ticketInfoContainer}>
                     <View>
                       <Text style={styles.ticketLabel}>NEXT SERVING</Text>
-                      <Text style={styles.ticketInfo}>ECE-0009</Text>
+                      <Text style={styles.ticketInfo}>{userTicketNumber}</Text>
                     </View>
                     <View>
                       <Text style={styles.ticketLabel}>NOW SERVING</Text>
-                      <Text style={styles.ticketInfo}>ARC-0008</Text>
+                      <Text style={styles.ticketInfo}>{currentDisplayedTicket || 'No ticket displayed'}</Text>
                     </View>
                   </View>
                   <Text style={styles.waitText}>
-                    {userTicketNumber === allTickets[1]
+                    {userTicketNumber === currentDisplayedTicket
                       ? "YOUR TURN"
                       : "PLEASE WAIT"
                     }
@@ -340,7 +433,7 @@ export default function Home() {
                   
                 </View>
                 <View style={styles.buttonContainer}>
-                  <Button title="Cancel" onPress={handleCancel} color="#004000" />
+                  <CustomButton title="CANCEL" onPress={handleCancel} color="white" />
                 </View>
               </View>
             ) : (
@@ -366,20 +459,15 @@ export default function Home() {
                 <TextInput
                   style={styles.input}
                   placeholder="Other concern:"
-                  placeholderTextColor="#cccccc"
+                  placeholderTextColor="#ccccc"
                   value={otherConcern}
                   onChangeText={(text) => setOtherConcern(text)}
                 />
                 <View style={styles.buttonContainer}>
                   {isLoading ? (
-                    <ActivityIndicator size="small" color="#004000" />
+                    <ActivityIndicator size="large" color="#004000" />
                   ) : (
-                    <Button 
-                      title="Request" 
-                      onPress={handleRequest} 
-                      color="#004000"
-                      disabled={isLoading}
-                    />
+                    <CustomButton title="REQUEST" onPress={handleRequest}  />
                   )}
                 </View>
 
@@ -451,8 +539,11 @@ export default function Home() {
             )
           )}
         </View>
-      )}
-    </ImageBackground>
+);
+  return (
+  <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
+    {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
+  </ImageBackground>
   );
 }
 
