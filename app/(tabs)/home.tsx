@@ -4,7 +4,7 @@ import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
-
+import { setDoc } from 'firebase/firestore';
 export default function Home() {
 // User related states
 const [userType, setUserType] = useState('');
@@ -35,7 +35,28 @@ const [concernModalVisible, setConcernModalVisible] = useState(false);
 // Data states
 const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
 const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '' });
+useEffect(() => {
+  const storeAllTickets = async () => {
+    try {
+      const allTicketsRef = doc(db, 'allTicketNumber', 'tickets');
+      await updateDoc(allTicketsRef, {
+        tickets: allTickets,
+        lastUpdated: new Date()
+      });
+    } catch (error) {
+      // If document doesn't exist, create it
+      const allTicketsRef = doc(db, 'allTicketNumber', 'tickets');
+      await setDoc(allTicketsRef, {
+        tickets: allTickets,
+        lastUpdated: new Date()
+      });
+    }
+  };
 
+  if (allTickets.length > 0) {
+    storeAllTickets();
+  }
+}, [allTickets]);
 // Authentication and user data effect
 useEffect(() => {
   const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
