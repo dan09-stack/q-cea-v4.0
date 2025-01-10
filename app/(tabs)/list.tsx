@@ -1,29 +1,24 @@
-import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native'
-import React, { useState, useEffect } from 'react'
-import { collection, onSnapshot } from 'firebase/firestore' // Update import
+import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore'; // Update import
 import { db } from '@/firebaseConfig';
-
-
+import * as SMS from 'expo-sms';
 
 interface FacultyItem {
+  id: string;
   name: string;
   status: 'ONLINE' | 'OFFLINE';
 }
 
 export default function List() {
-
   const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-
-  interface FacultyItem {
-    id: string;
-    name: string;
-    status: 'ONLINE' | 'OFFLINE';
-  }
+  const [registeredNumber, setRegisteredNumber] = useState<string | null>(null);
 
   const filteredFacultyData = facultyData.filter(faculty =>
     faculty.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
   const renderFaculty = ({ item }: { item: FacultyItem }) => (
     <View style={styles.row}>
       <Text style={styles.name}>{item.name}</Text>
@@ -37,52 +32,87 @@ export default function List() {
       </Text>
     </View>
   );
+
   useEffect(() => {
+    // Fetch faculty data
     const facultyCollectionRef = collection(db, 'faculty');
     const unsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
       const faculty: FacultyItem[] = snapshot.docs.map(doc => ({
         id: doc.id,
         name: doc.data().fullName || '',
-        status: doc.data().status || 'OFFLINE'
+        status: doc.data().status || 'OFFLINE',
       }))
       .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
       
       setFacultyData(faculty);
     });
-  
+
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    // Fetch registered phone number
+    const fetchRegisteredNumber = async () => {
+      const docRef = doc(db, 'settings', 'registeredNumber'); // Replace 'settings' and 'registeredNumber' with your collection and document IDs
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setRegisteredNumber(docSnap.data()?.phoneNumber || null);
+      } else {
+        console.error('No such document!');
+      }
+    };
+
+    fetchRegisteredNumber();
+  }, []);
+
+  const sendTextMessage = async () => {
+    if (registeredNumber) {
+      const isAvailable = await SMS.isAvailableAsync();
+      if (isAvailable) {
+        await SMS.sendSMSAsync(
+          [registeredNumber],
+          'Hello, this is a test message from your app!'
+        );
+      } else {
+        console.error('SMS service is not available on this device.');
+      }
+    } else {
+      console.error('No registered phone number found.');
+    }
+  };
+
   return (
-      <ImageBackground
-        source={require('../../assets/green p2.jpg')}
-        style={styles.background}
-      >
-        <View style={styles.listContainer}>
-          <Text style={styles.title}>LIST OF FACULTY</Text>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search faculty..."
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+    <ImageBackground
+      source={require('../../assets/green p2.jpg')}
+      style={styles.background}
+    >
+      <View style={styles.listContainer}>
+        <Text style={styles.title}>LIST OF FACULTY</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search faculty..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
 
-
-          <View style={styles.header}>
-            <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
-            <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
-          </View>
-          <FlatList
-            data={filteredFacultyData}
-            keyExtractor={(item) => item.id}
-            renderItem={renderFaculty}
-            style={styles.list}
-          />
+        <View style={styles.header}>
+          <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
         </View>
-      </ImageBackground>
-    
-  )
+        <FlatList
+          data={filteredFacultyData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderFaculty}
+          style={styles.list}
+        />
+      </View>
+
+      <TouchableOpacity style={styles.button} onPress={sendTextMessage}>
+        <Text style={styles.buttonText}>Text Me</Text>
+      </TouchableOpacity>
+    </ImageBackground>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -98,13 +128,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: '5%',
-    paddingVertical: '5%',
   },
   listContainer: {
     backgroundColor: '#1f4e21',
@@ -157,21 +180,18 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  iconContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  button: {
+    backgroundColor: '#1f4e21',
+    padding: 15,
+    borderRadius: 10,
     position: 'absolute',
     bottom: 20,
-    width: '100%',
-    paddingHorizontal: 20,
+    alignSelf: 'center',
   },
-  iconImage: {
-    width: 50,
-    height: 35,
-    resizeMode: 'contain',
-  },
-  icon: {
-    marginHorizontal: 50,
-    marginVertical: 10,
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
