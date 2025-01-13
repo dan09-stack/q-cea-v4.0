@@ -1,37 +1,79 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { sendPasswordResetEmail } from 'firebase/auth'; // Adjust this for your auth setup
-import { auth } from '../../../firebaseConfig'; // Ensure your Firebase config is imported
-import { router } from 'expo-router';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../../firebaseConfig';
+import { router, useLocalSearchParams } from 'expo-router';
 import { CustomButton } from '@/components/ui/CustomButton';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 type ForgotPasswordProps = NativeStackScreenProps<any, 'ForgotPassword'>;
 
 export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
-  
-  const [email, setEmail] = useState<string>('');
+  const { loginEmail } = useLocalSearchParams();
+  const [email, setEmail] = useState<string>(loginEmail as string || '');
+  const [isLoading, setIsLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handlePasswordReset = async () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address');
+      setModalMessage('Please enter your email address');
+      setIsSuccess(false);
+      setModalVisible(true);
       return;
     }
 
+    setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, email);
-      Alert.alert(
-        'Success',
-        'Password reset email sent. Please check your inbox.',
-        [{ text: 'OK', onPress: () =>  router.back()}]
-      );
+      setModalMessage('Password reset email sent! Please check your inbox.');
+      setIsSuccess(true);
+      setModalVisible(true);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Something went wrong.');
+      let errorMsg = 'Failed to send reset email. Please try again.';
+      if (error.code === 'auth/user-not-found') {
+        errorMsg = 'No account found with this email.';
+      }
+      setModalMessage(errorMsg);
+      setIsSuccess(false);
+      setModalVisible(true);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    if (isSuccess) {
+      router.replace('/student/login');
     }
   };
 
   return (
     <View style={styles.container}>
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+        >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={[styles.modalText, isSuccess ? styles.successText : styles.errorText]}>
+              {modalMessage}
+            </Text>
+            <TouchableOpacity 
+              style={styles.modalButton} 
+              onPress={handleModalClose}
+              >
+              <Text style={styles.modalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       <Text style={styles.heading}>Reset Password</Text>
       <Text style={styles.instructions}>
         Enter your email address below to receive a password reset link.
@@ -43,9 +85,14 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-      />
-      <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
-      <TouchableOpacity onPress={() => router.back()} style={styles.backLink}>
+        editable={!isLoading}
+        />
+      {isLoading ? (
+        <ActivityIndicator size="large" color="#2c6b2f" />
+      ) : (
+        <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
+      )}
+      <TouchableOpacity onPress={() => router.replace('/student/login')} style={styles.backLink}>
         <Text style={styles.backLinkText}>Back to Login</Text>
       </TouchableOpacity>
     </View>
@@ -58,7 +105,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
+    marginHorizontal: 'auto'
+},
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -79,23 +130,46 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     borderRadius: 5,
   },
-  button: {
-    backgroundColor: '#2c6b2f',
-    width: '100%',
-    padding: 12,
-    alignItems: 'center',
-    borderRadius: 5,
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
   backLink: {
     marginTop: 15,
   },
   backLinkText: {
     fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    maxWidth: 300,
+    alignItems: 'center',
+    elevation: 5,
+  },
+  modalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  successText: {
+    color: '#2c6b2f',
+  },
+  errorText: {
+    color: '#ff0000',
+  },
+  modalButton: {
+    backgroundColor: '#2c6b2f',
+    padding: 10,
+    borderRadius: 5,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
   },
 });

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 export default function TabsLayout() {
   return (
@@ -12,13 +11,15 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: '#fff', // Active tab color (green)
-        tabBarInactiveTintColor: '#666', // Optional: color for inactive tabs
+        tabBarInactiveTintColor: '#0009', // Optional: color for inactive tabs
         tabBarStyle: {
-          backgroundColor: 'transparent',
+          backgroundColor: Platform.OS === 'web' ? '' : 'transparent',
           elevation: 0,
           borderTopWidth: 0,
           position: 'absolute',
-          bottom: 0
+          bottom: 0,
+          paddingLeft: Platform.OS === 'web' ? '20%' : 0,
+          paddingRight: Platform.OS === 'web' ? '20%' : 0,
         },
         tabBarVisibilityAnimationConfig: {
           show: {
@@ -36,7 +37,7 @@ export default function TabsLayout() {
           options={{ 
             title: "Profile",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
+              <Ionicons name="person" size={Platform.OS === 'web' ? 32 : 24}  color={color} />
             )
           }} 
         />
@@ -45,7 +46,7 @@ export default function TabsLayout() {
           options={{ 
             title: "Home",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
+              <Ionicons name="home" size={Platform.OS === 'web' ? 32 : 24}  color={color} />
             )
           }} 
         />
@@ -54,7 +55,7 @@ export default function TabsLayout() {
           options={{ 
             title: "List",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="list" size={size} color={color} />
+              <Ionicons name="list" size={Platform.OS === 'web' ? 32 : 24}  color={color} />
             )
           }} 
         />

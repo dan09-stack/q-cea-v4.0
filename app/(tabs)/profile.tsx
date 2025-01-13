@@ -268,7 +268,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   container: {
+    
     width: '100%',
+    maxWidth: 800,
     flex: 1,
     alignItems: 'center',
     padding: 20,

@@ -6,18 +6,24 @@ import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { setDoc } from 'firebase/firestore';
 export default function Home() {
+  
+  // Add this state at the top with other states
+const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
+const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
 // User related states
 const [userType, setUserType] = useState('');
-const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '' });
+const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '', faculty: '' });
 
 // Queue and ticket states
 const [ticketNumber, setTicketNumber] = useState('');
 const [userTicketNumber, setUserTicketNumber] = useState('');
+const [userProgram, setUserProgram] = useState('');
 const [allTickets, setAllTickets] = useState<string[]>([]);
 const [currentTicketIndex, setCurrentTicketIndex] = useState(0);
 const [currentQueue, setCurrentQueue] = useState(0);
 const [servingTickets, setServingTickets] = useState<string[]>([]);
 const [currentDisplayedTicket, setCurrentDisplayedTicket] = useState('');
+const [currentDisplayedProgram, setCurrentDisplayedProgram] = useState('');
 
 // Form states
 const [selectedFaculty, setSelectedFaculty] = useState('');
@@ -35,6 +41,53 @@ const [concernModalVisible, setConcernModalVisible] = useState(false);
 // Data states
 const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
 const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '' });
+
+
+// Add this effect to track next ticket
+useEffect(() => {
+  const facultyQuery = query(
+    collection(db, 'student'),
+    where('faculty', '==', currentStudent.faculty),
+    where('userTicketNumber', '>', currentDisplayedTicket),
+    orderBy('userTicketNumber', 'asc'),
+    limit(1)
+  );
+
+  const unsubscribe = onSnapshot(facultyQuery, (snapshot) => {
+    if (!snapshot.empty) {
+      const nextTicket = snapshot.docs[0].data();
+      setNextDisplayedTicket(nextTicket.userTicketNumber);
+      setNextDisplayedProgram(nextTicket.program);
+    } else {
+      setNextDisplayedTicket('');
+      setNextDisplayedProgram('');
+    }
+  });
+
+  return () => unsubscribe();
+}, [currentDisplayedTicket, currentStudent.faculty]);
+
+
+
+
+useEffect(() => {
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    const userRef = doc(db, 'student', currentUser.uid);
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const userData = doc.data();
+        setCurrentStudent(prevState => ({
+          ...prevState,
+          faculty: userData.faculty,
+        }));
+      }
+    });
+
+    return () => unsubscribe();
+  }
+}, []);
+
 useEffect(() => {
   const storeAllTickets = async () => {
     try {
@@ -67,7 +120,8 @@ useEffect(() => {
         setUserType(userData.userType);
         setCurrentStudent(prevState => ({
           ...prevState,
-          name: userData.fullName
+          name: userData.fullName,
+          faculty: userData.faculty
         }));
       }
 
@@ -103,6 +157,7 @@ useEffect(() => {
           // Only set isRequested to true if status is not cancelled and there's a ticket number
           setIsRequested(userData.status !== 'cancelled' && userData.userTicketNumber != null);
           setUserTicketNumber(userData.userTicketNumber);
+          setUserProgram(userData.program);
         }
         setIsTicketLoading(false);
         setIsCheckingRequest(false);  
@@ -154,7 +209,7 @@ useEffect(() => {
         const studentData = querySnapshot.docs[0].data();
         setTicketStudentData({
           name: studentData.fullName,
-          concern: studentData.concern || studentData.otherConcern
+          concern: studentData.concern || studentData.otherConcern,
         });
       }
     }
@@ -201,19 +256,32 @@ useEffect(() => {
 useEffect(() => {
   const facultyQuery = query(
     collection(db, 'student'),
-    where('userType', '==', 'FACULTY')
+    where('userType', '==', 'FACULTY'),
+    where('fullName', '==', currentStudent.faculty)
   );
 
-  const unsubscribe = onSnapshot(facultyQuery, (snapshot) => {
-    snapshot.docs.forEach(doc => {
+  const unsubscribe = onSnapshot(facultyQuery, async (snapshot) => {
+    for (const doc of snapshot.docs) {
       if (doc.data().displayedTicket) {
-        setCurrentDisplayedTicket(doc.data().displayedTicket);
+        const displayedTicket = doc.data().displayedTicket;
+        setCurrentDisplayedTicket(displayedTicket);
+        
+        // Fetch student program for the displayed ticket
+        const studentQuery = query(
+          collection(db, 'student'),
+          where('userTicketNumber', '==', displayedTicket)
+        );
+        const studentSnapshot = await getDocs(studentQuery);
+        if (!studentSnapshot.empty) {
+          setCurrentDisplayedProgram(studentSnapshot.docs[0].data().program);
+        }
       }
-    });
+    }
   });
 
   return () => unsubscribe();
-}, []);
+}, [currentStudent.faculty]);
+
 
 // Student data effects
 useEffect(() => {
@@ -275,6 +343,7 @@ const handleNext = async () => {
   await updateFacultyTicketIndex(newIndex);
 };
 const handleBack = async () => {
+  if (currentTicketIndex === 0) return;
   const newIndex = currentTicketIndex > 0 ? currentTicketIndex - 1 : allTickets.length - 1;
   
   const ticketToSave = allTickets[newIndex];
@@ -390,7 +459,13 @@ const FacultyView = () => (
   <View style={styles.container}>
           <View style={styles.ticketBox}>
             <Text style={styles.queueText}>
-              <Text style={styles.boldText}>Student in line:</Text> 10
+              <Text style={styles.boldText}>Student in line:</Text> 
+              <Text style={styles.ticketInfo}>
+                {allTickets.length > 0 ? 
+                  ` ${allTickets.length - (currentTicketIndex + 1)}` 
+                  : 'No tickets in line'}
+              </Text>
+
             </Text>
             <Text style={styles.ticketNumber}>STUDENT TICKET NUMBER</Text>
             {allTickets.length === 0 ? (
@@ -417,7 +492,7 @@ const FacultyView = () => (
             <Text style={styles.details}>{allTickets.length === 0 ? 'No concern to display' : ticketStudentData.concern}</Text>
 
             <View style={styles.buttonContainer}>
-              <CustomButton title="BACK" onPress={handleBack} color="white" />
+              <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
               <CustomButton title="NEXT" onPress={handleNext}  />
             </View>
           </View>
@@ -430,21 +505,34 @@ const StudentView = () => (
           ) : (
             isRequested ? (
               <View style={styles.ticketContainer}>
-                <Text style={styles.headerText}>{ticketNumber}</Text>
-                <Text style={styles.subHeaderText}>People in front of you: 2</Text>
+                <Text style={styles.subHeaderText}>
+                  People in front of you: {userTicketNumber && currentDisplayedTicket ? 
+                    Math.max(0, Number(userTicketNumber) - Number(currentDisplayedTicket)-1 ) : 
+                    0}
+                </Text>
                 <View style={styles.ticketDetails}>
                   <Text style={styles.ticketLabel}>YOUR TICKET NUMBER</Text>
-                  <Text style={styles.ticketNumber}>{`CPE-${String(userTicketNumber).padStart(4, '0')}`}</Text>
+                  <Text style={styles.ticketNumber}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
                   <View style={styles.ticketInfoContainer}>
                     <View>
                       <Text style={styles.ticketLabel}>NEXT SERVING</Text>
-                      <Text style={styles.ticketInfo}>{userTicketNumber}</Text>
+                      <Text style={styles.ticketInfo}>
+                        {nextDisplayedTicket ? 
+                          `${nextDisplayedProgram ? `${nextDisplayedProgram}-` : ''}${String(nextDisplayedTicket).padStart(4, '0')}` 
+                          : 'No Next Ticket'}
+                      </Text>
+
                     </View>
                     <View>
                       <Text style={styles.ticketLabel}>NOW SERVING</Text>
-                      <Text style={styles.ticketInfo}>{currentDisplayedTicket || 'No ticket displayed'}</Text>
+                      <Text style={styles.ticketInfo}>
+                      {currentDisplayedTicket ? 
+                      `${currentDisplayedProgram ? `${currentDisplayedProgram}-` : ''}${String(currentDisplayedTicket).padStart(4, '0')}` 
+                      : 'No ticket displayed'}
+                      </Text>
                     </View>
                   </View>
+
                   <Text style={styles.waitText}>
                     {userTicketNumber === currentDisplayedTicket
                       ? "YOUR TURN"

@@ -147,6 +147,7 @@ const styles = StyleSheet.create({
     paddingVertical: '5%',
   },
   listContainer: {
+    maxWidth: 800,
     backgroundColor: '#1f4e21',
     borderRadius: 10,
     padding: 20,

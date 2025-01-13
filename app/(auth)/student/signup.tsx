@@ -76,7 +76,7 @@ export default function Signup(): JSX.Element {
             <Text style={styles.inputLabel}>ID Number</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter your ID number"
+              placeholder="03-XXXX-XXXXXX"
               value={idNumber}
               onChangeText={setIdNumber}
               keyboardType="numeric"

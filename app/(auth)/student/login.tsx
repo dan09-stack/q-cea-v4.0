@@ -112,7 +112,10 @@ export default function Login() {
               <Text style={styles.checkboxLabel}>Remember Password</Text>
             </TouchableOpacity>
           </View>
-          <TouchableOpacity onPress={() => router.push('/student/forgotPassword')}>
+          <TouchableOpacity onPress={() => router.push({
+            pathname: '/(auth)/student/forgotPassword',
+            params: { loginEmail: email }
+          })}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
@@ -203,17 +206,11 @@ const styles = StyleSheet.create({
     },
     
     container: {
-    
     width: '90%',
-    
-    maxWidth: 600,
-    
+    maxWidth: 500,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    
     padding: 20,
-    
     borderRadius: 12,
-    
     alignItems: 'center',
     
     marginTop: 50,

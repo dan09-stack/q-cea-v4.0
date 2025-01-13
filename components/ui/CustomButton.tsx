@@ -5,6 +5,7 @@ interface CustomButtonProps {
   title: string;
   onPress: () => void;
   color?: string;
+  disabled?: boolean;
 }
 
 export const CustomButton = ({ title, onPress, color = '#005000' }: CustomButtonProps) => {
