@@ -40,7 +40,7 @@ const [concernModalVisible, setConcernModalVisible] = useState(false);
 
 // Data states
 const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
-const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '' });
+const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '', program:'' });
 
 
 // Add this effect to track next ticket
@@ -140,7 +140,7 @@ useEffect(() => {
         (snapshot) => {
           const tickets = snapshot.docs
             .filter(doc => doc.data().userTicketNumber)
-            .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
+            .map(doc => `${String(doc.data().userTicketNumber).padStart(4, '0')}`);
            
           setAllTickets(tickets);
           setCurrentQueue(tickets.length);
@@ -210,6 +210,7 @@ useEffect(() => {
         setTicketStudentData({
           name: studentData.fullName,
           concern: studentData.concern || studentData.otherConcern,
+          program: studentData.program,
         });
       }
     }
@@ -242,7 +243,7 @@ useEffect(() => {
       (snapshot) => {
         const tickets = snapshot.docs
           .filter(doc => doc.data().userTicketNumber)
-          .map(doc => `CPE-${String(doc.data().userTicketNumber).padStart(4, '0')}`);
+          .map(doc => `${String(doc.data().userTicketNumber).padStart(4, '0')}`);
         setAllTickets(tickets);
         setCurrentQueue(tickets.length);
       }
@@ -296,7 +297,8 @@ useEffect(() => {
         const studentData = querySnapshot.docs[0].data();
         setTicketStudentData({
           name: studentData.fullName,
-          concern: studentData.concern || studentData.otherConcern
+          concern: studentData.concern || studentData.otherConcern,
+          program: studentData.program
         });
 
         // Save displayed ticket number as integer
@@ -476,7 +478,7 @@ const FacultyView = () => (
               </View>
             ) : allTickets[currentTicketIndex] ? (
               <Text style={styles.ticketCode}>
-                {allTickets[currentTicketIndex]}
+               {ticketStudentData.program}-{allTickets[currentTicketIndex]}
               </Text>
             ) : (
               <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>

@@ -65,7 +65,7 @@ export default function Login() {
       imageStyle={{ resizeMode: 'cover' }}
     >
       <View style={styles.container}>
-        <Text style={styles.heading}>Student Login</Text>
+        <Text style={styles.heading}>Login</Text>
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
           <TextInput
