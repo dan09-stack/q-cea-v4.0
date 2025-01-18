@@ -5,8 +5,8 @@
   "scripts": {
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint"
@@ -19,6 +19,7 @@
     "@expo/server": "^0.5.0",
     "@expo/vector-icons": "^14.0.2",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-firebase/app": "^21.6.1",
     "@react-native-firebase/firestore": "^21.6.1",
     "@react-native-firebase/storage": "^21.6.1",
     "@react-native-picker/picker": "^2.10.2",
@@ -30,6 +31,7 @@
     "expo-blur": "~14.0.1",
     "expo-checkbox": "~4.0.0",
     "expo-constants": "~17.0.2",
+    "expo-dev-client": "~5.0.9",
     "expo-font": "~13.0.1",
     "expo-haptics": "~14.0.0",
     "expo-image-picker": "~16.0.3",

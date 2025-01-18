@@ -18,8 +18,7 @@ export default function TabsLayout() {
           borderTopWidth: 0,
           position: 'absolute',
           bottom: 0,
-          paddingLeft: Platform.OS === 'web' ? '20%' : 0,
-          paddingRight: Platform.OS === 'web' ? '20%' : 0,
+          
         },
         tabBarVisibilityAnimationConfig: {
           show: {

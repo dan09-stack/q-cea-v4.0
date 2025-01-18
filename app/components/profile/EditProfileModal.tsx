@@ -78,7 +78,7 @@ export function EditProfileModal({
     </Modal>
   );
 }
-
+export default EditProfileModal;
 const styles = StyleSheet.create({
   modalView: {
     backgroundColor: 'white',

@@ -40,7 +40,7 @@ const [concernModalVisible, setConcernModalVisible] = useState(false);
 
 // Data states
 const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
-const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '', program:'' });
+const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '', program:'',email:'' });
 
 
 // Add this effect to track next ticket
@@ -211,6 +211,7 @@ useEffect(() => {
           name: studentData.fullName,
           concern: studentData.concern || studentData.otherConcern,
           program: studentData.program,
+          email: studentData.email
         });
       }
     }
@@ -298,7 +299,8 @@ useEffect(() => {
         setTicketStudentData({
           name: studentData.fullName,
           concern: studentData.concern || studentData.otherConcern,
-          program: studentData.program
+          program: studentData.program,
+          email: studentData.email
         });
 
         // Save displayed ticket number as integer
@@ -483,13 +485,14 @@ const FacultyView = () => (
             ) : (
               <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
                 <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
-                  Ticket Number has been cancelled by student. Please click next to view available tickets
+                  Ticket Number has been cancelled by the student. Please NEXT/BACK to view available tickets.
                 </Text>
               </View>
             )}
 
             <Text style={styles.boldText}>Student Name</Text>
             <Text style={styles.details}>{allTickets.length === 0 ? 'No student in queue' : ticketStudentData.name}</Text>
+            <Text style={styles.details}>{allTickets.length === 0 ? 'No student in queue' : ticketStudentData.email}</Text>
             <Text style={styles.boldText}>Concern</Text>
             <Text style={styles.details}>{allTickets.length === 0 ? 'No concern to display' : ticketStudentData.concern}</Text>
 
@@ -652,7 +655,7 @@ const StudentView = () => (
         </View>
 );
   return (
-  <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
+    <ImageBackground source={require('../../assets/green p2.jpg')} style={styles.background}>
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
   </ImageBackground>
   );

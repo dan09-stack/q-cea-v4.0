@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "ths",
-    "slug": "ths",
+    "name": "Qcea App",
+    "slug": "qcea-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
+    "ios": {    
       "supportsTablet": true
     },
     "android": {
@@ -41,7 +41,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "7f330fe6-85b9-46e6-8d9c-04d9abcd2991"
+        "projectId": "62279a82-aa85-412b-b41a-c397b348690d"
       }
     }
   }
