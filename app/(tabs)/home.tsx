@@ -5,15 +5,18 @@ import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, 
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { setDoc } from 'firebase/firestore';
+import NetInfo from '@react-native-community/netinfo';
+import { MaterialIcons } from '@expo/vector-icons';
+
 export default function Home() {
-  
-  // Add this state at the top with other states
+  const [isConnected, setIsConnected] = useState(true);
+
 const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
 const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
 // User related states
 const [userType, setUserType] = useState('');
-const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '', faculty: '' });
-
+const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '', faculty: null });
+const [isInitialized, setIsInitialized] = useState(false);
 // Queue and ticket states
 const [ticketNumber, setTicketNumber] = useState('');
 const [userTicketNumber, setUserTicketNumber] = useState('');
@@ -24,7 +27,7 @@ const [currentQueue, setCurrentQueue] = useState(0);
 const [servingTickets, setServingTickets] = useState<string[]>([]);
 const [currentDisplayedTicket, setCurrentDisplayedTicket] = useState('');
 const [currentDisplayedProgram, setCurrentDisplayedProgram] = useState('');
-
+const [peopleAhead, setPeopleAhead] = useState(0);
 // Form states
 const [selectedFaculty, setSelectedFaculty] = useState('');
 const [selectedConcern, setSelectedConcern] = useState('');
@@ -41,10 +44,84 @@ const [concernModalVisible, setConcernModalVisible] = useState(false);
 // Data states
 const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
 const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '', program:'' });
-
-
-// Add this effect to track next ticket
+const [connectionInfo, setConnectionInfo] = useState({
+  isConnected: true,
+  type: 'unknown',
+  speedMs: 0
+});
 useEffect(() => {
+  const checkSpeed = async () => {
+    const startTime = Date.now();
+    try {
+      const response = await fetch('https://1.1.1.1/cdn-cgi/trace', {
+        method: 'GET',
+        cache: 'no-cache'
+      });
+      
+      if (!response.ok) throw new Error('Network response was not ok');
+      
+      const endTime = Date.now();
+      return endTime - startTime;
+    } catch (error) {
+      console.log('Speed test error:', error);
+      return 0;
+    }
+  };
+
+  const runSpeedTest = async () => {
+    const speeds = [];
+    for (let i = 0; i < 3; i++) {
+      const speed = await checkSpeed();
+      if (speed > 0) speeds.push(speed);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    const averageSpeed = speeds.length > 0 
+      ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length)
+      : 0;
+
+    setConnectionInfo(prev => ({
+      ...prev,
+      speedMs: averageSpeed
+    }));
+  };
+
+  // Run speed test more frequently when disconnected
+  const intervalId = setInterval(() => {
+    NetInfo.fetch().then(state => {
+      const isConnected = state.isConnected ?? false;
+      setConnectionInfo(prev => ({
+        ...prev,
+        isConnected,
+        type: state.type
+      }));
+      
+      if (isConnected) {
+        runSpeedTest();
+      }
+    });
+  }, 2000); // Check every 2 seconds
+
+  // Initial check
+  runSpeedTest();
+
+  return () => {
+    clearInterval(intervalId);
+  };
+}, []);
+
+
+useEffect(() => {
+  const unsubscribe = NetInfo.addEventListener(state => {
+    setIsConnected(state.isConnected ?? false);
+  });
+
+  return () => unsubscribe();
+}, []);
+
+// to track next ticket
+useEffect(() => {
+  if (!currentStudent.faculty) return; // Add this guard
   const facultyQuery = query(
     collection(db, 'student'),
     where('faculty', '==', currentStudent.faculty),
@@ -65,10 +142,27 @@ useEffect(() => {
   });
 
   return () => unsubscribe();
-}, [currentDisplayedTicket, currentStudent.faculty]);
+}, [currentDisplayedTicket, currentStudent?.faculty]);
 
 
+//  to track queue position
+useEffect(() => {
+  if (!userTicketNumber || !currentDisplayedTicket || !currentStudent.faculty) return;
 
+  const queueQuery = query(
+    collection(db, 'student'),
+    where('faculty', '==', currentStudent.faculty),
+    where('userTicketNumber', '>', Number(currentDisplayedTicket)),
+    where('userTicketNumber', '<', Number(userTicketNumber)),
+    where('status', '==', 'waiting')
+  );
+
+  const unsubscribe = onSnapshot(queueQuery, (snapshot) => {
+    setPeopleAhead(snapshot.size);
+  });
+
+  return () => unsubscribe();
+}, [userTicketNumber, currentDisplayedTicket, currentStudent.faculty]);
 
 useEffect(() => {
   const currentUser = auth.currentUser;
@@ -120,8 +214,8 @@ useEffect(() => {
         setUserType(userData.userType);
         setCurrentStudent(prevState => ({
           ...prevState,
-          name: userData.fullName,
-          faculty: userData.faculty
+          name: userData.fullName || '',
+            faculty: userData.faculty || null
         }));
       }
 
@@ -315,6 +409,33 @@ useEffect(() => {
     fetchStudentData();
   }
 }, [currentTicketIndex, allTickets]);
+const ConnectionStatus = () => {
+  const getIconName = () => {
+    if (!connectionInfo.isConnected || connectionInfo.speedMs === 0) return 'wifi-off';
+    return connectionInfo.speedMs < 500 ? 'wifi' : 'wifi-2-bar';
+  };
+
+  const getIconColor = () => {
+    if (!connectionInfo.isConnected || connectionInfo.speedMs === 0) return '#721c24';
+    return connectionInfo.speedMs < 500 ? '#155724' : '#856404';
+  };
+
+  return (
+    <View style={styles.connectionIndicator}>
+      <MaterialIcons 
+        name={getIconName()} 
+        size={24} 
+        color={getIconColor()} 
+      />
+      <Text style={[
+        styles.speedText,
+        { color: connectionInfo.speedMs === 0 ? '#721c24' : '#333' }
+      ]}>
+        {connectionInfo.speedMs}ms
+      </Text>
+    </View>
+  );
+};
 
 // Queue control handlers
 const handleNext = async () => {
@@ -508,9 +629,7 @@ const StudentView = () => (
             isRequested ? (
               <View style={styles.ticketContainer}>
                 <Text style={styles.subHeaderText}>
-                  People in front of you: {userTicketNumber && currentDisplayedTicket ? 
-                    Math.max(0, Number(userTicketNumber) - Number(currentDisplayedTicket)-1 ) : 
-                    0}
+                People in front of you: {peopleAhead}
                 </Text>
                 <View style={styles.ticketDetails}>
                   <Text style={styles.ticketLabel}>YOUR TICKET NUMBER</Text>
@@ -653,6 +772,7 @@ const StudentView = () => (
 );
   return (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
+    <ConnectionStatus />
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
   </ImageBackground>
   );

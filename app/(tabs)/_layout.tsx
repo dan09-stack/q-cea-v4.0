@@ -6,18 +6,18 @@ import { Platform, View } from 'react-native';
 export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
-      
       <Tabs screenOptions={{ 
         headerShown: false,
+        tabBarShowLabel: false, // This line hides the tab labels
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: '#fff', // Active tab color (green)
-        tabBarInactiveTintColor: '#0009', // Optional: color for inactive tabs
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#0009',
         tabBarStyle: {
           backgroundColor: Platform.OS === 'web' ? '' : 'transparent',
           elevation: 0,
           borderTopWidth: 0,
           position: 'absolute',
-          bottom: 0,
+          bottom: 10,
           paddingLeft: Platform.OS === 'web' ? '20%' : 0,
           paddingRight: Platform.OS === 'web' ? '20%' : 0,
         },

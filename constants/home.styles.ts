@@ -1,6 +1,24 @@
 import { StyleSheet } from 'react-native';
 
 export const homeStyles = StyleSheet.create({
+  speedText: {
+    fontSize: 12,
+    marginLeft: 4,
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  connectionIndicator: {
+    alignItems: 'center',
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+   boxShadow: '0 2px 3.84px rgba(0, 0, 0, 0.25)',
+    elevation: 5,
+    zIndex: 1000,
+  },
     disabledButton: {
         opacity: 0.5,
         backgroundColor: '#808080'
