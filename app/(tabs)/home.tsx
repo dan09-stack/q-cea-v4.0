@@ -15,7 +15,15 @@ const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
 const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
 // User related states
 const [userType, setUserType] = useState('');
-const [currentStudent, setCurrentStudent] = useState({ name: '', concern: '', faculty: null });
+const [currentStudent, setCurrentStudent] = useState<{ 
+  name: string; 
+  concern: string; 
+  faculty: string | null;  // Allow both string and null
+}>({ 
+  name: '', 
+  concern: '', 
+  faculty: null 
+});
 const [isInitialized, setIsInitialized] = useState(false);
 // Queue and ticket states
 const [ticketNumber, setTicketNumber] = useState('');
@@ -49,75 +57,8 @@ const [connectionInfo, setConnectionInfo] = useState({
   type: 'unknown',
   speedMs: 0
 });
-useEffect(() => {
-  const checkSpeed = async () => {
-    const startTime = Date.now();
-    try {
-      const response = await fetch('https://1.1.1.1/cdn-cgi/trace', {
-        method: 'GET',
-        cache: 'no-cache'
-      });
-      
-      if (!response.ok) throw new Error('Network response was not ok');
-      
-      const endTime = Date.now();
-      return endTime - startTime;
-    } catch (error) {
-      console.log('Speed test error:', error);
-      return 0;
-    }
-  };
 
-  const runSpeedTest = async () => {
-    const speeds = [];
-    for (let i = 0; i < 3; i++) {
-      const speed = await checkSpeed();
-      if (speed > 0) speeds.push(speed);
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    const averageSpeed = speeds.length > 0 
-      ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length)
-      : 0;
-
-    setConnectionInfo(prev => ({
-      ...prev,
-      speedMs: averageSpeed
-    }));
-  };
-
-  // Run speed test more frequently when disconnected
-  const intervalId = setInterval(() => {
-    NetInfo.fetch().then(state => {
-      const isConnected = state.isConnected ?? false;
-      setConnectionInfo(prev => ({
-        ...prev,
-        isConnected,
-        type: state.type
-      }));
-      
-      if (isConnected) {
-        runSpeedTest();
-      }
-    });
-  }, 2000); // Check every 2 seconds
-
-  // Initial check
-  runSpeedTest();
-
-  return () => {
-    clearInterval(intervalId);
-  };
-}, []);
-
-
-useEffect(() => {
-  const unsubscribe = NetInfo.addEventListener(state => {
-    setIsConnected(state.isConnected ?? false);
-  });
-
-  return () => unsubscribe();
-}, []);
+const [isInitialLoad, setIsInitialLoad] = useState(true);
 
 // to track next ticket
 useEffect(() => {
@@ -147,7 +88,6 @@ useEffect(() => {
 
 //  to track queue position
 useEffect(() => {
-  if (!userTicketNumber || !currentDisplayedTicket || !currentStudent.faculty) return;
 
   const queueQuery = query(
     collection(db, 'student'),
@@ -165,21 +105,23 @@ useEffect(() => {
 }, [userTicketNumber, currentDisplayedTicket, currentStudent.faculty]);
 
 useEffect(() => {
+  if (!currentStudent?.name) return;
   const currentUser = auth.currentUser;
-  if (currentUser) {
-    const userRef = doc(db, 'student', currentUser.uid);
-    const unsubscribe = onSnapshot(userRef, (doc) => {
-      if (doc.exists()) {
-        const userData = doc.data();
-        setCurrentStudent(prevState => ({
-          ...prevState,
-          faculty: userData.faculty,
-        }));
-      }
-    });
+  if (!currentUser) return;
 
-    return () => unsubscribe();
-  }
+  const userRef = doc(db, 'student', currentUser.uid);
+  const unsubscribe = onSnapshot(userRef, (doc) => {
+    if (doc.exists()) {
+      const userData = doc.data();
+      setCurrentStudent(prevState => ({
+        ...prevState,
+        faculty: userData.faculty
+      }));
+      setIsInitialLoad(false);
+    }
+  });
+
+  return () => unsubscribe();
 }, []);
 
 useEffect(() => {
@@ -515,6 +457,7 @@ const handleRequest = async () => {
         ticketNum: newNumber
       });
 
+      // Update user document
       const userRef = doc(db, 'student', currentUser.uid);
       await updateDoc(userRef, {
         userTicketNumber: newNumber,
@@ -525,8 +468,13 @@ const handleRequest = async () => {
         status: 'waiting'
       });
       
+      // Force refresh the display by triggering state updates
       setTicketNumber(newNumber);
       setIsRequested(true);
+      setCurrentStudent(prev => ({
+        ...prev, 
+        faculty: selectedFaculty || null  // Ensure null fallback
+      }));
     }
   } catch (error) {
     console.log('Error updating ticket number:', error);
@@ -772,7 +720,7 @@ const StudentView = () => (
 );
   return (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
-    <ConnectionStatus />
+ 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
   </ImageBackground>
   );
