@@ -13,8 +13,8 @@ export default function List() {
     id: string;
     name: string;
     status: 'ONLINE' | 'OFFLINE';
+    numOnQueue: number;
   }
-
   const handleSearch = () => {
     setActiveSearch(true);
   };
@@ -40,6 +40,7 @@ export default function List() {
       >
         {item.status}
       </Text>
+      <Text style={styles.studentCount}>{item.numOnQueue}</Text>
     </View>
   );
 
@@ -51,7 +52,8 @@ export default function List() {
           id: doc.id,
           name: doc.data().fullName || '',
           status: doc.data().status || 'OFFLINE',
-          userType: doc.data().userType || ''
+          userType: doc.data().userType || '',
+          numOnQueue: doc.data().numOnQueue|| 0
         }))
         .filter(user => user.userType === 'FACULTY')
         .sort((a, b) => a.name.localeCompare(b.name));
@@ -61,6 +63,7 @@ export default function List() {
   
     return () => unsubscribe();
   }, []);
+  
 
   return (
     <ImageBackground
@@ -91,6 +94,7 @@ export default function List() {
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>STUDENTS</Text>
         </View>
         <FlatList
           data={filteredFacultyData}
@@ -105,6 +109,12 @@ export default function List() {
 }
 
 const styles = StyleSheet.create({
+  studentCount: {
+    flex: 1,
+    fontSize: 16,
+    color: 'black',
+    textAlign: 'center',
+  },
   noResultsContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -112,11 +122,12 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   noResultsText: {
-    color: 'white',
+    color: 'black',
     fontSize: 16,
     textAlign: 'center',
   },
   searchContainer: {
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
@@ -148,7 +159,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     maxWidth: 800,
-    backgroundColor: '#1f4e21',
+    backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     marginHorizontal: 20,
@@ -158,7 +169,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   title: {
-    color: 'white',
+    color: 'black',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
@@ -167,12 +178,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: 'white',
+    borderBottomColor: 'black',
     paddingBottom: 5,
     marginBottom: 10,
   },
   headerText: {
-    color: 'white',
+    color: 'black',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -186,7 +197,7 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
     fontSize: 16,
-    color: 'white',
+    color: 'black',
     textAlign: 'center',
   },
   status: {

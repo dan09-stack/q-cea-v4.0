@@ -1,7 +1,7 @@
 import { View, Text, TextInput, StyleSheet, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable, Platform } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
-import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { setDoc } from 'firebase/firestore';
@@ -9,7 +9,6 @@ import NetInfo from '@react-native-community/netinfo';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function Home() {
-  const [isConnected, setIsConnected] = useState(true);
 
 const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
 const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
@@ -18,7 +17,7 @@ const [userType, setUserType] = useState('');
 const [currentStudent, setCurrentStudent] = useState<{ 
   name: string; 
   concern: string; 
-  faculty: string | null;  // Allow both string and null
+  faculty: string | null; 
 }>({ 
   name: '', 
   concern: '', 
@@ -52,14 +51,43 @@ const [concernModalVisible, setConcernModalVisible] = useState(false);
 // Data states
 const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
 const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '', program:'' });
-const [connectionInfo, setConnectionInfo] = useState({
-  isConnected: true,
-  type: 'unknown',
-  speedMs: 0
-});
 
+const [userData, setUserData] = useState({ phoneNumber: '' });
 const [isInitialLoad, setIsInitialLoad] = useState(true);
+const handleSendSMS = async () => {
+  try {
+    const formattedPhone = userData.phoneNumber
+      .replace(/\D/g, '')
+      .replace(/^0+/, '63');
+    
+    const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer 1308|QzHqnNuiO7xjeEzknr6f1lBKEkbhDBF08Wsrx90l'
+      },
+      body: JSON.stringify({
+        recipient: formattedPhone,
+        sender_id: 'PhilSMS',  // Changed to QCEA without hyphen
+        type: 'plain',
+        message: 'Hello from Q-CEA!'
+      })
+    });
 
+    const data = await response.json();
+    console.log('SMS Response:', data);
+
+    if (response.ok) {
+      alert('SMS sent successfully!');
+    } else {
+      alert(`Failed to send SMS: ${data.message}`);
+    }
+  } catch (error) {
+    console.error('SMS Error:', error);
+    alert('Error sending SMS');
+  }
+};
 // to track next ticket
 useEffect(() => {
   if (!currentStudent.faculty) return; // Add this guard
@@ -113,6 +141,7 @@ useEffect(() => {
   const unsubscribe = onSnapshot(userRef, (doc) => {
     if (doc.exists()) {
       const userData = doc.data();
+      
       setCurrentStudent(prevState => ({
         ...prevState,
         faculty: userData.faculty
@@ -154,6 +183,7 @@ useEffect(() => {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         setUserType(userData.userType);
+        setUserData({ phoneNumber: userData.phoneNumber || '' });
         setCurrentStudent(prevState => ({
           ...prevState,
           name: userData.fullName || '',
@@ -351,33 +381,7 @@ useEffect(() => {
     fetchStudentData();
   }
 }, [currentTicketIndex, allTickets]);
-const ConnectionStatus = () => {
-  const getIconName = () => {
-    if (!connectionInfo.isConnected || connectionInfo.speedMs === 0) return 'wifi-off';
-    return connectionInfo.speedMs < 500 ? 'wifi' : 'wifi-2-bar';
-  };
 
-  const getIconColor = () => {
-    if (!connectionInfo.isConnected || connectionInfo.speedMs === 0) return '#721c24';
-    return connectionInfo.speedMs < 500 ? '#155724' : '#856404';
-  };
-
-  return (
-    <View style={styles.connectionIndicator}>
-      <MaterialIcons 
-        name={getIconName()} 
-        size={24} 
-        color={getIconColor()} 
-      />
-      <Text style={[
-        styles.speedText,
-        { color: connectionInfo.speedMs === 0 ? '#721c24' : '#333' }
-      ]}>
-        {connectionInfo.speedMs}ms
-      </Text>
-    </View>
-  );
-};
 
 // Queue control handlers
 const handleNext = async () => {
@@ -394,6 +398,10 @@ const handleNext = async () => {
   }
 
   const ticketToSave = allTickets[newIndex];
+  if (!ticketToSave) {
+    showAlert('No ticket on queue');
+    return ;
+  }
   const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
   
   const currentUser = auth.currentUser;
@@ -412,7 +420,7 @@ const handleBack = async () => {
   const newIndex = currentTicketIndex > 0 ? currentTicketIndex - 1 : allTickets.length - 1;
   
   const ticketToSave = allTickets[newIndex];
-  const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
+  const numberOnly = ticketToSave ? parseInt(ticketToSave.replace('CPE-', '')) : null;
   
   const currentUser = auth.currentUser;
   if (currentUser && userType === 'FACULTY' && ticketToSave) {
@@ -444,6 +452,19 @@ const handleRequest = async () => {
     if (!currentUser) {
       Alert.alert('Error', 'User not authenticated');
       return;
+    }
+    const facultyQuery = query(
+      collection(db, 'student'),
+      where('fullName', '==', selectedFaculty),
+      where('userType', '==', 'FACULTY')
+    );
+    
+    const facultySnapshot = await getDocs(facultyQuery);
+    if (!facultySnapshot.empty) {
+      const facultyDoc = facultySnapshot.docs[0];
+      await updateDoc(doc(db, 'student', facultyDoc.id), {
+        numOnQueue: increment(1)
+      });
     }
 
     const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
@@ -487,7 +508,29 @@ const handleCancel = async () => {
   try {
     const currentUser = auth.currentUser;
     if (currentUser) {
+      // Get the faculty name before updating user status
       const userRef = doc(db, 'student', currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const facultyName = userDoc.data()?.faculty;
+
+      // Find and update faculty's numOnQueue
+      if (facultyName) {
+        const facultyQuery = query(
+          collection(db, 'student'),
+          where('fullName', '==', facultyName),
+          where('userType', '==', 'FACULTY')
+        );
+        
+        const facultySnapshot = await getDocs(facultyQuery);
+        if (!facultySnapshot.empty) {
+          const facultyDoc = facultySnapshot.docs[0];
+          await updateDoc(doc(db, 'student', facultyDoc.id), {
+            numOnQueue: increment(-1)
+          });
+        }
+      }
+
+      // Update user status
       await updateDoc(userRef, {
         status: 'cancelled',
         userTicketNumber: null
@@ -499,6 +542,7 @@ const handleCancel = async () => {
     Alert.alert('Error', 'Failed to cancel ticket');
   }
 };
+
 
 // Helper functions
 const saveDisplayedTicket = async () => {
@@ -532,9 +576,9 @@ const FacultyView = () => (
             <Text style={styles.queueText}>
               <Text style={styles.boldText}>Student in line:</Text> 
               <Text style={styles.ticketInfo}>
-                {allTickets.length > 0 ? 
-                  ` ${allTickets.length - (currentTicketIndex + 1)}` 
-                  : 'No tickets in line'}
+              {allTickets.length > 0 ? 
+  ` ${(allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1)}` 
+  : 'No tickets in line'}
               </Text>
 
             </Text>
@@ -720,7 +764,6 @@ const StudentView = () => (
 );
   return (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
- 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
   </ImageBackground>
   );
