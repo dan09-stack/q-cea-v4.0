@@ -58,7 +58,7 @@ const handleSendSMS = async () => {
   try {
     const formattedPhone = userData.phoneNumber
       .replace(/\D/g, '')
-      .replace(/^0+/, '63');
+      .replace(/^0+/, '+63');
     
     const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
       method: 'POST',
@@ -765,6 +765,8 @@ const StudentView = () => (
 );
   return (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
+                    <CustomButton title="SEND ME MESSAGE" onPress={handleSendSMS}  />
+
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
   </ImageBackground>
   );
