@@ -1,14 +1,14 @@
 import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { collection, onSnapshot } from 'firebase/firestore'
-import { db } from '@/firebaseConfig';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore'
+import { auth, db } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function List() {
   const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [activeSearch, setActiveSearch] = useState(false);
-
+  const [userType, setUserType] = useState('');
   interface FacultyItem {
     id: string;
     name: string;
@@ -59,18 +59,20 @@ export default function List() {
         .sort((a, b) => a.name.localeCompare(b.name));
       
       setFacultyData(faculty);
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const currentUserDoc = snapshot.docs.find(doc => doc.id === currentUser.uid);
+        if (currentUserDoc) {
+          setUserType(currentUserDoc.data().userType || '');
+        }
+      }
     });
   
     return () => unsubscribe();
   }, []);
   
-
-  return (
-    <ImageBackground
-      source={require('../../assets/green p2.jpg')}
-      style={styles.background}
-    >
-      <View style={styles.listContainer}>
+  const StudentView = () => (
+    <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF FACULTY</Text>
         <View style={styles.searchContainer}>
             <TextInput
@@ -94,7 +96,7 @@ export default function List() {
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
-          <Text style={[styles.headerText, { flex: 1 }]}>STUDENTS</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>ON QUEUE</Text>
         </View>
         <FlatList
           data={filteredFacultyData}
@@ -104,11 +106,118 @@ export default function List() {
           ListEmptyComponent={NoResults}
         />
       </View>
+  )
+  const FacultyView = () => {
+    const [studentData, setStudentData] = useState<StudentItem[]>([]);
+    const [currentFacultyName, setCurrentFacultyName] = useState('');
+  
+    interface StudentItem {
+      id: string;
+      name: string;
+      faculty: string;
+      concerns: string;
+      otherConcern: string;
+      ticketNumber: number;
+      program: string;
+    }
+  
+    useEffect(() => {
+      // Get current faculty name
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userDocRef = doc(db, 'student', currentUser.uid);
+        getDoc(userDocRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setCurrentFacultyName(docSnap.data().fullName || '');
+          }
+        });
+      }
+  
+      // Listen for students with matching faculty
+      const studentCollectionRef = collection(db, 'student');
+      const unsubscribe = onSnapshot(studentCollectionRef, (snapshot) => {
+        const students: StudentItem[] = snapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            name: doc.data().fullName || '',
+            faculty: doc.data().faculty || '',
+            concerns: doc.data().concern || '',
+            otherConcern: doc.data().otherConcern|| '',
+            ticketNumber: doc.data().userTicketNumber || 0,
+            program: doc.data().program ||''
+          }))
+          .filter(student => student.faculty === currentFacultyName)
+          .sort((b,a) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
+        
+        setStudentData(students);
+      });
+  
+      return () => unsubscribe();
+    }, [currentFacultyName]);
+  
+    const renderStudent = ({ item }: { item: StudentItem }) => (
+      <View style={styles.row}>
+        <Text style={[styles.name, { flex: 0.5 }]}>
+          {/* {item.program}- */}
+          {String(item.ticketNumber).padStart(4, '0')}
+        </Text>
+        <View style={styles.verticalSeparator} />
+        <Text style={styles.name}>{item.name}</Text>
+        <View style={styles.verticalSeparator} />
+        <Text style={styles.concerns}>
+          <Text>{item.concerns}</Text>
+          <Text>{item.otherConcern ? ` , ${item.otherConcern}` : ''}</Text>
+        </Text>
+      </View>
+    );
+  
+    return (
+      <View style={styles.listContainer}>
+        <Text style={styles.title}>LIST OF STUDENT CONCERN</Text>
+        <View style={styles.header}>
+          <Text style={[styles.headerText, { flex: 0.5 }]}>TICKET</Text>
+          <View style={styles.verticalSeparator} />
+          <Text style={[styles.headerText, { flex: 1 }]}>STUDENT NAME</Text>
+          <View style={styles.verticalSeparator} />
+          <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
+        </View>
+        <FlatList
+          data={studentData}
+          keyExtractor={(item) => item.id}
+          renderItem={renderStudent}
+          style={styles.list}
+          ListEmptyComponent={() => (
+            <View style={styles.noResultsContainer}>
+              <Text style={styles.noResultsText}>No students in queue</Text>
+            </View>
+          )}
+        />
+      </View>
+    );
+  };
+  return (
+    <ImageBackground
+      source={require('../../assets/green p2.jpg')}
+      style={styles.background}
+    >
+       {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     </ImageBackground>
   )
 }
 
 const styles = StyleSheet.create({
+  verticalSeparator: {
+    width: 1,
+    height: '100%',
+    backgroundColor: '#ccc',
+  },
+  concerns: {
+    flex: 1,
+    flexDirection: 'row',
+    fontSize: 16,
+    color: 'black',
+    textAlign: 'center',
+  },
   studentCount: {
     flex: 1,
     fontSize: 16,
@@ -158,13 +267,13 @@ const styles = StyleSheet.create({
     paddingVertical: '5%',
   },
   listContainer: {
-    maxWidth: 800,
     backgroundColor: 'white',
     borderRadius: 10,
-    padding: 20,
+    padding: 10,
     marginHorizontal: 20,
     marginVertical: 20,
-    width: '90%',
+    maxWidth: 800,
+    width: '98%',
     height: '80%',
     alignSelf: 'center',
   },

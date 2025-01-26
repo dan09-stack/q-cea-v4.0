@@ -533,7 +533,8 @@ const handleCancel = async () => {
       // Update user status
       await updateDoc(userRef, {
         status: 'cancelled',
-        userTicketNumber: null
+        userTicketNumber: null,
+        faculty: null,
       });
     }
     setIsRequested(false);

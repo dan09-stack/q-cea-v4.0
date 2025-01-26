@@ -263,17 +263,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    alignSelf: 'flex-end', // Add this line
+    alignSelf: 'flex-end', 
     padding: 40,
     marginTop: 10,
   },
   container: {
-    
     width: '100%',
     maxWidth: 800,
     flex: 1,
     alignItems: 'center',
-    padding: 20,
+    padding: 5,
   },
   contentContainer: {
     width: '100%',
@@ -285,6 +284,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   infoContainer: {
+    backgroundColor: 'white',
     width: '100%',
     marginBottom: 20,
     padding: 15,
