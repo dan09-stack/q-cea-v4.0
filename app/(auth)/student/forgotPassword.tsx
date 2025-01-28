@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ActivityIndicator, Image } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../../firebaseConfig';
@@ -52,68 +52,76 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
   };
 
   return (
-    <View style={styles.container}>
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+      <View style={styles.container}>
+        <Image source={require('../../../assets/password.png')} style={styles.reset} />
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
         >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={[styles.modalText, isSuccess ? styles.successText : styles.errorText]}>
-              {modalMessage}
-            </Text>
-            <TouchableOpacity 
-              style={styles.modalButton} 
-              onPress={handleModalClose}
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={[styles.modalText, isSuccess ? styles.successText : styles.errorText]}>
+                {modalMessage}
+              </Text>
+              <TouchableOpacity 
+                style={styles.modalButton} 
+                onPress={handleModalClose}
               >
-              <Text style={styles.modalButtonText}>OK</Text>
-            </TouchableOpacity>
+                <Text style={styles.modalButtonText}>OK</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
 
-      <Text style={styles.heading}>Reset Password</Text>
-      <Text style={styles.instructions}>
-        Enter your email address below to receive a password reset link.
-      </Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        editable={!isLoading}
+        <Text style={styles.heading}>RESET PASSWORD</Text>
+        <Text style={styles.instructions}>
+          Enter your email address below to receive a password reset link.
+        </Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          editable={!isLoading}
         />
-      {isLoading ? (
-        <ActivityIndicator size="large" color="#2c6b2f" />
-      ) : (
-        <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
-      )}
-      <TouchableOpacity onPress={() => router.replace('/student/login')} style={styles.backLink}>
-        <Text style={styles.backLinkText}>Back to Login</Text>
-      </TouchableOpacity>
-    </View>
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#2c6b2f" />
+        ) : (
+          <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
+        )}
+        <TouchableOpacity onPress={() => router.replace('/student/login')} style={styles.backLink}>
+          <Text style={styles.backLinkText}>Back to Login</Text>
+        </TouchableOpacity>
+      </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
-    maxWidth: 600,
-    alignSelf: 'center',
     width: '100%',
-    marginHorizontal: 'auto'
+    height: '100%',
+  },
+  container: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 10,
+    flex: 1,
 },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 5,
+    marginTop: 0,
   },
   instructions: {
     textAlign: 'center',
@@ -171,5 +179,13 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: 'white',
     fontSize: 16,
+  },
+  reset: {
+      width: 100,
+      height: 100,
+      top: 220,
+      position: 'absolute',
+      
+
   },
 });

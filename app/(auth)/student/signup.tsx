@@ -274,8 +274,9 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 28,
-    color: '#000',
+    color: '#000000',
     marginBottom: 30,
+    fontWeight: 'bold'
   },
   inputContainer: {
     width: '100%',
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: '#000000',
     marginBottom: 5,
     paddingLeft: 2,
   },
@@ -344,6 +345,6 @@ const styles = StyleSheet.create({
     color: '#000',
   },
   placeholderText: {
-    color: '#999',
+    color: '#000',
   },
 });

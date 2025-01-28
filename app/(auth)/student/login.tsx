@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,13 +12,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  const router = useRouter();
+
   useEffect(() => {
     loadSavedCredentials();
   }, []);
 
+  // Load saved credentials from AsyncStorage
   const loadSavedCredentials = async () => {
     try {
       const savedEmail = await AsyncStorage.getItem('savedEmail');
@@ -33,6 +35,7 @@ export default function Login() {
     }
   };
 
+  // Save credentials to AsyncStorage
   const saveCredentials = async () => {
     try {
       if (rememberPassword) {
@@ -47,6 +50,7 @@ export default function Login() {
     }
   };
 
+  // Handle login
   const handleLogin = async () => {
     setIsLoading(true);
     try {
@@ -65,7 +69,10 @@ export default function Login() {
       imageStyle={{ resizeMode: 'cover' }}
     >
       <View style={styles.container}>
+        <Image source={require('../../../assets/circle.png')} style={styles.logo} />
         <Text style={styles.heading}>Login</Text>
+        
+        {/* Email Input */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
           <TextInput
@@ -76,6 +83,8 @@ export default function Login() {
             keyboardType="email-address"
             autoCapitalize="none"
           />
+          
+          {/* Password Input */}
           <Text style={styles.label}>Password</Text>
           <View style={styles.passwordContainer}>
             <TextInput
@@ -86,32 +95,33 @@ export default function Login() {
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
-          <TouchableOpacity 
-            style={styles.eyeIcon} 
-            onPress={() => setShowPassword(!showPassword)}
-          >
-            <Ionicons 
-              name={showPassword ? "eye-outline" : "eye-off-outline"} 
-              size={24} 
-              color="#666"
-            />
-          </TouchableOpacity>
-        </View>
-        </View>
-        <View style={styles.checkboxContainer}>
-          <View style={styles.rememberPasswordContainer}>
             <TouchableOpacity 
-              style={styles.checkboxWrapper} 
-              onPress={() => setRememberPassword(!rememberPassword)}
+              style={styles.eyeIcon} 
+              onPress={() => setShowPassword(!showPassword)}
             >
-              <Checkbox
-                value={rememberPassword}
-                onValueChange={setRememberPassword}
-                color={rememberPassword ? '#2c6b2f' : undefined}
+              <Ionicons 
+                name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                size={24} 
+                color="#666"
               />
-              <Text style={styles.checkboxLabel}>Remember Password</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Remember Password and Forgot Password */}
+        <View style={styles.checkboxContainer}>
+          <TouchableOpacity 
+            style={styles.checkboxWrapper} 
+            onPress={() => setRememberPassword(!rememberPassword)}
+          >
+            <Checkbox
+              value={rememberPassword}
+              onValueChange={setRememberPassword}
+              color={rememberPassword ? '#2c6b2f' : undefined}
+            />
+            <Text style={styles.checkboxLabel}>Remember Password</Text>
+          </TouchableOpacity>
+          
           <TouchableOpacity onPress={() => router.push({
             pathname: '/(auth)/student/forgotPassword',
             params: { loginEmail: email }
@@ -120,10 +130,13 @@ export default function Login() {
           </TouchableOpacity>
         </View>
 
+        {/* Sign In Button */}
         <CustomButton
           title={isLoading ? "Loading..." : "SIGN IN"}
           onPress={handleLogin}
-          />
+        />
+
+        {/* Sign Up Link */}
         <View style={styles.signupContainer}>
           <Text>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
@@ -136,6 +149,79 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  container: {
+    width: '90%',
+    maxWidth: 500,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    padding: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 50,
+  },
+  logo: {
+    width: 170,
+    height: 170,
+    top: -85,
+    position: 'absolute',
+    borderColor: '#2c6b2f',
+    borderWidth: 1,
+    borderRadius: 100,
+  },
+  heading: {
+    fontSize: 28,
+    fontFamily: 'Roboto',
+    color: '#000000',
+    marginTop: 75,
+    marginBottom: 10,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 1,
+  },
+  label: {
+    fontSize: 16,
+    color: '#000000',
+    marginBottom: 1,
+    fontWeight: '500',
+  },
+  input: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    marginBottom: 5,
+    paddingLeft: 10,
+    borderRadius: 5,
+  },
+  passwordContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+    position: 'relative',
+  },
+  passwordInput: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    paddingLeft: 10,
+    borderRadius: 5,
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 12,
+    height: '100%',
+    justifyContent: 'center',
+  },
   checkboxContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -147,186 +233,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  rememberPasswordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   checkboxLabel: {
     marginLeft: 8,
     fontSize: 15,
     color: '#000',
   },
   forgotPasswordText: {
-    marginBottom:1,
+    marginBottom: 1,
     color: 'gray',
     fontSize: 14,
-  }
-,  
-  inputContainer: {
-    width: '100%',
-    marginBottom: 1,
   },
-  label: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 1,
-    fontWeight: '500',
+  signupContainer: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-    forgotPasswordContainer: {
-      marginBottom: 10,
-      backgroundColor: 'red',
-      height:"100%",
-    },
-
-    signupContainer: {
-      marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    },
-    backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 1,
-    },
-    backButtonText: {
-    marginLeft: 5,
-    fontSize: 16,
-    color: 'black',
-    },
-    
-    background: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-    },
-    
-    container: {
-    width: '90%',
-    maxWidth: 500,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    
-    marginTop: 50,
-    
-    },
-    
-    heading: {
-    
-    fontSize: 28,
-    
-    fontFamily: 'Roboto',
-    
-    color: '#000000',
-    
-    marginBottom: 30,
-    },
-    input: {
-    width: '100%',
-    height: 45,
-    borderColor: '#000',
-    borderWidth: 1,
-    marginBottom: 5,
-    paddingLeft: 10,
-    borderRadius: 5,
-    },
-    passwordContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 15,
-    position: 'relative',
-    },
-    passwordInput: {
-    width: '100%',
-    height: 45,
-    
-    borderColor: '#000',
-    
-    borderWidth: 1,
-    
-    paddingLeft: 10,
-    
-    borderRadius: 5,
-    
-    paddingRight: 50,
-    
-    },
-    
-    eyeIcon: {
-    
-    position: 'absolute',
-    
-    right: 12,
-    
-    height: '100%',
-    
-    justifyContent: 'center',
-    
-    },
-    
-    button: {
-    
-    backgroundColor: '#2c6b2f',
-    
-    width: '30%',
-    
-    padding: 12,
-    
-    alignItems: 'center',
-    
-    borderRadius: 5,
-    
-    marginBottom: 15,
-    
-    },
-    
-    buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    },
-    
-    linkText: {
-    
+  linkText: {
     color: '#2c6b2f',
-    
-    },
-    
-    goBackButton: {
-    
-    marginTop: 20,
-    
-    paddingVertical: 6,
-    
-    paddingHorizontal: 12,
-    
-    backgroundColor: '#2c6b2f',
-    
-    borderRadius: 5,
-    
-    },
-    
-    goBackText: {
-    
-    color: '#FFFFFF',
-    
-    fontSize: 14,
-    
     fontWeight: 'bold',
-    
-    },
-    
-    errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginBottom: 10,
-    },
-    
+  },
 });
