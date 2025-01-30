@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator, Alert } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
-import { db } from '../../../firebaseConfig';  // Assuming you've exported firestore in firebaseConfig
+import { WebView } from 'react-native-webview'; // Import WebView
+import { db } from '../../../firebaseConfig';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [recaptchaVerified, setRecaptchaVerified] = useState(false);  // State for reCAPTCHA
+  const router = useRouter();
+
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -48,26 +50,28 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
+    if (!recaptchaVerified) {
+      Alert.alert("reCAPTCHA Verification", "Please complete reCAPTCHA verification.");
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // Call your login function (assuming `handleUserLogin` authenticates the user)
       await handleUserLogin(email, password, router, saveCredentials);
 
-      // After login, fetch the user document from Firestore to check userType
       const userDoc = await db.collection('students').where("email", "==", email).get();
 
-if (!userDoc.empty) {
-  const userData = userDoc.docs[0].data(); // Assuming email is unique
-  const userType = userData?.userType;
-  if (userType === 'student') {
-    router.push('/(tabs)/profile');
-  } else if (userType === 'faculty') {
-    router.push('/(tab)/home');
-  } else {
-    alert('User type is undefined');
-  }
-}
-
+      if (!userDoc.empty) {
+        const userData = userDoc.docs[0].data(); 
+        const userType = userData?.userType;
+        if (userType === 'student') {
+          router.push('/(tabs)/profile');
+        } else if (userType === 'faculty') {
+          router.push('/(tab)/home');
+        } else {
+          alert('User type is undefined');
+        }
+      }
     } catch (error) {
       console.log('Login error:', error);
     } finally {
@@ -75,6 +79,13 @@ if (!userDoc.empty) {
     }
   };
 
+  const onRecaptchaVerify = (event: { nativeEvent: { data: string } }) => {
+    const token = event.nativeEvent.data;
+    if (token) {
+      setRecaptchaVerified(true); // Mark reCAPTCHA as verified
+    }
+  };
+  
   return (
     <ImageBackground
       source={require('../../../assets/green p2.jpg')}
@@ -118,7 +129,13 @@ if (!userDoc.empty) {
             />
           </TouchableOpacity>
         </View>
-        
+
+        <WebView
+          source={{ uri: 'https://www.google.com/recaptcha/api2/anchor?ar=1&k=6Le6d8cqAAAAALq8HDK4rXEIstXapOvMvdkajiTP&co=aHR0cHM6Ly93d3cueW91cmRvbWFpbi5jb20&hl=en&v=your_recaptcha_version&size=normal&cb=xyz' }} 
+          javaScriptEnabled={true}
+          onMessage={onRecaptchaVerify}
+        />
+
         <View style={styles.checkboxContainer}>
           <View style={{flexDirection: 'row'}}>
             <Checkbox
@@ -128,11 +145,11 @@ if (!userDoc.empty) {
             />
             <Text style={styles.checkboxLabel}>Remember Password</Text>
           </View>
-          <TouchableOpacity  style={styles.forgotPasswordContainer}
-          onPress={() => router.push('/student/forgotPassword')} 
-        >
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.forgotPasswordContainer}
+            onPress={() => router.push('/student/forgotPassword')} 
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
         </View>
         <TouchableOpacity 
           style={styles.button} 
@@ -157,6 +174,17 @@ if (!userDoc.empty) {
 }
 
 const styles = StyleSheet.create({
+  recaptchaButton: {
+    backgroundColor: '#4285F4',  // reCAPTCHA blue color
+    padding: 10,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  recaptchaText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
     forgotPasswordContainer: {
       alignSelf: 'flex-end',
       marginBottom: 10,
