@@ -124,7 +124,7 @@ details:{
     marginTop: 5,
     marginBottom: 10,
     borderRadius: 5,
-    height: 100,
+    height: 50,
     textAlignVertical: 'top', 
     },
     buttonContainer: {
