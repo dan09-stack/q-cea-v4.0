@@ -36,6 +36,7 @@ export default function Layout() {
           } else {
             router.replace('/verify');
           }
+<<<<<<< HEAD
         } else {
           setIsAuthenticated(false);
           router.replace('/student/login'); 
@@ -46,6 +47,10 @@ export default function Layout() {
       console.error('Route restoration error:', error);
     }
   };
+=======
+          // console.log('Last route:', await AsyncStorage.getItem('lastRoute'));
+          // console.log('Current auth state:', auth.currentUser);
+>>>>>>> test
 
   checkAuthAndRoute();
 }, []);
@@ -72,6 +77,7 @@ export default function Layout() {
           },
         }}
       />
+<<<<<<< HEAD
       <Stack.Screen
         name="verify"
         options={{
@@ -81,6 +87,10 @@ export default function Layout() {
         }}
       />
       <Stack.Screen name="index" />
+=======
+     
+      
+>>>>>>> test
     </Stack>
   );
 }

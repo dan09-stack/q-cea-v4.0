@@ -102,16 +102,17 @@ export const handleUserLogin = async (email, password, router, saveCredentials) 
 
 //handleSignup function
 export const handleSignup = async ({
+  userType,
   fullName,
   idNumber,
   phoneNumber,
-  selectedCourse,
+  selectedProgram,
   email,
   password,
   userType,
   router
 }) => {
-  if (!fullName || !idNumber || !phoneNumber || !selectedCourse || !email || !password) {
+  if (!fullName || !idNumber || !phoneNumber || !selectedProgram || !email || !password) {
     Alert.alert('Validation Error', 'Please fill in all fields.');
     return;
   }
@@ -124,9 +125,14 @@ export const handleSignup = async ({
       fullName,
       idNumber,
       phoneNumber,
-      course: selectedCourse,
+      program: selectedProgram,
       email,
       userType,
+<<<<<<< HEAD
+=======
+      isVerified: userType === 'FACULTY' ? false : true,
+      status: userType === 'FACULTY' ? false : true
+>>>>>>> test
     });
 
     await sendEmailVerification(user);

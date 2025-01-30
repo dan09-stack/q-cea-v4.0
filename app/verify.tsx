@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { useRouter } from 'expo-router';
+import { CustomButton } from '@/components/ui/CustomButton';
 
 export default function Verify(): JSX.Element {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function Verify(): JSX.Element {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Please check your email to verify your account.</Text>
-      <Button title="Back to Login" onPress={handleBackToLogin} />
+      <CustomButton title="Back to Login" onPress={handleBackToLogin} />
     </View>
   );
 }

@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react';
+<<<<<<< HEAD
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator, Alert } from 'react-native';
+=======
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
+>>>>>>> test
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
+<<<<<<< HEAD
 import { WebView } from 'react-native-webview'; // Import WebView
 import { db } from '../../../firebaseConfig';
+=======
+import { CustomButton } from '@/components/ui/CustomButton';
+>>>>>>> test
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,13 +22,18 @@ export default function Login() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+<<<<<<< HEAD
   const [recaptchaVerified, setRecaptchaVerified] = useState(false);  // State for reCAPTCHA
+=======
+
+>>>>>>> test
   const router = useRouter();
 
   useEffect(() => {
     loadSavedCredentials();
   }, []);
 
+  // Load saved credentials from AsyncStorage
   const loadSavedCredentials = async () => {
     try {
       const savedEmail = await AsyncStorage.getItem('savedEmail');
@@ -35,6 +48,7 @@ export default function Login() {
     }
   };
 
+  // Save credentials to AsyncStorage
   const saveCredentials = async () => {
     try {
       if (rememberPassword) {
@@ -49,6 +63,7 @@ export default function Login() {
     }
   };
 
+  // Handle login
   const handleLogin = async () => {
     if (!recaptchaVerified) {
       Alert.alert("reCAPTCHA Verification", "Please complete reCAPTCHA verification.");
@@ -88,18 +103,12 @@ export default function Login() {
   
   return (
     <ImageBackground
-      source={require('../../../assets/green p2.jpg')}
+      source={require('../../../assets/green.jpg')}
       style={styles.background}
       imageStyle={{ resizeMode: 'cover' }}
     >
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => router.push('/')}
-      >
-        <Ionicons name="arrow-back" size={24} color="black" />
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
       <View style={styles.container}>
+<<<<<<< HEAD
         <Text style={styles.heading}>Login</Text>
         <TextInput
           style={styles.input}
@@ -110,58 +119,92 @@ export default function Login() {
           autoCapitalize="none"
         />
         <View style={styles.passwordContainer}>
+=======
+        <Image source={require('../../../assets/circle.png')} style={styles.logo} />
+        <Text style={styles.heading}>Login</Text>
+        
+        {/* Email Input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Email</Text>
+>>>>>>> test
           <TextInput
-            style={styles.passwordInput}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword}
+            style={styles.input}
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
             autoCapitalize="none"
           />
-          <TouchableOpacity 
-            style={styles.eyeIcon} 
-            onPress={() => setShowPassword(!showPassword)}
-          >
-            <Ionicons 
-              name={showPassword ? "eye-outline" : "eye-off-outline"} 
-              size={24} 
-              color="#666"
+          
+          {/* Password Input */}
+          <Text style={styles.label}>Password</Text>
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
             />
-          </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                size={24} 
+                color="#666"
+              />
+            </TouchableOpacity>
+          </View>
         </View>
 
+<<<<<<< HEAD
         <WebView
           source={{ uri: 'https://www.google.com/recaptcha/api2/anchor?ar=1&k=6Le6d8cqAAAAALq8HDK4rXEIstXapOvMvdkajiTP&co=aHR0cHM6Ly93d3cueW91cmRvbWFpbi5jb20&hl=en&v=your_recaptcha_version&size=normal&cb=xyz' }} 
           javaScriptEnabled={true}
           onMessage={onRecaptchaVerify}
         />
 
+=======
+        {/* Remember Password and Forgot Password */}
+>>>>>>> test
         <View style={styles.checkboxContainer}>
-          <View style={{flexDirection: 'row'}}>
+          <TouchableOpacity 
+            style={styles.checkboxWrapper} 
+            onPress={() => setRememberPassword(!rememberPassword)}
+          >
             <Checkbox
               value={rememberPassword}
               onValueChange={setRememberPassword}
               color={rememberPassword ? '#2c6b2f' : undefined}
             />
             <Text style={styles.checkboxLabel}>Remember Password</Text>
+<<<<<<< HEAD
           </View>
           <TouchableOpacity style={styles.forgotPasswordContainer}
             onPress={() => router.push('/student/forgotPassword')} 
           >
+=======
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={() => router.push({
+            pathname: '/(auth)/student/forgotPassword',
+            params: { loginEmail: email }
+          })}>
+>>>>>>> test
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity 
-          style={styles.button} 
+
+        {/* Sign In Button */}
+        <CustomButton
+          title={isLoading ? "Loading..." : "SIGN IN"}
           onPress={handleLogin}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator size="small" color="white" />
-          ) : (
-            <Text style={styles.buttonText}>SIGN IN</Text>
-          )}
-        </TouchableOpacity>
+        />
+
+        {/* Sign Up Link */}
         <View style={styles.signupContainer}>
           <Text>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
@@ -174,6 +217,7 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   recaptchaButton: {
     backgroundColor: '#4285F4',  // reCAPTCHA blue color
     padding: 10,
@@ -219,152 +263,109 @@ const styles = StyleSheet.create({
     },
     background: {
     
+=======
+  background: {
+>>>>>>> test
     flex: 1,
-    
     justifyContent: 'center',
-    
     alignItems: 'center',
-    
     width: '100%',
-    
     height: '100%',
-    
-    },
-    
-    container: {
-    
+  },
+  container: {
     width: '90%',
-    
-    maxWidth: 600,
-    
+    maxWidth: 500,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    
     padding: 20,
-    
     borderRadius: 12,
-    
     alignItems: 'center',
-    
     marginTop: 50,
-    
-    },
-    
-    heading: {
-    
+  },
+  logo: {
+    width: 170,
+    height: 170,
+    top: -85,
+    position: 'absolute',
+    borderColor: '#2c6b2f',
+    borderWidth: 1,
+    borderRadius: 100,
+  },
+  heading: {
     fontSize: 28,
-    
     fontFamily: 'Roboto',
-    
     color: '#000000',
-    
-    marginBottom: 30,
-    },
-    input: {
+    marginTop: 75,
+    marginBottom: 10,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 1,
+  },
+  label: {
+    fontSize: 16,
+    color: '#000000',
+    marginBottom: 1,
+    fontWeight: '500',
+  },
+  input: {
     width: '100%',
     height: 45,
     borderColor: '#000',
     borderWidth: 1,
-    marginBottom: 15,
+    marginBottom: 5,
     paddingLeft: 10,
     borderRadius: 5,
-    },
-    passwordContainer: {
+  },
+  passwordContainer: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 15,
     position: 'relative',
-    },
-    passwordInput: {
+  },
+  passwordInput: {
     width: '100%',
     height: 45,
-    
     borderColor: '#000',
-    
     borderWidth: 1,
-    
     paddingLeft: 10,
-    
     borderRadius: 5,
-    
     paddingRight: 50,
-    
-    },
-    
-    eyeIcon: {
-    
+  },
+  eyeIcon: {
     position: 'absolute',
-    
     right: 12,
-    
     height: '100%',
-    
     justifyContent: 'center',
-    
-    },
-    
-    button: {
-    
-    backgroundColor: '#2c6b2f',
-    
-    width: '30%',
-    
-    padding: 12,
-    
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    
-    borderRadius: 5,
-    
+    width: '100%',
     marginBottom: 15,
-    
-    },
-    
-    buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    },
-    
-    linkText: {
-    
-    color: '#2c6b2f',
-    
-    },
-    
-    goBackButton: {
-    
-    marginTop: 20,
-    
-    paddingVertical: 6,
-    
-    paddingHorizontal: 12,
-    
-    backgroundColor: '#2c6b2f',
-    
-    borderRadius: 5,
-    
-    },
-    
-    goBackText: {
-    
-    color: '#FFFFFF',
-    
-    fontSize: 14,
-    
-    fontWeight: 'bold',
-    
-    },
-    
-    errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginBottom: 10,
-    },
+  },
+  checkboxWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkboxLabel: {
+    marginLeft: 8,
+    fontSize: 15,
+    color: '#000',
+  },
   forgotPasswordText: {
+    marginBottom: 1,
     color: 'gray',
     fontSize: 14,
-    textAlign: 'right',
-    width: '100%',
-    marginBottom: 10,
+  },
+  signupContainer: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  linkText: {
+    color: '#2c6b2f',
+    fontWeight: 'bold',
   },
 });

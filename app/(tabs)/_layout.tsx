@@ -1,27 +1,24 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
 export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
-      <LinearGradient
-        colors={['#2c6b2f', '#1a4d1c']}
-        style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-      />
       <Tabs screenOptions={{ 
         headerShown: false,
+        tabBarShowLabel: false, // This line hides the tab labels
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: '#fff', // Active tab color (green)
-        tabBarInactiveTintColor: '#666', // Optional: color for inactive tabs
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#0009',
         tabBarStyle: {
-          backgroundColor: 'transparent',
+          backgroundColor: Platform.OS === 'web' ? '' : 'transparent',
           elevation: 0,
           borderTopWidth: 0,
           position: 'absolute',
-          bottom: 0
+          bottom: 10,
+          
         },
         tabBarVisibilityAnimationConfig: {
           show: {
@@ -39,7 +36,7 @@ export default function TabsLayout() {
           options={{ 
             title: "Profile",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person" size={size} color={color} />
+              <Ionicons name="person" size={Platform.OS === 'web' ? 32 : 24}  color={color} />
             )
           }} 
         />
@@ -48,7 +45,7 @@ export default function TabsLayout() {
           options={{ 
             title: "Home",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home" size={size} color={color} />
+              <Ionicons name="home" size={Platform.OS === 'web' ? 32 : 24}  color={color} />
             )
           }} 
         />
@@ -57,7 +54,7 @@ export default function TabsLayout() {
           options={{ 
             title: "List",
             tabBarIcon: ({ color, size }) => (
-              <Ionicons name="list" size={size} color={color} />
+              <Ionicons name="list" size={Platform.OS === 'web' ? 32 : 24}  color={color} />
             )
           }} 
         />

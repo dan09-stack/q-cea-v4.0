@@ -1,28 +1,20 @@
-import { Text, View, TouchableOpacity, StyleSheet, ActivityIndicator, Image, ImageBackground } from 'react-native';
-import { useRouter } from 'expo-router';
+import { Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
 
 export default function Index() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading time
     setTimeout(() => {
       setIsLoading(false);
+      router.push('/student/login'); // Or any default route you want to redirect to
     }, 2000);
   }, []);
 
-  if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#008000" />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
-
   return (
+<<<<<<< HEAD
     <TouchableOpacity
       style={styles.fullScreenTouchable}
       onPress={() => router.push('/student/login')}
@@ -39,10 +31,17 @@ export default function Index() {
         </View>
       </ImageBackground>
     </TouchableOpacity>
+=======
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color="#008000" />
+      <Text style={styles.loadingText}>Loading...</Text>
+    </View>
+>>>>>>> test
   );
 }
 
 const styles = StyleSheet.create({
+<<<<<<< HEAD
   loadingText: {
     marginTop: 10,
     fontSize: 16,
@@ -103,10 +102,20 @@ const styles = StyleSheet.create({
     color: '#555555',
     fontFamily: 'Roboto',
   },
+=======
+>>>>>>> test
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
   },
+<<<<<<< HEAD
+=======
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#008000',
+  }
+>>>>>>> test
 });
