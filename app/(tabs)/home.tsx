@@ -572,26 +572,26 @@ const showAlert = (message: string) => {
   }
 };
 const FacultyView = () => (
-  <View style={styles.container}>
-          <View style={styles.ticketBox}>
+  <View style={[styles.container, {width: '100%', maxWidth: 500}]}>
+          <View style={[styles.ticketBox,{width: '100%'}]}>
             <Text style={styles.queueText}>
-              <Text style={styles.boldText}>Student in line:</Text> 
+              <Text style={styles.boldText}>Students in line:</Text> 
               <Text style={styles.ticketInfo}>
               {allTickets.length > 0 ? 
   ` ${(allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1)}` 
-  : 'No tickets in line'}
+  : ' No tickets in line'}
               </Text>
 
             </Text>
-            <Text style={styles.ticketNumber}>STUDENT TICKET NUMBER</Text>
+            <Text style={[styles.ticketNumber, {color:'#f44336', fontSize: 20}]}>STUDENT TICKET NUMBER</Text>
             {allTickets.length === 0 ? (
               <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
                 <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
-                  No ticket on queue
+                  No tickets in queue
                 </Text>
               </View>
             ) : allTickets[currentTicketIndex] ? (
-              <Text style={styles.ticketCode}>
+              <Text style={[styles.ticketCode, {color: '#07643d', fontSize: 30}]}>
                {ticketStudentData.program}-{allTickets[currentTicketIndex]}
               </Text>
             ) : (
@@ -602,10 +602,10 @@ const FacultyView = () => (
               </View>
             )}
 
-            <Text style={styles.boldText}>Student Name</Text>
-            <Text style={styles.details}>{allTickets.length === 0 ? 'No student in queue' : ticketStudentData.name}</Text>
-            <Text style={styles.boldText}>Concern</Text>
-            <Text style={styles.details}>{allTickets.length === 0 ? 'No concern to display' : ticketStudentData.concern}</Text>
+            <Text style={[styles.boldText, {fontSize: 18}]}>Student Name</Text>
+            <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No students in queue' : ticketStudentData.name}</Text>
+            <Text style={[styles.boldText, {fontSize: 18 , marginTop: 20}]}>Concern</Text>
+            <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No concerns to display' : ticketStudentData.concern}</Text>
 
             <View style={styles.buttonContainer}>
               <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
@@ -615,22 +615,22 @@ const FacultyView = () => (
         </View>
 );
 const StudentView = () => (
-  <View style={styles.container}>
+  <View style={[styles.container, {width: '100%' , maxWidth: 500}]}>
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
           ) : (
             isRequested ? (
-              <View style={styles.ticketContainer}>
-                <Text style={styles.subHeaderText}>
+              <View style={[styles.ticketContainer, {width: '100%'}]}>
+                <Text style={[styles.subHeaderText, {fontWeight: 'bold'}]}>
                 People in front of you: {peopleAhead}
                 </Text>
                 <View style={styles.ticketDetails}>
-                  <Text style={styles.ticketLabel}>YOUR TICKET NUMBER</Text>
-                  <Text style={styles.ticketNumber}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
+                  <Text style={[styles.ticketLabel, { color: '#f44336' , fontWeight: 'bold' , fontSize: 20}]}>YOUR TICKET NUMBER</Text>
+                  <Text style={[styles.ticketNumber, { fontSize: 25 , marginBottom: 20}]}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
                   <View style={styles.ticketInfoContainer}>
                     <View>
-                      <Text style={styles.ticketLabel}>NEXT SERVING</Text>
-                      <Text style={styles.ticketInfo}>
+                      <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NEXT SERVING</Text>
+                      <Text style={[styles.ticketInfo, {fontSize: 20}]}>
                         {nextDisplayedTicket ? 
                           `${nextDisplayedProgram ? `${nextDisplayedProgram}-` : ''}${String(nextDisplayedTicket).padStart(4, '0')}` 
                           : 'No Next Ticket'}
@@ -638,8 +638,8 @@ const StudentView = () => (
 
                     </View>
                     <View>
-                      <Text style={styles.ticketLabel}>NOW SERVING</Text>
-                      <Text style={styles.ticketInfo}>
+                      <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NOW SERVING</Text>
+                      <Text style={[styles.ticketInfo, {fontSize: 20}]}>
                       {currentDisplayedTicket ? 
                       `${currentDisplayedProgram ? `${currentDisplayedProgram}-` : ''}${String(currentDisplayedTicket).padStart(4, '0')}` 
                       : 'No ticket displayed'}
@@ -647,7 +647,7 @@ const StudentView = () => (
                     </View>
                   </View>
 
-                  <Text style={styles.waitText}>
+                  <Text style={[styles.waitText,{ marginTop: 30 , marginBottom: -10 , fontSize: 23}]}>
                     {userTicketNumber === currentDisplayedTicket
                       ? "YOUR TURN"
                       : "PLEASE WAIT"
@@ -656,11 +656,11 @@ const StudentView = () => (
                   
                 </View>
                 <View style={styles.buttonContainer}>
-                  <CustomButton title="CANCEL" onPress={handleCancel} color="white" />
+                  <CustomButton title="CANCEL" onPress={handleCancel} color="#8e0000" />
                 </View>
               </View>
             ) : (
-              <View style={styles.formGroup}>
+              <View style={[styles.formGroup, {width: '100%'}]}>
                 <TouchableOpacity 
                   style={styles.pickerButton}
                   onPress={() => setFacultyModalVisible(true)}
@@ -680,11 +680,23 @@ const StudentView = () => (
                 </TouchableOpacity>
 
                 <TextInput
-                  style={styles.input}
+                  style={{
+                  height: 100, 
+                  textAlignVertical: 'top', 
+                  padding: 10, 
+                  borderWidth: 1, 
+                  borderColor: '#005000', 
+                  fontSize: 16,
+                  borderRadius: 5, 
+                  color: '#f3f3f3',
+                  backgroundColor: '#005000'
+                  }}
                   placeholder="Other concern:"
                   placeholderTextColor="#ccccc"
                   value={otherConcern}
                   onChangeText={(text) => setOtherConcern(text)}
+                  multiline={true}
+
                 />
                 <View style={styles.buttonContainer}>
                   {isLoading ? (

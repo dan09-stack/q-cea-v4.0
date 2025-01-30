@@ -96,7 +96,7 @@ export default function List() {
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
-          <Text style={[styles.headerText, { flex: 1 }]}>ON QUEUE</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>IN QUEUE</Text>
         </View>
         <FlatList
           data={filteredFacultyData}
@@ -175,9 +175,9 @@ export default function List() {
       <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF STUDENT CONCERN</Text>
         <View style={styles.header}>
-          <Text style={[styles.headerText, { flex: 0.5 }]}>TICKET</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
           <View style={styles.verticalSeparator} />
-          <Text style={[styles.headerText, { flex: 1 }]}>STUDENT NAME</Text>
+          <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
           <View style={styles.verticalSeparator} />
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
         </View>
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   studentCount: {
     flex: 1,
     fontSize: 16,
-    color: 'black',
+    color: '#f3f3f3',
     textAlign: 'center',
   },
   noResultsContainer: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   noResultsText: {
-    color: 'black',
+    color: '#f3f3f3',
     fontSize: 16,
     textAlign: 'center',
   },
@@ -267,46 +267,49 @@ const styles = StyleSheet.create({
     paddingVertical: '5%',
   },
   listContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#1f4e21',
     borderRadius: 10,
     padding: 10,
-    marginHorizontal: 20,
-    marginVertical: 20,
-    maxWidth: 800,
-    width: '98%',
-    height: '80%',
+    marginTop: 0,
+    marginBottom: 20,
+    maxWidth: 1000,
+    width: '95%',
+    height: '85%',
     alignSelf: 'center',
   },
   title: {
-    color: 'black',
+    color: '#f3f3f3',
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
+    marginTop: 15,
     textAlign: 'center',
   },
   header: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: 'black',
+    borderBottomWidth: 2,
+    borderBottomColor: '#f3f3f3',
     paddingBottom: 5,
     marginBottom: 10,
   },
   headerText: {
-    color: 'black',
+    color: '#f3f3f3',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 5,
   },
   row: {
     flexDirection: 'row',
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    borderBottomColor: '#f3f3f3',
   },
   name: {
     flex: 1,
     fontSize: 16,
-    color: 'black',
+    color: '#f3f3f3',
     textAlign: 'center',
   },
   status: {

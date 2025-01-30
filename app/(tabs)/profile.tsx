@@ -163,7 +163,7 @@ export default function Profile(): JSX.Element {
   return (
     <PageContainer>
       <ImageBackground
-        source={require('../../assets/green p2.jpg')}
+        source={require('../../assets/green.jpg')}
         style={styles.background}
       >
         <View style={styles.container}>
@@ -196,18 +196,34 @@ export default function Profile(): JSX.Element {
             <Text style={styles.title}>{userData.fullName}</Text>
             <View style={styles.infoContainer}>
               <View style={styles.infoText}>
+              <Image 
+               source={require('../../assets/gmail.png')} 
+               style={styles.icon} 
+              />
                 <Text style={styles.infoLabel}>Email:</Text>
                 <Text style={styles.infoValue}>{userData.email}</Text>
               </View>
               <View style={styles.infoText}>
+              <Image 
+               source={require('../../assets/phone.png')} 
+               style={styles.icon} 
+              />
                 <Text style={styles.infoLabel}>Phone Number:</Text>
                 <Text style={styles.infoValue}>{userData.phoneNumber}</Text>
               </View>
               <View style={styles.infoText}>
+              <Image 
+               source={require('../../assets/id.png')} 
+               style={styles.icon} 
+              />
                 <Text style={styles.infoLabel}>ID Number:</Text>
                 <Text style={styles.infoValue}>{userData.idNumber}</Text>
               </View>
               <View style={styles.infoText}>
+              <Image 
+               source={require('../../assets/course.png')} 
+               style={styles.icon} 
+              />
                 <Text style={styles.infoLabel}>Program:</Text>
                 <Text style={styles.infoValue}>{userData.program}</Text>
               </View>
@@ -269,7 +285,6 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
-    maxWidth: 800,
     flex: 1,
     alignItems: 'center',
     padding: 5,
@@ -284,26 +299,35 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   infoContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#005000',
     width: '100%',
+    height: '100%',
     marginBottom: 20,
     padding: 15,
     borderRadius: 10,
+    maxWidth: 1000,
   },
   infoText: {
     fontSize: 16,
-    marginBottom: 12,
+    color: '#f3f3f3',
+    marginBottom: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   infoLabel: {
     fontWeight: 'bold',
     width: 120, 
+    color: '#f3f3f3',
+    fontSize: 15,
+  },
+  icon: {
+    width: 20,   
+    height: 20, 
+    marginRight: 8, 
   },
   infoValue: {
     flex: 1,
   },
-
   modalView: {
     backgroundColor: 'white',
     marginTop: 50,
