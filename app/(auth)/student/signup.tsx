@@ -187,11 +187,14 @@ export default function Signup(): JSX.Element {
             </View>
           </Modal>
 
-          <CustomButton
-            title={isLoading ? 'CREATING...' : 'CREATE'}
-            onPress={onSignup}
-            color="#2c6b2f"
-          />
+          <View style={{ marginVertical: 30 }}>
+           <CustomButton
+             title={isLoading ? 'CREATING...' : 'CREATE'}
+             onPress={onSignup}
+             color="#2c6b2f"
+            />
+          </View>
+          
 
           <View style={styles.loginContainer}>
             <Text>Already have an account? </Text>
@@ -257,7 +260,7 @@ const styles = StyleSheet.create({
   loginContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: -5,
   },
   background: {
     flex: 1,
@@ -266,6 +269,7 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '90%',
+    height: '90%',
     maxWidth: 600,
     backgroundColor: 'rgba(255, 255, 255, 0.8)',
     padding: 20,
