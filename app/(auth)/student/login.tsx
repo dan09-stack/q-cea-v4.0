@@ -31,7 +31,7 @@ export default function Login() {
         setRememberPassword(true);
       }
     } catch (error) {
-      console.log('Error loading saved credentials');
+      console.log('Error loading saved credential');
     }
   };
 
