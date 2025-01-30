@@ -157,12 +157,12 @@ export default function List() {
   
     const renderStudent = ({ item }: { item: StudentItem }) => (
       <View style={styles.row}>
-        <Text style={[styles.name, { flex: 0.5 }]}>
+        <Text style={[styles.name, { flex: 1 }]}>
           {/* {item.program}- */}
           {String(item.ticketNumber).padStart(4, '0')}
         </Text>
         <View style={styles.verticalSeparator} />
-        <Text style={styles.name}>{item.name}</Text>
+        <Text style={[styles.name,{flex: 1.5, width: 100,  textAlign: 'center'}]} >{item.name}</Text>
         <View style={styles.verticalSeparator} />
         <Text style={styles.concerns}>
           <Text>{item.concerns}</Text>
@@ -215,14 +215,16 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     fontSize: 16,
-    color: 'black',
+    color: 'white',
     textAlign: 'center',
+    alignSelf: 'center',
   },
   studentCount: {
     flex: 1,
     fontSize: 16,
     color: '#f3f3f3',
     textAlign: 'center',
+    
   },
   noResultsContainer: {
     flex: 1,
@@ -278,7 +280,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   title: {
-    color: '#f3f3f3',
+    color: '#DAF7A6',
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -293,7 +295,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   headerText: {
-    color: '#f3f3f3',
+    color: '#d9ab0e',
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -311,12 +313,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#f3f3f3',
     textAlign: 'center',
+    alignSelf: 'center' 
+
   },
   status: {
     flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
+    
   },
   list: {
     flex: 1,
