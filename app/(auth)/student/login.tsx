@@ -6,6 +6,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
+import Modal from 'react-native-modal';
+import { generateCaptcha } from '../../../utils/captcha'; // We'll create this
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,9 +15,18 @@ export default function Login() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [isCaptchaModalVisible, setIsCaptchaModalVisible] = useState(false);
+  const [captchaText, setCaptchaText] = useState('');
+  const [userCaptchaInput, setUserCaptchaInput] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+  
   const router = useRouter();
-
+  const generateNewCaptcha = () => {
+    const newCaptcha = generateCaptcha(6); // 6 characters long
+    setCaptchaText(newCaptcha);
+    setUserCaptchaInput('');
+    setCaptchaError('');
+  };
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -52,13 +63,24 @@ export default function Login() {
 
   // Handle login
   const handleLogin = async () => {
-    setIsLoading(true);
-    try {
-      await handleUserLogin(email, password, router, saveCredentials);
-    } catch (error) {
-      console.log('Login error:', error);
-    } finally {
-      setIsLoading(false);
+    setIsCaptchaModalVisible(true);
+    generateNewCaptcha();
+  };
+  
+  const handleCaptchaSubmit = async () => {
+    if (userCaptchaInput === captchaText) {
+      setIsCaptchaModalVisible(false);
+      setIsLoading(true);
+      try {
+        await handleUserLogin(email, password, router, saveCredentials);
+      } catch (error) {
+        console.log('Login error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setCaptchaError('Invalid captcha. Please try again.');
+      generateNewCaptcha();
     }
   };
 
@@ -144,11 +166,96 @@ export default function Login() {
           </TouchableOpacity>
         </View>
       </View>
+      <Modal
+  isVisible={isCaptchaModalVisible}
+  onBackdropPress={() => setIsCaptchaModalVisible(false)}
+  backdropOpacity={0.5}
+  animationIn="slideInUp"
+  animationOut="slideOutDown"
+>
+      <View style={styles.modalContainer}>
+        <Text style={styles.modalTitle}>Verify Captcha</Text>
+        
+        <View style={styles.captchaBox}>
+          <Text style={styles.captchaText}>{captchaText}</Text>
+        </View>
+        
+        <TextInput
+          style={styles.captchaInput}
+          placeholder="Enter captcha text"
+          value={userCaptchaInput}
+          onChangeText={setUserCaptchaInput}
+          autoCapitalize="none"
+        />
+        
+        {captchaError ? (
+          <Text style={styles.errorText}>{captchaError}</Text>
+        ) : null}
+        
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={styles.refreshButton}
+            onPress={generateNewCaptcha}
+          >
+            <Ionicons name="refresh" size={24} color="#2c6b2f" />
+          </TouchableOpacity>
+          
+          <CustomButton
+            title="Verify"
+            onPress={handleCaptchaSubmit}
+          />
+        </View>
+      </View>
+    </Modal>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  captchaBox: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  captchaText: {
+    fontSize: 24,
+    letterSpacing: 3,
+    fontFamily: 'monospace',
+  },
+  captchaInput: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingLeft: 10,
+    borderRadius: 5,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  refreshButton: {
+    padding: 10,
+  },
   background: {
     flex: 1,
     justifyContent: 'center',
