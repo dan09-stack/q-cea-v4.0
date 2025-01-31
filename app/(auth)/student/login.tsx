@@ -103,7 +103,9 @@ export default function Login() {
       style={styles.background}
       imageStyle={{ resizeMode: 'cover' }}        
     >
+      
       <View style={styles.container}>
+        <View style={styles.blurBackground} />
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
         <Text style={styles.heading}>Login</Text>
         
@@ -166,14 +168,19 @@ export default function Login() {
         </View>
 
         {/* Sign In Button */}
-        <CustomButton
-          title={isLoading ? "Loading..." : "Login"}
-          onPress={() => handleLogin(email, password)}
-        />
+        <TouchableOpacity
+                           style={[styles.button, isLoading && styles.buttonDisabled]}
+                           onPress={() => handleLogin(email, password)}
+                           disabled={isLoading}
+         >
+            <Text style={styles.buttonText}>
+                         {isLoading ? 'Signing In...' : 'SIGN IN'}
+                        </Text>
+         </TouchableOpacity>
 
         {/* Sign Up Link */}
         <View style={styles.signupContainer}>
-          <Text>Don't have an account? </Text>
+        <Text style={{ color: 'white' }}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
             <Text style={styles.linkText}>Sign Up</Text>
           </TouchableOpacity>
@@ -255,28 +262,54 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject, 
+    borderRadius: 12, 
+    backdropFilter: 'blur(10px)', 
+    zIndex: -1, 
+  },
+  button: {
+    width: '60%',
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonDisabled: {
+    backgroundColor: '#rgba(255, 255, 255, 0.4)',
+  },
   container: {
     width: '90%',
     maxWidth: 500,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 50,
+    borderColor: 'white',
+    borderWidth: 1,
   },
   logo: {
     width: 170,
     height: 170,
     top: -85,
     position: 'absolute',
-    borderColor: '#2c6b2f',
-    borderWidth: 1,
+    borderColor: 'white',
+    borderWidth: 0,
     borderRadius: 100,
   },
   heading: {
     fontSize: 28,
     fontFamily: 'Roboto',
-    color: '#000000',
+    color: 'white',
     marginTop: 75,
     marginBottom: 10,
   },
@@ -286,18 +319,19 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 16,
-    color: '#000000',
+    color: 'white',
     marginBottom: 1,
     fontWeight: '500',
   },
   input: {
     width: '100%',
     height: 45,
-    borderColor: '#000',
-    borderWidth: 1,
+    borderColor: 'white',
+    borderWidth: 2,
     marginBottom: 5,
     paddingLeft: 10,
     borderRadius: 5,
+    color: 'white'
   },
   passwordContainer: {
     width: '100%',
@@ -305,15 +339,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 15,
     position: 'relative',
+    
   },
   passwordInput: {
     width: '100%',
     height: 45,
-    borderColor: '#000',
-    borderWidth: 1,
+    borderColor: 'white',
+    borderWidth: 2,
     paddingLeft: 10,
     borderRadius: 5,
     paddingRight: 50,
+    color: 'white'
   },
   eyeIcon: {
     position: 'absolute',
@@ -335,11 +371,11 @@ const styles = StyleSheet.create({
   checkboxLabel: {
     marginLeft: 8,
     fontSize: 15,
-    color: '#000',
+    color: 'white',
   },
   forgotPasswordText: {
     marginBottom: 1,
-    color: 'gray',
+    color: 'white',
     fontSize: 14,
   },
   signupContainer: {
@@ -348,8 +384,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   linkText: {
-    color: '#2c6b2f',
+    color: 'white',
     fontWeight: 'bold',
+  
   },
 
   modalContent: {

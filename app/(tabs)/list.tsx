@@ -166,7 +166,7 @@ export default function List() {
         <View style={styles.verticalSeparator} />
         <Text style={styles.concerns}>
           <Text>{item.concerns}</Text>
-          <Text>{item.otherConcern ? ` , ${item.otherConcern}` : ''}</Text>
+          <Text>{item.otherConcern ? `  ${item.otherConcern}` : ''}</Text>
         </Text>
       </View>
     );
@@ -176,9 +176,7 @@ export default function List() {
         <Text style={styles.title}>LIST OF STUDENT CONCERN</Text>
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
-          <View style={styles.verticalSeparator} />
           <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
-          <View style={styles.verticalSeparator} />
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
         </View>
         <FlatList
@@ -218,6 +216,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     alignSelf: 'center',
+    width: 100,
   },
   studentCount: {
     flex: 1,

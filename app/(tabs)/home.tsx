@@ -668,7 +668,7 @@ const StudentView = () => (
               </View>
             ) : (
               <View style={[styles.formGroup, {width: '100%'}]}>
-                 <Text style= {{fontSize: 16, }}>Faculty</Text>
+                 <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Faculty</Text>
                 <TouchableOpacity 
                   style={styles.pickerButton}
                   onPress={() => setFacultyModalVisible(true)}
@@ -676,7 +676,7 @@ const StudentView = () => (
                   <Text style={styles.pickerButtonText}>
                     {selectedFaculty || "Select Faculty"}
                   </Text>
-                </TouchableOpacity> <Text style= {{fontSize: 16}}>Concern</Text>
+                </TouchableOpacity> <Text style= {{fontSize: 16, fontWeight: 'bold'}}>Concern</Text>
 
                 <TouchableOpacity 
                   style={styles.pickerButton}
