@@ -133,7 +133,7 @@ export default function Login() {
               <Ionicons 
                 name={showPassword ? "eye-outline" : "eye-off-outline"} 
                 size={24} 
-                color="#666"
+                color="gray"
               />
             </TouchableOpacity>
           </View>
