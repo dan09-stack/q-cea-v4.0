@@ -139,7 +139,7 @@ export default function Login() {
               <Ionicons 
                 name={showPassword ? "eye-outline" : "eye-off-outline"} 
                 size={24} 
-                color="#666"
+                color="gray"
               />
             </TouchableOpacity>
           </View>
@@ -174,7 +174,7 @@ export default function Login() {
                            disabled={isLoading}
          >
             <Text style={styles.buttonText}>
-                         {isLoading ? 'Signing In...' : 'SIGN IN'}
+                         {isLoading ? 'Logging In...' : 'Log In'}
                         </Text>
          </TouchableOpacity>
 
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     color: 'white',
-    marginBottom: 1,
+    marginBottom: 3,
     fontWeight: '500',
   },
   input: {
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     height: 45,
     borderColor: 'white',
     borderWidth: 2,
-    marginBottom: 5,
+    marginBottom: 15,
     paddingLeft: 10,
     borderRadius: 5,
     color: 'white'
@@ -337,7 +337,8 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: 20,
+    marginTop: 1,
     position: 'relative',
     
   },

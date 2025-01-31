@@ -226,6 +226,7 @@ const styles = StyleSheet.create({
   },
   userTypeButtonActive: {
     backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 2,
   },
   userTypeText: {
     color: 'white',

@@ -197,7 +197,7 @@ export default function Profile(): JSX.Element {
             <View style={styles.infoContainer}>
               <View style={styles.infoText}>
               <Image 
-               source={require('../../assets/gmail.png')} 
+               source={require('../../assets/email.png')} 
                style={styles.icon} 
               />
                 <Text style={styles.infoLabel}>Email:</Text>
@@ -321,8 +321,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   icon: {
-    width: 20,   
-    height: 20, 
+    width: 30,   
+    height: 30, 
     marginRight: 8, 
   },
   infoValue: {
