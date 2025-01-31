@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
+import { auth, db } from '@/firebaseConfig';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image, Modal } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
+
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,6 +16,10 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // error handling
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -37,7 +43,7 @@ export default function Login() {
 
   // Save credentials to AsyncStorage
   const saveCredentials = async () => {
-    try {
+    try { 
       if (rememberPassword) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('savedPassword', password);
@@ -50,13 +56,36 @@ export default function Login() {
     }
   };
 
-  // Handle login
-  const handleLogin = async () => {
-    setIsLoading(true);
+  const handleLogin = async (email: string, password: string) => {
     try {
-      await handleUserLogin(email, password, router, saveCredentials);
-    } catch (error) {
-      console.log('Login error:', error);
+      if (!email || !password) { 
+        setErrorMessage('Please fill in both email and password.');
+        setErrorModalVisible(true);
+        return; 
+      }
+  
+      setIsLoading(true);
+      await auth.signInWithEmailAndPassword(email, password); 
+  
+      // Call saveCredentials function after successful login
+      await saveCredentials();
+  
+      router.push('/(tabs)/home'); 
+
+    } catch (error: any) {
+      console.log("Firebase Error:", error);
+      let errorMessage = 'Incorrect password/email. Please try again.';
+  
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'User not found. Please check your email.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      }
+  
+      setErrorMessage(errorMessage);
+      setErrorModalVisible(true);
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +95,7 @@ export default function Login() {
     <ImageBackground
       source={require('../../../assets/green.jpg')}
       style={styles.background}
-      imageStyle={{ resizeMode: 'cover' }}
+      imageStyle={{ resizeMode: 'cover' }}        
     >
       
       <View style={styles.container}>
@@ -133,15 +162,16 @@ export default function Login() {
         </View>
 
         {/* Sign In Button */}
-         <TouchableOpacity
+        <TouchableOpacity
                            style={[styles.button, isLoading && styles.buttonDisabled]}
-                           onPress={handleLogin}
+                           onPress={() => handleLogin(email, password)}
                            disabled={isLoading}
          >
             <Text style={styles.buttonText}>
                          {isLoading ? 'Signing In...' : 'SIGN IN'}
                         </Text>
          </TouchableOpacity>
+
         {/* Sign Up Link */}
         <View style={styles.signupContainer}>
         <Text style={{ color: 'white' }}>Don't have an account? </Text>
@@ -150,6 +180,26 @@ export default function Login() {
           </TouchableOpacity>
         </View>
       </View>
+
+      
+      {/* Error Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Wrong Credentials</Text>
+            <Text style={styles.modalItemText}>{errorMessage}</Text>
+            <CustomButton
+              title="Close"
+              onPress={() => setErrorModalVisible(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -287,5 +337,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#004000',
+  },
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
