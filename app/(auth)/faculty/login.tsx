@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { auth, db } from '../../../firebaseConfig';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,6 +9,10 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberPassword, setRememberPassword] = useState(false);
+  
+  // Error handling
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -45,16 +49,18 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Validation Error', 'Please fill in both email and password.');
+      setErrorMessage('Please fill in both email and password.');
+      setErrorModalVisible(true);
       return;
     }
 
     try {
       const userCredential = await auth.signInWithEmailAndPassword(email, password);
       const user = userCredential.user;
-     
+      
       if (!user) {
-        Alert.alert('Login Error', 'User authentication failed.');
+        setErrorMessage('User authentication failed.');
+        setErrorModalVisible(true);
         return;
       }
 
@@ -62,7 +68,8 @@ export default function Login() {
 
       const userDoc = await db.collection('users').doc(user.uid).get();
       if (!userDoc.exists) {
-        Alert.alert('Login Error', 'User data not found.');
+        setErrorMessage('User data not found.');
+        setErrorModalVisible(true);
         return;
       }
 
@@ -78,7 +85,7 @@ export default function Login() {
           phoneNumber: userData?.phoneNumber,
         },
       });
-    } catch (error: unknown) {
+    } catch (error) {
       if (error instanceof Error) {
         let errorMessage = 'An error occurred while logging in.';
         switch (error.message) {
@@ -94,7 +101,8 @@ export default function Login() {
           default:
             errorMessage = error.message;
         }
-        Alert.alert('Login Error', errorMessage);
+        setErrorMessage(errorMessage);
+        setErrorModalVisible(true);
       }
     }
   };
@@ -133,6 +141,21 @@ export default function Login() {
           <Text style={styles.signupLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>
+      
+      {/* Error Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>{errorMessage}</Text>
+            <Button title="OK" onPress={() => setErrorModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -179,5 +202,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#007AFF',
     fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 15,
   },
 });

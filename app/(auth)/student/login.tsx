@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
+import { auth, db } from '@/firebaseConfig';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image, Modal } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
-import Modal from 'react-native-modal';
 import { generateCaptcha } from '../../../utils/captcha'; // We'll create this
+
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -15,18 +16,18 @@ export default function Login() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isCaptchaModalVisible, setIsCaptchaModalVisible] = useState(false);
-  const [captchaText, setCaptchaText] = useState('');
-  const [userCaptchaInput, setUserCaptchaInput] = useState('');
-  const [captchaError, setCaptchaError] = useState('');
+
+  // error handling
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   const router = useRouter();
-  const generateNewCaptcha = () => {
-    const newCaptcha = generateCaptcha(6); // 6 characters long
-    setCaptchaText(newCaptcha);
-    setUserCaptchaInput('');
-    setCaptchaError('');
-  };
+  // const generateNewCaptcha = () => {
+  //   const newCaptcha = generateCaptcha(6); // 6 characters long
+  //   setCaptchaText(newCaptcha);
+  //   setUserCaptchaInput('');
+  //   setCaptchaError('');
+  // };
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -48,7 +49,7 @@ export default function Login() {
 
   // Save credentials to AsyncStorage
   const saveCredentials = async () => {
-    try {
+    try { 
       if (rememberPassword) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('savedPassword', password);
@@ -61,26 +62,38 @@ export default function Login() {
     }
   };
 
-  // Handle login
-  const handleLogin = async () => {
-    setIsCaptchaModalVisible(true);
-    generateNewCaptcha();
-  };
-  
-  const handleCaptchaSubmit = async () => {
-    if (userCaptchaInput === captchaText) {
-      setIsCaptchaModalVisible(false);
-      setIsLoading(true);
-      try {
-        await handleUserLogin(email, password, router, saveCredentials);
-      } catch (error) {
-        console.log('Login error:', error);
-      } finally {
-        setIsLoading(false);
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      if (!email || !password) { 
+        setErrorMessage('Please fill in both email and password.');
+        setErrorModalVisible(true);
+        return; 
       }
-    } else {
-      setCaptchaError('Invalid captcha. Please try again.');
-      generateNewCaptcha();
+  
+      setIsLoading(true);
+      await auth.signInWithEmailAndPassword(email, password); 
+  
+      // Call saveCredentials function after successful login
+      await saveCredentials();
+  
+      router.push('/(tabs)/home'); 
+
+    } catch (error: any) {
+      console.log("Firebase Error:", error);
+      let errorMessage = 'Incorrect password/email. Please try again.';
+  
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'User not found. Please check your email.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      }
+  
+      setErrorMessage(errorMessage);
+      setErrorModalVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -88,7 +101,7 @@ export default function Login() {
     <ImageBackground
       source={require('../../../assets/green.jpg')}
       style={styles.background}
-      imageStyle={{ resizeMode: 'cover' }}
+      imageStyle={{ resizeMode: 'cover' }}        
     >
       <View style={styles.container}>
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
@@ -154,8 +167,8 @@ export default function Login() {
 
         {/* Sign In Button */}
         <CustomButton
-          title={isLoading ? "Loading..." : "SIGN IN"}
-          onPress={handleLogin}
+          title={isLoading ? "Loading..." : "Login"}
+          onPress={() => handleLogin(email, password)}
         />
 
         {/* Sign Up Link */}
@@ -166,47 +179,26 @@ export default function Login() {
           </TouchableOpacity>
         </View>
       </View>
+
+      
+      {/* Error Modal */}
       <Modal
-  isVisible={isCaptchaModalVisible}
-  onBackdropPress={() => setIsCaptchaModalVisible(false)}
-  backdropOpacity={0.5}
-  animationIn="slideInUp"
-  animationOut="slideOutDown"
->
-      <View style={styles.modalContainer}>
-        <Text style={styles.modalTitle}>Verify Captcha</Text>
-        
-        <View style={styles.captchaBox}>
-          <Text style={styles.captchaText}>{captchaText}</Text>
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Wrong Credentials</Text>
+            <Text style={styles.modalItemText}>{errorMessage}</Text>
+            <CustomButton
+              title="Close"
+              onPress={() => setErrorModalVisible(false)}
+            />
+          </View>
         </View>
-        
-        <TextInput
-          style={styles.captchaInput}
-          placeholder="Enter captcha text"
-          value={userCaptchaInput}
-          onChangeText={setUserCaptchaInput}
-          autoCapitalize="none"
-        />
-        
-        {captchaError ? (
-          <Text style={styles.errorText}>{captchaError}</Text>
-        ) : null}
-        
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.refreshButton}
-            onPress={generateNewCaptcha}
-          >
-            <Ionicons name="refresh" size={24} color="#2c6b2f" />
-          </TouchableOpacity>
-          
-          <CustomButton
-            title="Verify"
-            onPress={handleCaptchaSubmit}
-          />
-        </View>
-      </View>
-    </Modal>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -358,5 +350,23 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#2c6b2f',
     fontWeight: 'bold',
+  },
+
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxHeight: '80%',
+  },
+ 
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
 });
