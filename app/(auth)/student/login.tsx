@@ -173,7 +173,8 @@ const styles = StyleSheet.create({
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center', 
-    width: '100%', height: '100%' 
+    width: '100%', 
+    height: '100%' 
   },
   container: { 
     width: '90%', 
@@ -184,7 +185,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     marginTop: 50 
   },
-  logo: { width: 170, 
+  logo: { 
+    width: 170, 
     height: 170, 
     top: -85, 
     position: 'absolute', 
@@ -192,22 +194,111 @@ const styles = StyleSheet.create({
     borderWidth: 1, 
     borderRadius: 100 
   },
-  heading: { fontSize: 28, fontFamily: 'Roboto', color: '#000000', marginTop: 75, marginBottom: 10 },
-  inputContainer: { width: '100%', marginBottom: 1 },
-  label: { fontSize: 16, color: '#000000', marginBottom: 1, fontWeight: '500' },
-  input: { width: '100%', height: 45, borderColor: '#000', borderWidth: 1, marginBottom: 5, paddingLeft: 10, borderRadius: 5 },
-  passwordContainer: { width: '100%', flexDirection: 'row', alignItems: 'center', marginBottom: 15, position: 'relative' },
-  passwordInput: { width: '100%', height: 45, borderColor: '#000', borderWidth: 1, paddingLeft: 10, borderRadius: 5, paddingRight: 50 },
-  eyeIcon: { position: 'absolute', right: 12, height: '100%', justifyContent: 'center' },
-  checkboxContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 15 },
-  checkboxWrapper: { flexDirection: 'row', alignItems: 'center' },
-  checkboxLabel: { marginLeft: 8, fontSize: 15, color: '#000' },
-  forgotPasswordText: { marginBottom: 1, color: 'gray', fontSize: 14 },
-  signupContainer: { marginTop: 10, flexDirection: 'row', alignItems: 'center' },
-  linkText: { color: '#2c6b2f', fontWeight: 'bold' },
-  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContent: { backgroundColor: 'white', padding: 20, borderRadius: 10, width: '80%', maxHeight: '80%' },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15, textAlign: 'center', color: '#004000' },
-  modalItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  modalItemText: { fontSize: 16, textAlign: 'center' },
+  heading: { 
+    fontSize: 28, 
+    fontFamily: 'Roboto', 
+    color: '#000000', 
+    marginTop: 75, 
+    marginBottom: 10 
+  },
+  inputContainer: { 
+    width: '100%', 
+    marginBottom: 1 
+  },
+  label: { 
+    fontSize: 16, 
+    color: '#000000', 
+    marginBottom: 1, 
+    fontWeight: '500' 
+  },
+  input: { 
+    width: '100%', 
+    height: 45, 
+    borderColor: '#000', 
+    borderWidth: 1, 
+    marginBottom: 5, 
+    paddingLeft: 10, 
+    borderRadius: 5 
+  },
+  passwordContainer: { 
+    width: '100%', 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 15, 
+    position: 'relative' 
+  },
+  passwordInput: { 
+    width: '100%', 
+    height: 45, 
+    borderColor: '#000', 
+    borderWidth: 1, 
+    paddingLeft: 10, 
+    borderRadius: 5, 
+    paddingRight: 50 
+  },
+  eyeIcon: { 
+    position: 'absolute', 
+    right: 12, 
+    height: '100%', 
+    justifyContent: 'center' 
+  },
+  checkboxContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    width: '100%', 
+    marginBottom: 15 
+  },
+  checkboxWrapper: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  checkboxLabel: { 
+    marginLeft: 8, 
+    fontSize: 15, 
+    color: '#000' 
+  },
+  forgotPasswordText: { 
+    marginBottom: 1, 
+    color: 'gray', 
+    fontSize: 14 
+  },
+  signupContainer: { 
+    marginTop: 10, 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  linkText: { 
+    color: '#2c6b2f', 
+    fontWeight: 'bold' 
+  },
+  modalContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: 'rgba(0, 0, 0, 0.5)' 
+  },
+  modalContent: { 
+    backgroundColor: 'white', 
+    padding: 20, 
+    borderRadius: 10, 
+    width: '80%', 
+    maxHeight: '80%' 
+  },
+  modalTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 15, 
+    textAlign: 'center', 
+    color: '#004000' 
+  },
+  modalItem: { 
+    padding: 15, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#eee' 
+  },
+  modalItemText: { 
+    fontSize: 16, 
+    textAlign: 'center' 
+  },
 });
