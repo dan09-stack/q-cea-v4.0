@@ -43,7 +43,7 @@ export default function Login() {
 
   // Save credentials to AsyncStorage
   const saveCredentials = async () => {
-    try {
+    try { 
       if (rememberPassword) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('savedPassword', password);
