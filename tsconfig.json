@@ -4,10 +4,9 @@
     "strict": true,
     "jsx": "react-native",         // Required for JSX in React Native
     "moduleResolution": "node",    // Ensures proper resolution of modules
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": [ "./*" ]
     }
   },
   "include": [

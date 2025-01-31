@@ -54,6 +54,11 @@ const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: 
 
 const [userData, setUserData] = useState({ phoneNumber: '' });
 const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+// error handling
+const [errorModalVisible, setErrorModalVisible] = useState(false);
+const [errorMessage, setErrorMessage] = useState('');
+
 const handleSendSMS = async () => {
   try {
     const formattedPhone = userData.phoneNumber
@@ -88,6 +93,8 @@ const handleSendSMS = async () => {
     alert('Error sending SMS');
   }
 };
+
+
 // to track next ticket
 useEffect(() => {
   if (!currentStudent.faculty) return; // Add this guard
@@ -768,7 +775,7 @@ const StudentView = () => (
                     <CustomButton title="SEND ME MESSAGE" onPress={handleSendSMS}  />
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
-  </ImageBackground>
+    </ImageBackground>
   );
 }
 
