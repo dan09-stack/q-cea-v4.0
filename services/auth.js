@@ -2,7 +2,8 @@ import { Alert } from 'react-native';
 import { auth, db } from '../firebaseConfig';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 
-// handleUserLogin function
+
+//handleUserLogin function
 export const handleUserLogin = async (email, password, router, saveCredentials) => {
   try {
     if (!email || !password) {
@@ -12,7 +13,7 @@ export const handleUserLogin = async (email, password, router, saveCredentials) 
 
     const userCredential = await auth.signInWithEmailAndPassword(email, password);
     const user = userCredential.user;
-
+    
     if (!user) {
       Alert.alert('Login Error', 'User authentication failed.');
       return;
@@ -22,62 +23,41 @@ export const handleUserLogin = async (email, password, router, saveCredentials) 
 
     // Check student collection
     const studentDoc = await db.collection('student').doc(user.uid).get();
+    // Check faculty collection
+    const facultyDoc = await db.collection('faculty').doc(user.uid).get();
 
-    if (studentDoc.exists) {
-      const userData = studentDoc.data();
-
-      // Check the userType field to differentiate between student and faculty
-      if (!userData.userType) {
-        Alert.alert('Login Error', 'User type is missing or incorrect.');
-        await auth.signOut();
-        return;
-      }
-
-      // Handle student login
-      if (userData.userType === 'student') {
-        if (!user.emailVerified) {
-          Alert.alert('Email Verification Required', 'Please verify your email address to continue.');
-          return;
-        }
-
-        // Redirect student to student-specific home page
-        router.push({
-          pathname: '/(tabs)/home',
-          params: {
-            fullName: userData?.fullName,
-            email: userData?.email,
-            idNumber: userData?.idNumber,
-            course: userData?.course,
-            phoneNumber: userData?.phoneNumber,
-          },
-        });
-      } 
-      // Handle faculty login
-      else if (userData.userType === 'faculty') {
-        if (!user.emailVerified) {
-          Alert.alert('Email Verification Required', 'Please verify your email address to continue.');
-          return;
-        }
-
-        // Redirect faculty to faculty-specific home page
-        router.push({
-          pathname: '/(tab)/home', // Correct route for faculty
-          params: {
-            fullName: userData?.fullName,
-            email: userData?.email,
-            facultyId: userData?.facultyId,
-            department: userData?.department,
-          },
-        });
-      } else {
-        Alert.alert('Invalid User Type', 'User type is neither student nor faculty.');
-        await auth.signOut(); // Sign out the user
-        return;
-      }
-    } else {
-      Alert.alert('Login Error', 'User data not found.');
+    // If user exists in faculty collection but trying to login as student
+    if (!studentDoc.exists && facultyDoc.exists) {
+      Alert.alert(
+        'Invalid Login', 
+        'This account belongs to faculty. Please use the faculty login page.'
+      );
       await auth.signOut(); // Sign out the user
+      return;
     }
+
+    // Continue with existing student validation
+    if (!studentDoc.exists) {
+      Alert.alert('Login Error', 'User data not found.');
+      return;
+    }
+
+    const userData = studentDoc.data();
+    if (!user.emailVerified) {
+      Alert.alert('Email Verification Required', 'Please verify your email address to continue.');
+      return;
+    }
+
+    router.push({
+      pathname: '/(tabs)/home',
+      params: {
+        fullName: userData?.fullName,
+        email: userData?.email,
+        idNumber: userData?.idNumber,
+        course: userData?.course,
+        phoneNumber: userData?.phoneNumber,
+      },
+    });
   } catch (error) {
     if (error instanceof Error) {
       let errorMessage = 'An error occurred while logging in.';
@@ -98,8 +78,6 @@ export const handleUserLogin = async (email, password, router, saveCredentials) 
     }
   }
 };
-
-
 //handleSignup function
 export const handleSignup = async ({
   userType,
@@ -109,7 +87,6 @@ export const handleSignup = async ({
   selectedProgram,
   email,
   password,
-  userType,
   router
 }) => {
   if (!fullName || !idNumber || !phoneNumber || !selectedProgram || !email || !password) {
@@ -128,11 +105,8 @@ export const handleSignup = async ({
       program: selectedProgram,
       email,
       userType,
-<<<<<<< HEAD
-=======
       isVerified: userType === 'FACULTY' ? false : true,
       status: userType === 'FACULTY' ? false : true
->>>>>>> test
     });
 
     await sendEmailVerification(user);

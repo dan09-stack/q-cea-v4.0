@@ -17,80 +17,79 @@ export default function Layout() {
     'Poppins-Bold': require('../assets/fonts/Poppins-Bold.ttf'),
   });
 
+  
+ 
   useEffect(() => {
-  const checkAuthAndRoute = async () => {
-    try {
-      const lastLoginRole = await AsyncStorage.getItem('lastLoginRole'); 
-
-      const unsubscribe = auth.onAuthStateChanged(async (user) => {
-        if (user) {
-          if (user.emailVerified) {
-            setIsAuthenticated(true);
-            
-            // Directly route to the correct menu based on the role
-            if (lastLoginRole === 'faculty') {
-              router.replace('/(tab)/profile'); 
-            } else if (lastLoginRole === 'student') {
-              router.replace('/(tabs)/home'); 
+    const checkAuthAndRoute = async () => {
+      try {
+        const hasLaunched = await AsyncStorage.getItem('hasLaunched');
+        const lastRoute = await AsyncStorage.getItem('lastRoute');
+        
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+          if (user) {
+            if (user.emailVerified) {
+              setIsAuthenticated(true);
+              // Only navigate if lastRoute exists and user is authenticated
+              if (lastRoute && lastRoute !== '/') {
+                router.replace(lastRoute as any );
+              } else {
+                router.replace('/(tabs)/home' );
+              }
+            } else {
+              router.replace('/verify' );
             }
           } else {
-            router.replace('/verify');
+            setIsAuthenticated(false);
+            router.replace('/student/login'  );
           }
-<<<<<<< HEAD
-        } else {
-          setIsAuthenticated(false);
-          router.replace('/student/login'); 
-        }
-      });
-      return unsubscribe;
-    } catch (error) {
-      console.error('Route restoration error:', error);
-    }
-  };
-=======
           // console.log('Last route:', await AsyncStorage.getItem('lastRoute'));
           // console.log('Current auth state:', auth.currentUser);
->>>>>>> test
 
-  checkAuthAndRoute();
-}, []);
+        });
+        return unsubscribe;
+      } catch (error) {
+        console.error('Route restoration error:', error);
+      }
+    };
+  
+    checkAuthAndRoute();
+  }, []);
+  
 
   if (!fontsLoaded) {
     return null;
   }
-
+  
+  
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        headerTitleStyle: {
-          fontFamily: 'Poppins-Regular',
+    <Stack 
+    screenOptions={{ 
+    headerShown: false,
+    headerTitleStyle: {
+      fontFamily: 'Poppins-Regular'
         },
+        
       }}
     >
-      <Stack.Screen
-        name="(tabs)"
-        options={{
-          title: "Tabs",
-          headerTitleStyle: {
-            fontFamily: 'Poppins-SemiBold',
-          },
-        }}
+      <Stack.Screen 
+        name="(tabs)" 
+        options={{ 
+        title: "Tabs",
+        headerTitleStyle: {
+        fontFamily: 'Poppins-SemiBold'
+          }
+        }} 
       />
-<<<<<<< HEAD
-      <Stack.Screen
-        name="verify"
-        options={{
+      <Stack.Screen 
+        name="verify" 
+        options={{ 
           headerTitleStyle: {
-            fontFamily: 'Poppins-SemiBold',
-          },
-        }}
+            fontFamily: 'Poppins-SemiBold'
+          }
+        }} 
       />
-      <Stack.Screen name="index" />
-=======
      
       
->>>>>>> test
     </Stack>
   );
 }

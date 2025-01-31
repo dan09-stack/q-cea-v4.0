@@ -11,8 +11,6 @@ export default function Signup(): JSX.Element {
   const [selectedProgram, setSelectedProgram] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
-  const [userType, setUserType] = useState<string>(''); // New state for userType
-  const [showPassword, setShowPassword] = useState<boolean>(false);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -44,14 +42,13 @@ export default function Signup(): JSX.Element {
         selectedProgram,
         email,
         password,
-        userType, // Pass userType to Firebase
         router
       });
     }
-    catch {
+    catch{
       Alert.alert('Error', 'Something went wrong. Please try again.');
     }
-    finally {
+     finally {
       setIsLoading(false);
     }
   };
@@ -64,80 +61,6 @@ export default function Signup(): JSX.Element {
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
           <Text style={styles.heading}>Signup</Text>
-<<<<<<< HEAD
-          <TextInput
-            style={styles.input}
-            placeholder="Full Name (Last Name, First Name MI)"
-            value={fullName}
-            onChangeText={setFullName}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="ID Number"
-            value={idNumber}
-            onChangeText={setIdNumber}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            keyboardType="phone-pad"
-          />
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={selectedCourse}
-              onValueChange={(itemValue) => setSelectedCourse(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select Your Course" value=""  />
-              <Picker.Item label="Course A" value="A" />
-              <Picker.Item label="Course B" value="B" />
-              <Picker.Item label="Course C" value="C" />
-              <Picker.Item label="Course D" value="D" />
-              <Picker.Item label="Course E" value="E" />
-              <Picker.Item label="Course F" value="F" />
-            </Picker>
-          </View>
-          
-          <View style={styles.pickerContainer}>
-            <Picker
-              selectedValue={userType}
-              onValueChange={(itemValue) => setUserType(itemValue)}
-              style={styles.picker}
-            >
-              <Picker.Item label="Select User Type" value="" />
-              <Picker.Item label="Student" value="student" />
-              <Picker.Item label="Faculty" value="faculty" />
-            </Picker>
-          </View>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-          />
-          <TouchableOpacity 
-            style={[styles.button, isLoading && styles.buttonDisabled]} 
-            onPress={onSignup}
-            disabled={isLoading}
-          >
-            <Text style={styles.buttonText}>
-              {isLoading ? 'CREATING...' : 'CREATE'}
-            </Text>
-          </TouchableOpacity>
-=======
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Full Name</Text>
@@ -273,7 +196,6 @@ export default function Signup(): JSX.Element {
           </View>
           
 
->>>>>>> test
           <View style={styles.loginContainer}>
             <Text>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/student/login')}>
@@ -324,7 +246,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 16,
   },
   keyboardView: {
     flex: 1,
@@ -380,13 +302,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     justifyContent: 'center',
   },
-<<<<<<< HEAD
-  picker: {
-    width: '100%',
-    height: 100,
-  },
-=======
->>>>>>> test
   loginText: {
     color: '#2c6b2f',
     fontWeight: 'bold',
