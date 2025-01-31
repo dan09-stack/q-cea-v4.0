@@ -163,7 +163,7 @@ export default function Profile(): JSX.Element {
   return (
     <PageContainer>
       <ImageBackground
-        source={require('../../assets/green.jpg')}
+        source={require('../../assets/green p2.jpg')}
         style={styles.background}
       >
         <View style={styles.container}>
@@ -301,8 +301,8 @@ const styles = StyleSheet.create({
   infoContainer: {
     backgroundColor: '#005000',
     width: '100%',
-    height: '100%',
-    marginBottom: 20,
+    height: '50%',
+    marginBottom: 30,
     padding: 15,
     borderRadius: 10,
     maxWidth: 1000,
@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     flex: 1,
+    color: 'white'
   },
   modalView: {
     backgroundColor: 'white',

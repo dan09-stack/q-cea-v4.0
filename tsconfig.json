@@ -1,14 +1,14 @@
 {
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "jsx": "react-native",
-    "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-native",         // Required for JSX in React Native
+    "moduleResolution": "node",    // Ensures proper resolution of modules
+    "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+      "@/*": [ "./*" ]
+    },
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
     "**/*.ts",
@@ -16,6 +16,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     ".expo/types/_layout.tsx"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }

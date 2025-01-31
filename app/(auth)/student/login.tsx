@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
-<<<<<<< HEAD
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, ActivityIndicator, Alert } from 'react-native';
-=======
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
->>>>>>> test
+import { auth, db } from '@/firebaseConfig';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image, Modal } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
-<<<<<<< HEAD
-import { WebView } from 'react-native-webview'; // Import WebView
-import { db } from '../../../firebaseConfig';
-=======
 import { CustomButton } from '@/components/ui/CustomButton';
->>>>>>> test
+
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,11 +15,11 @@ export default function Login() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-<<<<<<< HEAD
-  const [recaptchaVerified, setRecaptchaVerified] = useState(false);  // State for reCAPTCHA
-=======
 
->>>>>>> test
+  // error handling
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  
   const router = useRouter();
 
   useEffect(() => {
@@ -50,7 +43,7 @@ export default function Login() {
 
   // Save credentials to AsyncStorage
   const saveCredentials = async () => {
-    try {
+    try { 
       if (rememberPassword) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('savedPassword', password);
@@ -63,70 +56,54 @@ export default function Login() {
     }
   };
 
-  // Handle login
-  const handleLogin = async () => {
-    if (!recaptchaVerified) {
-      Alert.alert("reCAPTCHA Verification", "Please complete reCAPTCHA verification.");
-      return;
-    }
-
-    setIsLoading(true);
+  const handleLogin = async (email: string, password: string) => {
     try {
-      await handleUserLogin(email, password, router, saveCredentials);
-
-      const userDoc = await db.collection('students').where("email", "==", email).get();
-
-      if (!userDoc.empty) {
-        const userData = userDoc.docs[0].data(); 
-        const userType = userData?.userType;
-        if (userType === 'student') {
-          router.push('/(tabs)/profile');
-        } else if (userType === 'faculty') {
-          router.push('/(tab)/home');
-        } else {
-          alert('User type is undefined');
-        }
+      if (!email || !password) { 
+        setErrorMessage('Please fill in both email and password.');
+        setErrorModalVisible(true);
+        return; 
       }
-    } catch (error) {
-      console.log('Login error:', error);
+  
+      setIsLoading(true);
+      await auth.signInWithEmailAndPassword(email, password); 
+  
+      // Call saveCredentials function after successful login
+      await saveCredentials();
+  
+      router.push('/(tabs)/home'); 
+
+    } catch (error: any) {
+      console.log("Firebase Error:", error);
+      let errorMessage = 'Incorrect password/email. Please try again.';
+  
+      if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'User not found. Please check your email.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address.';
+      }
+  
+      setErrorMessage(errorMessage);
+      setErrorModalVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const onRecaptchaVerify = (event: { nativeEvent: { data: string } }) => {
-    const token = event.nativeEvent.data;
-    if (token) {
-      setRecaptchaVerified(true); // Mark reCAPTCHA as verified
-    }
-  };
-  
   return (
     <ImageBackground
       source={require('../../../assets/green.jpg')}
       style={styles.background}
-      imageStyle={{ resizeMode: 'cover' }}
+      imageStyle={{ resizeMode: 'cover' }}        
     >
       <View style={styles.container}>
-<<<<<<< HEAD
-        <Text style={styles.heading}>Login</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-        <View style={styles.passwordContainer}>
-=======
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
         <Text style={styles.heading}>Login</Text>
         
         {/* Email Input */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
->>>>>>> test
           <TextInput
             style={styles.input}
             placeholder="Enter your email"
@@ -160,16 +137,7 @@ export default function Login() {
           </View>
         </View>
 
-<<<<<<< HEAD
-        <WebView
-          source={{ uri: 'https://www.google.com/recaptcha/api2/anchor?ar=1&k=6Le6d8cqAAAAALq8HDK4rXEIstXapOvMvdkajiTP&co=aHR0cHM6Ly93d3cueW91cmRvbWFpbi5jb20&hl=en&v=your_recaptcha_version&size=normal&cb=xyz' }} 
-          javaScriptEnabled={true}
-          onMessage={onRecaptchaVerify}
-        />
-
-=======
         {/* Remember Password and Forgot Password */}
->>>>>>> test
         <View style={styles.checkboxContainer}>
           <TouchableOpacity 
             style={styles.checkboxWrapper} 
@@ -181,27 +149,20 @@ export default function Login() {
               color={rememberPassword ? '#2c6b2f' : undefined}
             />
             <Text style={styles.checkboxLabel}>Remember Password</Text>
-<<<<<<< HEAD
-          </View>
-          <TouchableOpacity style={styles.forgotPasswordContainer}
-            onPress={() => router.push('/student/forgotPassword')} 
-          >
-=======
           </TouchableOpacity>
           
           <TouchableOpacity onPress={() => router.push({
             pathname: '/(auth)/student/forgotPassword',
             params: { loginEmail: email }
           })}>
->>>>>>> test
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
 
         {/* Sign In Button */}
         <CustomButton
-          title={isLoading ? "Loading..." : "SIGN IN"}
-          onPress={handleLogin}
+          title={isLoading ? "Loading..." : "Login"}
+          onPress={() => handleLogin(email, password)}
         />
 
         {/* Sign Up Link */}
@@ -212,60 +173,32 @@ export default function Login() {
           </TouchableOpacity>
         </View>
       </View>
+
+      
+      {/* Error Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={errorModalVisible}
+        onRequestClose={() => setErrorModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Wrong Credentials</Text>
+            <Text style={styles.modalItemText}>{errorMessage}</Text>
+            <CustomButton
+              title="Close"
+              onPress={() => setErrorModalVisible(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-<<<<<<< HEAD
-  recaptchaButton: {
-    backgroundColor: '#4285F4',  // reCAPTCHA blue color
-    padding: 10,
-    alignItems: 'center',
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  recaptchaText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-    forgotPasswordContainer: {
-      alignSelf: 'flex-end',
-      marginBottom: 10,
-    },
-    signupContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    },
-    backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    zIndex: 1,
-    },
-    backButtonText: {
-    marginLeft: 5,
-    fontSize: 16,
-    color: 'black',
-    },
-    checkboxContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 15,
-    width: '100%',
-    },
-    checkboxLabel: {
-    marginLeft: 8,
-    fontSize: 15,
-    color: '#000',
-    },
-    background: {
-    
-=======
   background: {
->>>>>>> test
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -367,5 +300,34 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#2c6b2f',
     fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#004000',
+  },
+  modalItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalItemText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
 });

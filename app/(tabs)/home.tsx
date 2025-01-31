@@ -54,6 +54,11 @@ const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: 
 
 const [userData, setUserData] = useState({ phoneNumber: '' });
 const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+// error handling
+const [errorModalVisible, setErrorModalVisible] = useState(false);
+const [errorMessage, setErrorMessage] = useState('');
+
 const handleSendSMS = async () => {
   try {
     const formattedPhone = userData.phoneNumber
@@ -88,6 +93,8 @@ const handleSendSMS = async () => {
     alert('Error sending SMS');
   }
 };
+
+
 // to track next ticket
 useEffect(() => {
   if (!currentStudent.faculty) return; // Add this guard
@@ -583,7 +590,7 @@ const FacultyView = () => (
               </Text>
 
             </Text>
-            <Text style={[styles.ticketNumber, {color:'#f44336', fontSize: 20}]}>STUDENT TICKET NUMBER</Text>
+            <Text style={[styles.ticketNumber, {color:'#d9ab0e', fontSize: 22}]}>STUDENT TICKET NUMBER</Text>
             {allTickets.length === 0 ? (
               <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
                 <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
@@ -625,7 +632,7 @@ const StudentView = () => (
                 People in front of you: {peopleAhead}
                 </Text>
                 <View style={styles.ticketDetails}>
-                  <Text style={[styles.ticketLabel, { color: '#f44336' , fontWeight: 'bold' , fontSize: 20}]}>YOUR TICKET NUMBER</Text>
+                  <Text style={[styles.ticketLabel, { color: '#d9ab0e' , fontWeight: 'bold' , fontSize: 22}]}>YOUR TICKET NUMBER</Text>
                   <Text style={[styles.ticketNumber, { fontSize: 25 , marginBottom: 20}]}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
                   <View style={styles.ticketInfoContainer}>
                     <View>
@@ -656,11 +663,12 @@ const StudentView = () => (
                   
                 </View>
                 <View style={styles.buttonContainer}>
-                  <CustomButton title="CANCEL" onPress={handleCancel} color="#8e0000" />
+                  <CustomButton title="CANCEL" onPress={handleCancel} color="#c8c4c4" />
                 </View>
               </View>
             ) : (
               <View style={[styles.formGroup, {width: '100%'}]}>
+                 <Text style= {{fontSize: 16, }}>Faculty</Text>
                 <TouchableOpacity 
                   style={styles.pickerButton}
                   onPress={() => setFacultyModalVisible(true)}
@@ -668,7 +676,7 @@ const StudentView = () => (
                   <Text style={styles.pickerButtonText}>
                     {selectedFaculty || "Select Faculty"}
                   </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> <Text style= {{fontSize: 16}}>Concern</Text>
 
                 <TouchableOpacity 
                   style={styles.pickerButton}
@@ -678,7 +686,8 @@ const StudentView = () => (
                     {selectedConcern || "Select your concern"}
                   </Text>
                 </TouchableOpacity>
-
+                <View style= {{marginTop: 5}}>
+                </View>
                 <TextInput
                   style={{
                   height: 100, 
@@ -780,7 +789,7 @@ const StudentView = () => (
                     <CustomButton title="SEND ME MESSAGE" onPress={handleSendSMS}  />
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
-  </ImageBackground>
+    </ImageBackground>
   );
 }
 
