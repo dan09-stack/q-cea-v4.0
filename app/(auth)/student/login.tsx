@@ -95,7 +95,7 @@ export default function Login() {
     <ImageBackground
       source={require('../../../assets/green.jpg')}
       style={styles.background}
-      imageStyle={{ resizeMode: 'cover' }}
+      imageStyle={{ resizeMode: 'cover' }}        
     >
       <View style={styles.container}>
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
