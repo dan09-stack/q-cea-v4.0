@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonDisabled: {
-    backgroundColor: '#d3d3d3',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   keyboardView: {
     flex: 1,

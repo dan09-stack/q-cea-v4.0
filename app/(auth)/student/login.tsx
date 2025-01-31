@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   button: {
     width: '60%',
     paddingVertical: 12,
-    backgroundColor: 'white',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
     borderRadius: 50,
     justifyContent: 'center',
     alignItems: 'center',
@@ -179,12 +179,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   buttonText: {
-    color: 'black',
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
   },
   buttonDisabled: {
-    backgroundColor: '#d3d3d3',
+    backgroundColor: '#rgba(255, 255, 255, 0.4)',
   },
   container: {
     width: '90%',
