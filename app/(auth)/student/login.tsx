@@ -93,7 +93,7 @@ export default function Login() {
 
   return (
     <ImageBackground
-      source={require('../../../assets/green p2.jpg')}
+      source={require('../../../assets/green.jpg')}
       style={styles.background}
       imageStyle={{ resizeMode: 'cover' }}
     >
