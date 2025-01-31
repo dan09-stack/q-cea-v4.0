@@ -60,6 +60,7 @@ export default function Signup(): JSX.Element {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
+          <View style={styles.blurBackground} />
           <Text style={styles.heading}>Signup</Text>
 
           <View style={styles.inputContainer}>
@@ -186,20 +187,21 @@ export default function Signup(): JSX.Element {
               </View>
             </View>
           </Modal>
-
-          <View style={{ marginVertical: 30 }}>
-           <CustomButton
-             title={isLoading ? 'CREATING...' : 'CREATE'}
-             onPress={onSignup}
-             color="#2c6b2f"
-            />
-          </View>
-          
+            
+           <TouchableOpacity
+                    style={[styles.button, isLoading && styles.buttonDisabled]}
+                    onPress={onSignup}
+                    disabled={isLoading}
+           >
+             <Text style={styles.buttonText}>
+              {isLoading ? 'CREATING...' : 'CREATE'}
+             </Text>
+             </TouchableOpacity>
 
           <View style={styles.loginContainer}>
-            <Text>Already have an account? </Text>
+            <Text style={{ color: 'white' }}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/student/login')}>
-              <Text style={styles.loginText}>Login</Text>
+              <Text style={[styles.loginText, {color: 'white'}]}>Login</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -219,34 +221,36 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: '#2c6b2f',
+    borderColor: 'white',
     alignItems: 'center',
   },
   userTypeButtonActive: {
-    backgroundColor: '#2c6b2f',
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   userTypeText: {
-    color: '#2c6b2f',
+    color: 'white',
     fontWeight: 'bold',
   },
   userTypeTextActive: {
     color: 'white',
   },
   button: {
-    backgroundColor: '#2c6b2f',
-    width: '30%',
-    padding: 12,
+    width: '60%',
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 50,
+    justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 5,
-    marginBottom: 15,
-  },
-  buttonDisabled: {
-    backgroundColor: '#84a886',
+    marginTop: 25,
+    marginBottom: 25,
   },
   buttonText: {
     color: 'white',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonDisabled: {
+    backgroundColor: '#d3d3d3',
   },
   keyboardView: {
     flex: 1,
@@ -271,14 +275,23 @@ const styles = StyleSheet.create({
     width: '90%',
     height: '90%',
     maxWidth: 600,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
     borderRadius: 12,
     alignItems: 'center',
+    borderColor: 'white',
+    borderWidth: 1,
+    
+  },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject, 
+    borderRadius: 12, 
+    backdropFilter: 'blur(10px)', 
+    zIndex: -1, 
   },
   heading: {
     fontSize: 28,
-    color: '#000000',
+    color: 'white',
     marginBottom: 30,
     fontWeight: 'bold'
   },
@@ -289,18 +302,19 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: 'white',
     marginBottom: 5,
     paddingLeft: 2,
   },
   input: {
     width: '100%',
     height: 40,
-    borderColor: '#000',
-    borderWidth: 1,
+    borderColor: 'white',
+    borderWidth: 2,
     paddingLeft: 10,
     borderRadius: 5,
     justifyContent: 'center',
+    color: 'white'
   },
   loginText: {
     color: '#2c6b2f',
@@ -346,9 +360,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   selectedText: {
-    color: '#000',
+    color: 'white',
   },
   placeholderText: {
-    color: '#000',
+    color: 'white',
   },
 });
