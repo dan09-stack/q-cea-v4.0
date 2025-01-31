@@ -1,25 +1,3 @@
-<<<<<<< HEAD
-import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, TextInput } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore'; // Update import
-import { db } from '@/firebaseConfig';
-import * as SMS from 'expo-sms';
-
-interface FacultyItem {
-  id: string;
-  name: string;
-  status: 'ONLINE' | 'OFFLINE';
-}
-
-export default function List() {
-  const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [registeredNumber, setRegisteredNumber] = useState<string | null>(null);
-
-  const filteredFacultyData = facultyData.filter(faculty =>
-    faculty.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-=======
 import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore'
@@ -50,7 +28,6 @@ export default function List() {
     : facultyData.filter(faculty =>
         faculty.name.toLowerCase().includes(inputValue.toLowerCase())
       );
->>>>>>> test
 
   const renderFaculty = ({ item }: { item: FacultyItem }) => (
     <View style={styles.row}>
@@ -68,17 +45,6 @@ export default function List() {
   );
 
   useEffect(() => {
-<<<<<<< HEAD
-    // Fetch faculty data
-    const facultyCollectionRef = collection(db, 'faculty');
-    const unsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
-      const faculty: FacultyItem[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        name: doc.data().fullName || '',
-        status: doc.data().status || 'OFFLINE',
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name)); // Sort alphabetically
-=======
     const facultyCollectionRef = collection(db, 'student');
     const unsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
       const faculty: FacultyItem[] = snapshot.docs
@@ -91,7 +57,6 @@ export default function List() {
         }))
         .filter(user => user.userType === 'FACULTY')
         .sort((a, b) => a.name.localeCompare(b.name));
->>>>>>> test
       
       setFacultyData(faculty);
       const currentUser = auth.currentUser;
@@ -105,59 +70,6 @@ export default function List() {
 
     return () => unsubscribe();
   }, []);
-<<<<<<< HEAD
-
-  useEffect(() => {
-    // Fetch registered phone number
-    const fetchRegisteredNumber = async () => {
-      const docRef = doc(db, 'settings', 'registeredNumber'); // Replace 'settings' and 'registeredNumber' with your collection and document IDs
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        setRegisteredNumber(docSnap.data()?.phoneNumber || null);
-      } else {
-        console.error('No such document!');
-      }
-    };
-
-    fetchRegisteredNumber();
-  }, []);
-
-  const sendTextMessage = async () => {
-    if (registeredNumber) {
-      const isAvailable = await SMS.isAvailableAsync();
-      if (isAvailable) {
-        await SMS.sendSMSAsync(
-          [registeredNumber],
-          'Hello, this is a test message from your app!'
-        );
-      } else {
-        console.error('SMS service is not available on this device.');
-      }
-    } else {
-      console.error('No registered phone number found.');
-    }
-  };
-
-  return (
-    <ImageBackground
-      source={require('../../assets/green p2.jpg')}
-      style={styles.background}
-    >
-      <View style={styles.listContainer}>
-        <Text style={styles.title}>LIST OF FACULTY</Text>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search faculty..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-
-        <View style={styles.header}>
-          <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
-          <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
-        </View>
-=======
   
   const StudentView = () => (
     <View style={styles.listContainer}>
@@ -186,22 +98,11 @@ export default function List() {
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>IN QUEUE</Text>
         </View>
->>>>>>> test
         <FlatList
           data={filteredFacultyData}
           keyExtractor={(item) => item.id}
           renderItem={renderFaculty}
           style={styles.list}
-<<<<<<< HEAD
-        />
-      </View>
-
-      <TouchableOpacity style={styles.button} onPress={sendTextMessage}>
-        <Text style={styles.buttonText}>Text Me</Text>
-      </TouchableOpacity>
-    </ImageBackground>
-  );
-=======
           ListEmptyComponent={NoResults}
         />
       </View>
@@ -302,7 +203,6 @@ export default function List() {
        {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     </ImageBackground>
   )
->>>>>>> test
 }
 
 const styles = StyleSheet.create({
