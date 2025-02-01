@@ -7,6 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
+import { generateCaptcha } from '../../../utils/captcha'; // We'll create this
 
 
 export default function Login() {
@@ -21,7 +22,12 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState('');
   
   const router = useRouter();
-
+  // const generateNewCaptcha = () => {
+  //   const newCaptcha = generateCaptcha(6); // 6 characters long
+  //   setCaptchaText(newCaptcha);
+  //   setUserCaptchaInput('');
+  //   setCaptchaError('');
+  // };
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -37,7 +43,7 @@ export default function Login() {
         setRememberPassword(true);
       }
     } catch (error) {
-      console.log('Error loading saved credentials');
+      console.log('Error loading saved credential');
     }
   };
 
@@ -205,6 +211,50 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  captchaBox: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  captchaText: {
+    fontSize: 24,
+    letterSpacing: 3,
+    fontFamily: 'monospace',
+  },
+  captchaInput: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingLeft: 10,
+    borderRadius: 5,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  refreshButton: {
+    padding: 10,
+  },
   background: {
     flex: 1,
     justifyContent: 'center',
@@ -339,12 +389,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   
   },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
+
   modalContent: {
     backgroundColor: 'white',
     padding: 20,
@@ -352,13 +397,7 @@ const styles = StyleSheet.create({
     width: '80%',
     maxHeight: '80%',
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center',
-    color: '#004000',
-  },
+ 
   modalItem: {
     padding: 15,
     borderBottomWidth: 1,

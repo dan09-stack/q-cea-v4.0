@@ -769,21 +769,40 @@ const StudentView = () => (
                       <Pressable
                         style={styles.modalItem}
                         onPress={() => {
-                          setSelectedConcern('concernA');
+                          setSelectedConcern('Enrollment');
                           setConcernModalVisible(false);
                         }}
                       >
-                        <Text style={styles.modalItemText}>Concern A</Text>
+                        <Text style={styles.modalItemText}>Enrollment</Text>
                       </Pressable>
                       <Pressable
                         style={styles.modalItem}
                         onPress={() => {
-                          setSelectedConcern('concernB');
+                          setSelectedConcern('Enlistment');
                           setConcernModalVisible(false);
                         }}
                       >
-                        <Text style={styles.modalItemText}>Concern B</Text>
+                        <Text style={styles.modalItemText}>Enlistment</Text>
                       </Pressable>
+                      <Pressable
+                        style={styles.modalItem}
+                        onPress={() => {
+                          setSelectedConcern('Grades');
+                          setConcernModalVisible(false);
+                        }}
+                      >
+                        <Text style={styles.modalItemText}>Grades</Text>
+                      </Pressable>
+                      <Pressable
+                        style={styles.modalItem}
+                        onPress={() => {
+                          setSelectedConcern('Study PlanStudy Plan');
+                          setConcernModalVisible(false);
+                        }}
+                      >
+                        <Text style={styles.modalItemText}>Study Plan</Text>
+                      </Pressable>
+                      
                       <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
                     </View>
                   </View>
@@ -795,7 +814,6 @@ const StudentView = () => (
 );
   return (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
-                    <CustomButton title="SEND ME MESSAGE" onPress={handleSendSMS}  />
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     </ImageBackground>
