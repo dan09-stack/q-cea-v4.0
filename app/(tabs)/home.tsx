@@ -9,6 +9,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function Home() {
+  const [concernsList, setConcernsList] = useState<string[]>([]);
 
 const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
 const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
@@ -94,7 +95,15 @@ const handleSendSMS = async () => {
   }
 };
 
-
+useEffect(() => {
+  const fetchConcerns = async () => {
+    const concernDoc = await getDoc(doc(db, 'admin', 'concern'));
+    if (concernDoc.exists()) {
+      setConcernsList(concernDoc.data().concern || []);
+    }
+  };
+  fetchConcerns();
+}, []);
 // to track next ticket
 useEffect(() => {
   if (!currentStudent.faculty) return; // Add this guard
@@ -688,7 +697,7 @@ const StudentView = () => (
                 </TouchableOpacity>
                 <View style= {{marginTop: 5}}>
                 </View>
-                <TextInput
+                {/* <TextInput
                   style={{
                   height: 100, 
                   textAlignVertical: 'top', 
@@ -706,7 +715,7 @@ const StudentView = () => (
                   onChangeText={(text) => setOtherConcern(text)}
                   multiline={true}
 
-                />
+                /> */}
                 <View style={styles.buttonContainer}>
                   {isLoading ? (
                     <ActivityIndicator size="large" color="#004000" />
@@ -757,43 +766,18 @@ const StudentView = () => (
                   <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                       <Text style={styles.modalTitle}>Select Concern</Text>
-                      <Pressable
-                        style={styles.modalItem}
-                        onPress={() => {
-                          setSelectedConcern('Enrollment');
-                          setConcernModalVisible(false);
-                        }}
-                      >
-                        <Text style={styles.modalItemText}>Enrollment</Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.modalItem}
-                        onPress={() => {
-                          setSelectedConcern('Enlistment');
-                          setConcernModalVisible(false);
-                        }}
-                      >
-                        <Text style={styles.modalItemText}>Enlistment</Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.modalItem}
-                        onPress={() => {
-                          setSelectedConcern('Grades');
-                          setConcernModalVisible(false);
-                        }}
-                      >
-                        <Text style={styles.modalItemText}>Grades</Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.modalItem}
-                        onPress={() => {
-                          setSelectedConcern('Study PlanStudy Plan');
-                          setConcernModalVisible(false);
-                        }}
-                      >
-                        <Text style={styles.modalItemText}>Study Plan</Text>
-                      </Pressable>
-                      
+                      {concernsList.map((concern) => (
+                        <Pressable
+                          key={concern}
+                          style={styles.modalItem}
+                          onPress={() => {
+                            setSelectedConcern(concern);
+                            setConcernModalVisible(false);
+                          }}
+                        >
+                          <Text style={styles.modalItemText}>{concern}</Text>
+                        </Pressable>
+                      ))}
                       <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
                     </View>
                   </View>
