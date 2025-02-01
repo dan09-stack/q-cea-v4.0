@@ -622,7 +622,7 @@ const FacultyView = () => (
         </View>
 );
 const StudentView = () => (
-  <View style={[styles.container, {width: '100%' , maxWidth: 500}]}>
+  <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
           ) : (
@@ -667,46 +667,55 @@ const StudentView = () => (
                 </View>
               </View>
             ) : (
-              <View style={[styles.formGroup, {width: '100%'}]}>
-                 <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Faculty</Text>
-                <TouchableOpacity 
-                  style={styles.pickerButton}
-                  onPress={() => setFacultyModalVisible(true)}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {selectedFaculty || "Select Faculty"}
-                  </Text>
-                </TouchableOpacity> <Text style= {{fontSize: 16, fontWeight: 'bold'}}>Concern</Text>
+              <View style={[styles.formGroup, { width: '100%' }]}>
 
-                <TouchableOpacity 
-                  style={styles.pickerButton}
-                  onPress={() => setConcernModalVisible(true)}
-                >
-                  <Text style={styles.pickerButtonText}>
-                    {selectedConcern || "Select your concern"}
-                  </Text>
-                </TouchableOpacity>
-                <View style= {{marginTop: 5}}>
-                </View>
-                <TextInput
-                  style={{
-                  height: 100, 
-                  textAlignVertical: 'top', 
-                  padding: 10, 
-                  borderWidth: 1, 
-                  borderColor: '#005000', 
+              {/* Faculty Selection */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 3 }}>
+                Faculty
+              </Text>
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => setFacultyModalVisible(true)}
+              >
+                <Text style={styles.pickerButtonText}>
+                  {selectedFaculty || "Select Faculty"}
+                </Text>
+                
+              </TouchableOpacity>
+            
+              {/* Concern Selection */}
+              <Text style={{ fontSize: 16, fontWeight: 'bold', marginTop: 10, marginBottom: 3}}>
+                Concern
+              </Text>
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => setConcernModalVisible(true)}
+              >
+                <Text style={styles.pickerButtonText}>
+                  {selectedConcern || "Select your concern"}
+                </Text>
+              </TouchableOpacity>
+            
+              {/* Other Concern Input */}
+              <TextInput
+                style={{
+                  height: 100,
+                  textAlignVertical: 'top',
+                  padding: 12,
+                  borderWidth: 1,
+                  borderColor: '#005000',
                   fontSize: 16,
-                  borderRadius: 5, 
-                  color: '#f3f3f3',
-                  backgroundColor: '#005000'
-                  }}
-                  placeholder="Other concern:"
-                  placeholderTextColor="#ccccc"
-                  value={otherConcern}
-                  onChangeText={(text) => setOtherConcern(text)}
-                  multiline={true}
-
-                />
+                  borderRadius: 8,
+                  color: '#fff',
+                  backgroundColor: '#005000',
+                  marginBottom: 10,
+                }}
+                placeholder="Other concern..."
+                placeholderTextColor="#cccccc"
+                value={otherConcern}
+                onChangeText={(text) => setOtherConcern(text)}
+                multiline={true}
+              />         
                 <View style={styles.buttonContainer}>
                   {isLoading ? (
                     <ActivityIndicator size="large" color="#004000" />

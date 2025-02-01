@@ -166,7 +166,7 @@ export default function List() {
         <View style={styles.verticalSeparator} />
         <Text style={styles.concerns}>
           <Text>{item.concerns}</Text>
-          <Text>{item.otherConcern ? `  ${item.otherConcern}` : ''}</Text>
+          <Text>{item.otherConcern ? `   ${item.otherConcern}` : ''}</Text>
         </Text>
       </View>
     );
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#DAF7A6',
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
     marginBottom: 20,
     marginTop: 15,
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: '#d9ab0e',
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 10,
