@@ -92,17 +92,33 @@ export default function Login() {
       setErrorMessage(errorMessage);
       setErrorModalVisible(true);
 
-      // Increment login attempts and lock out user after 3 failed attempts
-      setLoginAttempts(prevAttempts => {
-        const newAttempts = prevAttempts + 1;
-        if (newAttempts >= 3) {
-          const lockDuration = 30000; // 30 seconds
-          setLockoutTime(Date.now() + lockDuration); // Lockout for 30 seconds
-          setErrorMessage('Too many failed attempts. Please try again later.');
-          setErrorModalVisible(true);
-        }
-        return newAttempts;
-      });
+      // Increment login attempts and apply progressive lockout
+setLoginAttempts(prevAttempts => {
+  const newAttempts = prevAttempts + 1;
+  let lockDuration = 0;
+
+  // Apply progressive lockout based on failed attempts
+  if (newAttempts % 5 === 0) { // Show the lockout only after every 5th failed attempt
+    if (newAttempts >= 5 && newAttempts < 10) {
+      lockDuration = 30 * 1000; // 30 seconds
+    } else if (newAttempts >= 10 && newAttempts < 15) {
+      lockDuration = 60 * 1000; // 1 minute
+    } else if (newAttempts >= 15 && newAttempts < 20) {
+      lockDuration = 300 * 1000; // 5 minutes
+    } else if (newAttempts >= 20) {
+      lockDuration = 600 * 1000; // 10 minutes
+    }
+
+    if (lockDuration > 0) {
+      setLockoutTime(Date.now() + lockDuration); // Lockout for calculated duration
+      setErrorMessage(`Too many failed attempts. Please try again in ${lockDuration / 1000} seconds.`);
+      setErrorModalVisible(true);
+    }
+  }
+
+  return newAttempts;
+});
+
     } finally {
       setIsLoading(false);
     }
@@ -269,8 +285,7 @@ const styles = StyleSheet.create({
     alignItems: 'center' 
   },
   linkText: { 
-    color: '#2c6b2f', 
-    fontWeight: 'bold' 
+    color: '#2c6b2f' 
   },
   modalContainer: { 
     flex: 1, 
@@ -279,26 +294,18 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)' 
   },
   modalContent: { 
-    backgroundColor: 'white', 
+    backgroundColor: '#fff', 
     padding: 20, 
-    borderRadius: 10, 
-    width: '80%', 
-    maxHeight: '80%' 
+    borderRadius: 8, 
+    width: 300 
   },
   modalTitle: { 
     fontSize: 18, 
     fontWeight: 'bold', 
-    marginBottom: 15, 
-    textAlign: 'center', 
-    color: '#004000' 
-  },
-  modalItem: { 
-    padding: 15, 
-    borderBottomWidth: 1, 
-    borderBottomColor: '#eee' 
+    marginBottom: 10 
   },
   modalItemText: { 
     fontSize: 16, 
-    textAlign: 'center' 
-  },
+    marginBottom: 20 
+  }
 });
