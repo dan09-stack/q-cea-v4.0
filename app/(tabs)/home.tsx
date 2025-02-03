@@ -77,20 +77,20 @@ const handleSendSMS = async () => {
         recipient: formattedPhone,
         sender_id: 'PhilSMS',  // Changed to QCEA without hyphen
         type: 'plain',
-        message: 'Hello from Q-CEA!'
+        message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
       })
     });
 
     const data = await response.json();
     console.log('SMS Response:', data);
 
-    if (response.ok) {
-      alert('SMS sent successfully!');
-    } else {
-      alert(`Failed to send SMS: ${data.message}`);
-    }
+    // if (response.ok) {
+    //   alert('SMS sent successfully!');
+    // } else {
+    //   alert(`Failed to send SMS: ${data.message}`);
+    // }
   } catch (error) {
-    console.error('SMS Error:', error);
+    console.error('SMS Error:', error); 
     alert('Error sending SMS');
   }
 };
@@ -419,7 +419,22 @@ const handleNext = async () => {
     return ;
   }
   const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
+  const studentQuery = query(
+    collection(db, 'student'),
+    where('userTicketNumber', '==', numberOnly)
+  );
   
+  const studentSnapshot = await getDocs(studentQuery);
+  if (!studentSnapshot.empty) {
+    const studentData = studentSnapshot.docs[0].data();
+    const phoneNumber = studentData.phoneNumber;
+    
+    // Set temporary userData for SMS
+    setUserData({ phoneNumber: phoneNumber });
+    
+    // Send SMS notification
+    await handleSendSMS();
+  }
   const currentUser = auth.currentUser;
   if (currentUser && userType === 'FACULTY' && ticketToSave) {
     const userRef = doc(db, 'student', currentUser.uid);
