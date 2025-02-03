@@ -7,6 +7,7 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { setDoc } from 'firebase/firestore';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function Home() {
   const [concernsList, setConcernsList] = useState<string[]>([]);
@@ -198,6 +199,11 @@ useEffect(() => {
       const userDoc = await getDoc(doc(db, 'student', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        if (!userData.isVerified) {
+          router.push('/verifyByAdmin');
+          return;
+        }
+
         setUserType(userData.userType);
         setUserData({ phoneNumber: userData.phoneNumber || '' });
         setCurrentStudent(prevState => ({
