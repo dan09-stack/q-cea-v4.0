@@ -74,7 +74,7 @@ export default function List() {
   const StudentView = () => (
     <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF FACULTY</Text>
-        <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Search faculty..."
@@ -92,7 +92,7 @@ export default function List() {
           <TouchableOpacity onPress={handleSearch}>
             <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           </TouchableOpacity>
-        </View>
+        </View> */}
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
