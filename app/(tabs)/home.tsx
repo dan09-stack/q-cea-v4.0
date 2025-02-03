@@ -10,6 +10,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 export default function Home() {
+  const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
+const [alertMessage, setAlertMessage] = useState('');
+const [alertTitle, setAlertTitle] = useState('');
   const [concernsList, setConcernsList] = useState<string[]>([]);
 
 const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
@@ -60,7 +63,33 @@ const [isInitialLoad, setIsInitialLoad] = useState(true);
 // error handling
 const [errorModalVisible, setErrorModalVisible] = useState(false);
 const [errorMessage, setErrorMessage] = useState('');
-
+const AlertModal = () => (
+  <Modal
+    animationType="fade"
+    transparent={true}
+    visible={isAlertModalVisible}
+    onRequestClose={() => setIsAlertModalVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>{alertTitle}</Text>
+        <Text style={styles.modalItemText}>{alertMessage}</Text>
+        <Button 
+          title="OK" 
+          onPress={() => {
+            setIsAlertModalVisible(false);
+            if (alertTitle === 'Faculty Unavailable') {
+              setSelectedFaculty('');
+              setSelectedConcern('');
+              setOtherConcern('');
+            }
+          }} 
+          color="#004000" 
+        />
+      </View>
+    </View>
+  </Modal>
+);
 const handleSendSMS = async () => {
   try {
     const formattedPhone = userData.phoneNumber
@@ -474,12 +503,28 @@ const handleBack = async () => {
 // Ticket management handlers
 const handleRequest = async () => {
   if (!selectedFaculty) {
-    Alert.alert('Error', 'Please select a faculty');
+    setAlertTitle('Error');
+    setAlertMessage('Please select a faculty');
+    setIsAlertModalVisible(true);
+    return;
+  }
+  
+  if (!selectedConcern && !otherConcern) {
+    showAlert( 'Please select a concern or provide details in Other field');
+    return;
+  }
+  const selectedFacultyData = facultyList.find(faculty => faculty.fullName === selectedFaculty);
+  if (selectedFacultyData?.status !== 'ONLINE') {
+    setAlertTitle('Faculty Unavailable');
+    setAlertMessage('The faculty is currently unavailable. Your request has been cancelled.');
+    setIsAlertModalVisible(true);
     return;
   }
 
   if (!selectedConcern && !otherConcern) {
-    Alert.alert('Error', 'Please select a concern or provide details in Other field');
+    setAlertTitle('Error');
+    setAlertMessage('Please select a concern or provide details in Other field');
+    setIsAlertModalVisible(true);
     return;
   }
 
@@ -812,6 +857,7 @@ const StudentView = () => (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
+    <AlertModal />
     </ImageBackground>
   );
 }
