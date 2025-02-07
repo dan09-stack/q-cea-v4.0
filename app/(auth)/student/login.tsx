@@ -7,8 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { generateCaptcha } from '../../../utils/captcha'; // We'll create this
-
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -16,11 +14,10 @@ export default function Login() {
   const [rememberPassword, setRememberPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // error handling
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
+  const [loginAttempts, setLoginAttempts] = useState(0); // Track failed attempts
+  const [lockoutTime, setLockoutTime] = useState<number | null>(null); // Track lockout time
   const router = useRouter();
   // const generateNewCaptcha = () => {
   //   const newCaptcha = generateCaptcha(6); // 6 characters long
@@ -32,7 +29,6 @@ export default function Login() {
     loadSavedCredentials();
   }, []);
 
-  // Load saved credentials from AsyncStorage
   const loadSavedCredentials = async () => {
     try {
       const savedEmail = await AsyncStorage.getItem('savedEmail');
@@ -47,9 +43,8 @@ export default function Login() {
     }
   };
 
-  // Save credentials to AsyncStorage
   const saveCredentials = async () => {
-    try { 
+    try {
       if (rememberPassword) {
         await AsyncStorage.setItem('savedEmail', email);
         await AsyncStorage.setItem('savedPassword', password);
@@ -63,25 +58,34 @@ export default function Login() {
   };
 
   const handleLogin = async (email: string, password: string) => {
-    try {
-      if (!email || !password) { 
-        setErrorMessage('Please fill in both email and password.');
-        setErrorModalVisible(true);
-        return; 
-      }
-  
-      setIsLoading(true);
-      await auth.signInWithEmailAndPassword(email, password); 
-  
-      // Call saveCredentials function after successful login
-      await saveCredentials();
-  
-      router.push('/(tabs)/home'); 
+    // Check if user is locked out
+    if (lockoutTime && Date.now() < lockoutTime) {
+      const remainingLockoutTime = Math.ceil((lockoutTime - Date.now()) / 1000);
+      setErrorMessage(`Too many failed attempts. Please wait ${remainingLockoutTime} seconds.`);
+      setErrorModalVisible(true);
+      return;
+    }
 
+    if (!email || !password) {
+      setErrorMessage('Please fill in both email and password.');
+      setErrorModalVisible(true);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+      
+      // Reset login attempts on successful login
+      setLoginAttempts(0);
+      setLockoutTime(null);
+
+      // Save credentials
+      await saveCredentials();
+
+      router.push('/(tabs)/home');
     } catch (error: any) {
-      console.log("Firebase Error:", error);
       let errorMessage = 'Incorrect password/email. Please try again.';
-  
       if (error.code === 'auth/wrong-password') {
         errorMessage = 'Incorrect password. Please try again.';
       } else if (error.code === 'auth/user-not-found') {
@@ -89,9 +93,21 @@ export default function Login() {
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address.';
       }
-  
+
       setErrorMessage(errorMessage);
       setErrorModalVisible(true);
+
+      // Increment login attempts and lock out user after 3 failed attempts
+      setLoginAttempts(prevAttempts => {
+        const newAttempts = prevAttempts + 1;
+        if (newAttempts >= 3) {
+          const lockDuration = 30000; // 30 seconds
+          setLockoutTime(Date.now() + lockDuration); // Lockout for 30 seconds
+          setErrorMessage('Too many failed attempts. Please try again later.');
+          setErrorModalVisible(true);
+        }
+        return newAttempts;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -109,19 +125,10 @@ export default function Login() {
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
         <Text style={styles.heading}>Login</Text>
         
-        {/* Email Input */}
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your email"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          <TextInput style={styles.input} placeholder="Enter your email" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
           
-          {/* Password Input */}
           <Text style={styles.label}>Password</Text>
           <View style={styles.passwordContainer}>
             <TextInput
@@ -145,24 +152,13 @@ export default function Login() {
           </View>
         </View>
 
-        {/* Remember Password and Forgot Password */}
         <View style={styles.checkboxContainer}>
-          <TouchableOpacity 
-            style={styles.checkboxWrapper} 
-            onPress={() => setRememberPassword(!rememberPassword)}
-          >
-            <Checkbox
-              value={rememberPassword}
-              onValueChange={setRememberPassword}
-              color={rememberPassword ? '#2c6b2f' : undefined}
-            />
+          <TouchableOpacity style={styles.checkboxWrapper} onPress={() => setRememberPassword(!rememberPassword)}>
+            <Checkbox value={rememberPassword} onValueChange={setRememberPassword} color={rememberPassword ? '#2c6b2f' : undefined} />
             <Text style={styles.checkboxLabel}>Remember Password</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity onPress={() => router.push({
-            pathname: '/(auth)/student/forgotPassword',
-            params: { loginEmail: email }
-          })}>
+          <TouchableOpacity onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}>
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
@@ -178,7 +174,6 @@ export default function Login() {
                         </Text>
          </TouchableOpacity>
 
-        {/* Sign Up Link */}
         <View style={styles.signupContainer}>
         <Text style={{ color: 'white' }}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
@@ -187,22 +182,12 @@ export default function Login() {
         </View>
       </View>
 
-      
-      {/* Error Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={errorModalVisible}
-        onRequestClose={() => setErrorModalVisible(false)}
-      >
+      <Modal animationType="slide" transparent={true} visible={errorModalVisible} onRequestClose={() => setErrorModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Wrong Credentials</Text>
+            <Text style={styles.modalTitle}>Error</Text>
             <Text style={styles.modalItemText}>{errorMessage}</Text>
-            <CustomButton
-              title="Close"
-              onPress={() => setErrorModalVisible(false)}
-            />
+            <CustomButton title="Close" onPress={() => setErrorModalVisible(false)} />
           </View>
         </View>
       </Modal>
@@ -255,12 +240,12 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 10,
   },
-  background: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
+  background: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    width: '100%', 
+    height: '100%' 
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 
@@ -286,125 +271,125 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     backgroundColor: '#rgba(255, 255, 255, 0.4)',
   },
-  container: {
-    width: '90%',
-    maxWidth: 500,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 50,
+  container: { 
+    width: '90%', 
+    maxWidth: 500, 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+    padding: 20, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    marginTop: 50 ,
     borderColor: 'white',
     borderWidth: 1,
   },
-  logo: {
-    width: 170,
-    height: 170,
-    top: -85,
-    position: 'absolute',
-    borderColor: 'white',
-    borderWidth: 0,
-    borderRadius: 100,
+  logo: { 
+    width: 170, 
+    height: 170, 
+    top: -85, 
+    position: 'absolute', 
+    borderColor: 'white', 
+    borderWidth: 0, 
+    borderRadius: 100 
   },
-  heading: {
-    fontSize: 28,
-    fontFamily: 'Roboto',
-    color: 'white',
-    marginTop: 75,
-    marginBottom: 10,
+  heading: { 
+    fontSize: 28, 
+    fontFamily: 'Roboto', 
+    color: 'white', 
+    marginTop: 75, 
+    marginBottom: 10 
   },
-  inputContainer: {
-    width: '100%',
-    marginBottom: 1,
+  inputContainer: { 
+    width: '100%', 
+    marginBottom: 1 
   },
-  label: {
-    fontSize: 16,
-    color: 'white',
-    marginBottom: 3,
-    fontWeight: '500',
+  label: { 
+    fontSize: 16, 
+    color: 'white', 
+    marginBottom: 3, 
+    fontWeight: '500' 
   },
-  input: {
-    width: '100%',
-    height: 45,
-    borderColor: 'white',
-    borderWidth: 2,
-    marginBottom: 15,
-    paddingLeft: 10,
-    borderRadius: 5,
+  input: { 
+    width: '100%', 
+    height: 45, 
+    borderColor: 'white', 
+    borderWidth: 2, 
+    marginBottom: 15, 
+    paddingLeft: 10, 
+    borderRadius: 5 ,
     color: 'white'
   },
-  passwordContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
+  passwordContainer: { 
+    width: '100%', 
+    flexDirection: 'row', 
+    alignItems: 'center', 
     marginBottom: 20,
-    marginTop: 1,
-    position: 'relative',
+    marginTop: 1, 
+    position: 'relative' 
     
   },
-  passwordInput: {
-    width: '100%',
-    height: 45,
-    borderColor: 'white',
-    borderWidth: 2,
-    paddingLeft: 10,
-    borderRadius: 5,
-    paddingRight: 50,
+  passwordInput: { 
+    width: '100%', 
+    height: 45, 
+    borderColor: 'white', 
+    borderWidth: 2, 
+    paddingLeft: 10, 
+    borderRadius: 5, 
+    paddingRight: 50 ,
     color: 'white'
   },
-  eyeIcon: {
-    position: 'absolute',
-    right: 12,
-    height: '100%',
-    justifyContent: 'center',
+  eyeIcon: { 
+    position: 'absolute', 
+    right: 12, 
+    height: '100%', 
+    justifyContent: 'center' 
   },
-  checkboxContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 15,
+  checkboxContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    width: '100%', 
+    marginBottom: 15 
   },
-  checkboxWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  checkboxWrapper: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
   },
-  checkboxLabel: {
-    marginLeft: 8,
-    fontSize: 15,
-    color: 'white',
+  checkboxLabel: { 
+    marginLeft: 8, 
+    fontSize: 15, 
+    color: 'white' 
   },
-  forgotPasswordText: {
-    marginBottom: 1,
-    color: 'white',
-    fontSize: 14,
+  forgotPasswordText: { 
+    marginBottom: 1, 
+    color: 'white', 
+    fontSize: 14 
   },
-  signupContainer: {
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
+  signupContainer: { 
+    marginTop: 10, 
+    flexDirection: 'row', 
+    alignItems: 'center' 
   },
   linkText: {
-    color: 'white',
+    color: '#2c6b2f',
     fontWeight: 'bold',
+  },
   
-  },
 
-  modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    maxHeight: '80%',
+  modalContent: { 
+    backgroundColor: 'white', 
+    padding: 20, 
+    borderRadius: 10, 
+    width: '80%', 
+    maxHeight: '80%' 
   },
- 
-  modalItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+  
+  modalItem: { 
+    padding: 15, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#eee' 
   },
-  modalItemText: {
-    fontSize: 16,
-    textAlign: 'center',
+  modalItemText: { 
+    fontSize: 16, 
+    textAlign: 'center' 
   },
 });

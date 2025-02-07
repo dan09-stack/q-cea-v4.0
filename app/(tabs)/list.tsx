@@ -67,7 +67,7 @@ export default function List() {
         }
       }
     });
-  
+
     return () => unsubscribe();
   }, []);
   
@@ -260,13 +260,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: '5%',
-    paddingVertical: '5%',
-  },
   listContainer: {
     backgroundColor: '#1f4e21',
     borderRadius: 10,
@@ -325,21 +318,18 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  iconContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+  button: {
+    backgroundColor: '#1f4e21',
+    padding: 15,
+    borderRadius: 10,
     position: 'absolute',
     bottom: 20,
-    width: '100%',
-    paddingHorizontal: 20,
+    alignSelf: 'center',
   },
-  iconImage: {
-    width: 50,
-    height: 35,
-    resizeMode: 'contain',
-  },
-  icon: {
-    marginHorizontal: 50,
-    marginVertical: 10,
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
