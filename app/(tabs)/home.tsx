@@ -762,7 +762,7 @@ const FacultyView = () => (
         </View>
 );
 const StudentView = () => (
-  <View style={[styles.container, {width: '100%' , maxWidth: 500}]}>
+  <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
           ) : (
