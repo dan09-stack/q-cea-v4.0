@@ -266,7 +266,6 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   profileImage: {
     width: 120,
@@ -280,7 +279,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     alignSelf: 'flex-end', 
-    padding: 40,
+    padding: 20,
     marginTop: 10,
   },
   container: {
@@ -301,8 +300,7 @@ const styles = StyleSheet.create({
   infoContainer: {
     backgroundColor: '#005000',
     width: '100%',
-    height: '50%',
-    marginBottom: 30,
+    marginBottom: 20,
     padding: 15,
     borderRadius: 10,
     maxWidth: 1000,
