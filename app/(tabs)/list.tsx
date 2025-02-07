@@ -147,7 +147,7 @@ export default function List() {
             program: doc.data().program ||''
           }))
           .filter(student => student.faculty === currentFacultyName)
-          .sort((b,a) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
+          .sort((a,b) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
         
         setStudentData(students);
       });

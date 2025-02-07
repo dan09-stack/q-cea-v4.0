@@ -182,7 +182,7 @@ export default function Login() {
         </View>
       </View>
 
-      <Modal animationType="slide" transparent={true} visible={errorModalVisible} onRequestClose={() => setErrorModalVisible(false)}>
+      <Modal animationType="fade" transparent={true} visible={errorModalVisible} onRequestClose={() => setErrorModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Error</Text>
@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   modalTitle: {
     fontSize: 20,

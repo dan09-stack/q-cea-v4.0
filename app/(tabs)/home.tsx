@@ -10,6 +10,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 export default function Home() {
+  
   const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
 const [alertMessage, setAlertMessage] = useState('');
 const [alertTitle, setAlertTitle] = useState('');
@@ -63,6 +64,21 @@ const [isInitialLoad, setIsInitialLoad] = useState(true);
 // error handling
 const [errorModalVisible, setErrorModalVisible] = useState(false);
 const [errorMessage, setErrorMessage] = useState('');
+const [nextStudentDetails, setNextStudentDetails] = useState<{fullName: string, phoneNumber: string} | null>(null);
+
+
+useEffect(() => {
+  const loadNextStudent = async () => {
+    const details = await getNextStudentDetails();
+    if (details) {
+      setNextStudentDetails(details);
+    } else {
+      setNextStudentDetails(null);
+    }
+  };
+  loadNextStudent();
+}, [currentTicketIndex, allTickets]);
+
 const AlertModal = () => (
   <Modal
     animationType="fade"
@@ -90,9 +106,27 @@ const AlertModal = () => (
     </View>
   </Modal>
 );
-const handleSendSMS = async () => {
+const getPhoneNumberForTicket = async (ticketNumber: string) => {
   try {
-    const formattedPhone = userData.phoneNumber
+    const studentQuery = query(
+      collection(db, 'student'),
+      where('userTicketNumber', '==', parseInt(ticketNumber))
+    );
+    
+    const querySnapshot = await getDocs(studentQuery);
+    if (!querySnapshot.empty) {
+      const studentData = querySnapshot.docs[0].data();
+      return studentData.phoneNumber;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching phone number:', error);
+    return null;
+  }
+};
+const handleSendSMS = async (phoneNumber: string) => {
+  try {
+    const formattedPhone = phoneNumber
       .replace(/\D/g, '')
       .replace(/^0+/, '+63');
     
@@ -105,7 +139,7 @@ const handleSendSMS = async () => {
       },
       body: JSON.stringify({
         recipient: formattedPhone,
-        sender_id: 'PhilSMS',  // Changed to QCEA without hyphen
+        sender_id: 'PhilSMS',
         type: 'plain',
         message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
       })
@@ -113,17 +147,11 @@ const handleSendSMS = async () => {
 
     const data = await response.json();
     console.log('SMS Response:', data);
-
-    // if (response.ok) {
-    //   alert('SMS sent successfully!');
-    // } else {
-    //   alert(`Failed to send SMS: ${data.message}`);
-    // }
   } catch (error) {
-    console.error('SMS Error:', error); 
-    alert('Error sending SMS');
+    console.error('SMS Error:', error);
   }
 };
+
 
 useEffect(() => {
   const fetchConcerns = async () => {
@@ -337,6 +365,8 @@ useEffect(() => {
   
   
 }, [currentTicketIndex, allTickets]);
+
+
 useEffect(() => {
   const loadSavedIndex = async () => {
     const currentUser = auth.currentUser;
@@ -432,7 +462,28 @@ useEffect(() => {
     fetchStudentData();
   }
 }, [currentTicketIndex, allTickets]);
+const getNextStudentDetails = async () => {
+  try {
+    const nextTicketNumber = allTickets[currentTicketIndex + 1];
+    if (!nextTicketNumber) return null;
 
+    const studentQuery = query(
+      collection(db, 'student'),
+      where('userTicketNumber', '==', parseInt(nextTicketNumber))
+    );
+
+    const querySnapshot = await getDocs(studentQuery);
+    if (!querySnapshot.empty) {
+      const studentData = querySnapshot.docs[0].data();
+      return {
+        fullName: studentData.fullName,
+        phoneNumber: studentData.phoneNumber
+      };
+    }
+  } catch (error) {
+    console.log('Error fetching next student details:', error);
+  }
+};
 
 // Queue control handlers
 const handleNext = async () => {
@@ -440,9 +491,22 @@ const handleNext = async () => {
     showAlert('No ticket on queue');
     return;
   }
-
   const newIndex = currentTicketIndex < allTickets.length - 1 ? currentTicketIndex + 1 : currentTicketIndex;
   
+  // Get the next ticket number (the one after newIndex)
+  const nextTicketNumber = allTickets[newIndex + 1];
+  if (nextTicketNumber) {
+    const studentQuery = query(
+      collection(db, 'student'),
+      where('userTicketNumber', '==', parseInt(nextTicketNumber))
+    );
+    
+    const querySnapshot = await getDocs(studentQuery);
+    if (!querySnapshot.empty) {
+      const studentData = querySnapshot.docs[0].data();
+      //  handleSendSMS(studentData.phoneNumber);
+    }
+  }
   if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
     showAlert('No ticket on queue');
     return;
@@ -453,6 +517,9 @@ const handleNext = async () => {
     showAlert('No ticket on queue');
     return ;
   }
+
+
+
   const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
   const studentQuery = query(
     collection(db, 'student'),
@@ -460,16 +527,7 @@ const handleNext = async () => {
   );
   
   const studentSnapshot = await getDocs(studentQuery);
-  if (!studentSnapshot.empty) {
-    const studentData = studentSnapshot.docs[0].data();
-    const phoneNumber = studentData.phoneNumber;
-    
-    // Set temporary userData for SMS
-    setUserData({ phoneNumber: phoneNumber });
-    
-    // Send SMS notification
-    await handleSendSMS();
-  }
+  
   const currentUser = auth.currentUser;
   if (currentUser && userType === 'FACULTY' && ticketToSave) {
     const userRef = doc(db, 'student', currentUser.uid);
@@ -654,6 +712,7 @@ const showAlert = (message: string) => {
   }
 };
 const FacultyView = () => (
+  
   <View style={[styles.container, {width: '100%', maxWidth: 500}]}>
           <View style={[styles.ticketBox,{width: '100%'}]}>
             <Text style={styles.queueText}>
@@ -683,11 +742,17 @@ const FacultyView = () => (
                 </Text>
               </View>
             )}
-
+          {/* {allTickets[currentTicketIndex + 1]} */}
             <Text style={[styles.boldText, {fontSize: 18}]}>Student Name</Text>
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No students in queue' : ticketStudentData.name}</Text>
             <Text style={[styles.boldText, {fontSize: 18 , marginTop: 20}]}>Concern</Text>
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No concerns to display' : ticketStudentData.concern}</Text>
+            {nextStudentDetails && (
+  <View>
+    <Text>Next Student: {nextStudentDetails.fullName}</Text>
+    <Text>Phone: {nextStudentDetails.phoneNumber}</Text>
+  </View>
+)}
 
             <View style={styles.buttonContainer}>
               <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
