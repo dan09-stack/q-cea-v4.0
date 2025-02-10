@@ -475,6 +475,33 @@ const getNextStudentDetails = async () => {
     const querySnapshot = await getDocs(studentQuery);
     if (!querySnapshot.empty) {
       const studentData = querySnapshot.docs[0].data();
+      
+      // if (Platform.OS === 'web') {
+      //   // Web notification
+      //   if (Notification.permission === 'granted') {
+      //     new Notification('Your Turn is Coming Up!', {
+      //       body: `Get ready ${studentData.fullName}! You're next in line.`,
+      //       icon: '/icon.png'
+      //     });
+      //   }
+      // } else {
+      //   // Mobile notification via Expo
+      //   if (studentData.expoPushToken) {
+      //     await fetch('https://exp.host/--/api/v2/push/send', {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({
+      //         to: studentData.expoPushToken,
+      //         title: 'Your Turn is Coming Up!',
+      //         body: `Get ready ${studentData.fullName}! You're next in line.`,
+      //         data: { type: 'queue_notification' },
+      //       }),
+      //     });
+      //   }
+      // }
+
       return {
         fullName: studentData.fullName,
         phoneNumber: studentData.phoneNumber
@@ -484,6 +511,8 @@ const getNextStudentDetails = async () => {
     console.log('Error fetching next student details:', error);
   }
 };
+
+
 
 // Queue control handlers
 const handleNext = async () => {
@@ -504,7 +533,7 @@ const handleNext = async () => {
     const querySnapshot = await getDocs(studentQuery);
     if (!querySnapshot.empty) {
       const studentData = querySnapshot.docs[0].data();
-      //  handleSendSMS(studentData.phoneNumber);
+       handleSendSMS(studentData.phoneNumber);
     }
   }
   if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {

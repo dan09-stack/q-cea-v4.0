@@ -62,7 +62,14 @@ export default function Profile(): JSX.Element {
       const storage = getStorage();
       const imageRef = ref(storage, `profilePictures/${user.uid}.jpg`);
       
-      const uploadTask = await uploadBytes(imageRef, blob);
+      const metadata = {
+        contentType: 'image/jpeg',
+        customMetadata: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      };
+      
+      const uploadTask = await uploadBytes(imageRef, blob, metadata);
       const downloadURL = await getDownloadURL(uploadTask.ref);
   
       await db.collection('student').doc(user.uid).update({
@@ -76,6 +83,7 @@ export default function Profile(): JSX.Element {
       alert('Image upload failed. Please try again.');
     }
   };
+  
   
   
   const router = useRouter();
@@ -188,9 +196,9 @@ export default function Profile(): JSX.Element {
                 ) : (
                   <MaterialIcons name="account-circle" size={120} color="white" />
                 )}
-                {/* <View style={styles.editIconContainer}>
+                <View style={styles.editIconContainer}>
                   <MaterialIcons name="edit" size={24} color="white" />
-                </View> */}
+                </View>
               </TouchableOpacity>
             </View>
             <Text style={styles.title}>{userData.fullName}</Text>
