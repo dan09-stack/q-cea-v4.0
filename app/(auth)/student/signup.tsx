@@ -15,7 +15,26 @@ export default function Signup(): JSX.Element {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [userType, setUserType] = useState<'STUDENT' | 'FACULTY'>('STUDENT');
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
+  const ErrorModal = () => (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={errorModalVisible}
+      onRequestClose={() => setErrorModalVisible(false)}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={[styles.modalTitle, { textAlign: 'center', color: '#d32f2f' }]}>Error</Text>
+          <Text style={[styles.modalItemText, { textAlign: 'center', color: '#d32f2f' }]}>{errorMessage}</Text>
+          <CustomButton title="Close" onPress={() => setErrorModalVisible(false)} color="#d32f2f" />
+        </View>
+      </View>
+    </Modal>
+  );
+  
   const courses = [
     { label: "Select Program", value: "" },
     { label: "BS Architecture", value: "ARCH" },
@@ -32,7 +51,26 @@ export default function Signup(): JSX.Element {
   };
   
   const onSignup = async () => {
+    if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
+      setErrorMessage('Please fill in all fields');
+      setErrorModalVisible(true);
+      return;
+    }
+  
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long');
+      setErrorModalVisible(true);
+      return;
+    }
+  
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email address');
+      setErrorModalVisible(true);
+      return;
+    }
+  
     setIsLoading(true);
+  
     try {
       await handleSignup({
         userType,
@@ -44,11 +82,10 @@ export default function Signup(): JSX.Element {
         password,
         router
       });
-    }
-    catch{
-      Alert.alert('Error', 'Something went wrong. Please try again.');
-    }
-     finally {
+    } catch {
+      setErrorMessage('Something went wrong. Please try again.');
+      setErrorModalVisible(true);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -60,6 +97,7 @@ export default function Signup(): JSX.Element {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
+          <ErrorModal />
           <View style={styles.blurBackground} />
           <Text style={styles.heading}>Signup</Text>
 
@@ -327,6 +365,19 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#004000',
   },
   modalContent: {
     width: '80%',

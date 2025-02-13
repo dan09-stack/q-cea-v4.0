@@ -119,6 +119,8 @@ export default function List() {
       otherConcern: string;
       ticketNumber: number;
       program: string;
+      requestDate: string;
+
     }
   
     useEffect(() => {
@@ -137,15 +139,30 @@ export default function List() {
       const studentCollectionRef = collection(db, 'student');
       const unsubscribe = onSnapshot(studentCollectionRef, (snapshot) => {
         const students: StudentItem[] = snapshot.docs
-          .map(doc => ({
+        .map(doc => {
+          const timestamp = doc.data().requestDate;
+          const formattedDate = timestamp ? new Date(timestamp.seconds * 1000).toLocaleString('en-US', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          }) : '';
+      
+          return {
             id: doc.id,
             name: doc.data().fullName || '',
             faculty: doc.data().faculty || '',
             concerns: doc.data().concern || '',
             otherConcern: doc.data().otherConcern|| '',
             ticketNumber: doc.data().userTicketNumber || 0,
-            program: doc.data().program ||''
-          }))
+            program: doc.data().program ||'',
+            requestDate: formattedDate
+            };
+          })
           .filter(student => student.faculty === currentFacultyName)
           .sort((b,a) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
         
@@ -168,6 +185,8 @@ export default function List() {
           <Text>{item.concerns}</Text>
           <Text>{item.otherConcern ? `   ${item.otherConcern}` : ''}</Text>
         </Text>
+        <View style={styles.verticalSeparator} />
+        <Text style={[styles.name, { flex: 1.5, textAlign: 'center' }]}>{item.requestDate}</Text>
       </View>
     );
   
@@ -178,6 +197,7 @@ export default function List() {
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
           <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
+          <Text style={[styles.headerText, { flex: 1.5 }]}>TIMESTAMP</Text>
         </View>
         <FlatList
           data={studentData}

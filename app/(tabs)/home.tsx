@@ -1,5 +1,5 @@
-import { View, Text, TextInput, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable, Platform } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { View, Text, TextInput, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable, Platform } from 'react-native';
+import { useEffect, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
@@ -58,6 +58,23 @@ const [isInitialLoad, setIsInitialLoad] = useState(true);
 // error handling
 const [errorModalVisible, setErrorModalVisible] = useState(false);
 const [errorMessage, setErrorMessage] = useState('');
+
+const ErrorModal = () => (
+  <Modal
+    animationType="slide"
+    transparent={true}
+    visible={errorModalVisible}
+    onRequestClose={() => setErrorModalVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <Text style={[styles.modalTitle, { textAlign : 'center', color: '#d32f2f' }]}>Error</Text>
+        <Text style={[styles.modalItemText, {textAlign : 'center'}]}>{errorMessage}</Text>
+        <Button title="Close" onPress={() => setErrorModalVisible(false)} color="#d32f2f" />
+      </View>
+    </View>
+  </Modal>
+);
 
 const handleSendSMS = async () => {
   try {
@@ -444,12 +461,22 @@ const handleBack = async () => {
 // Ticket management handlers
 const handleRequest = async () => {
   if (!selectedFaculty) {
-    Alert.alert('Error', 'Please select a faculty');
+    setErrorMessage('Please select a faculty');
+    setErrorModalVisible(true);
     return;
   }
 
   if (!selectedConcern && !otherConcern) {
-    Alert.alert('Error', 'Please select a concern or provide details in Other field');
+    setErrorMessage('Please select a concern or provide details in Other field');
+    setErrorModalVisible(true);
+    return;
+  }
+
+  // Check if selected faculty is online
+  const selectedFacultyData = facultyList.find(f => f.fullName === selectedFaculty);
+  if (selectedFacultyData?.status !== 'ONLINE') {
+    setErrorMessage('Selected faculty is currently offline. Please select another faculty.');
+    setErrorModalVisible(true);
     return;
   }
 
@@ -505,8 +532,8 @@ const handleRequest = async () => {
       }));
     }
   } catch (error) {
-    console.log('Error updating ticket number:', error);
-    Alert.alert('Error', 'Failed to create ticket request');
+    setErrorMessage('Failed to create ticket request. Please try again.');
+    setErrorModalVisible(true);
   } finally {
     setIsLoading(false);
   }
@@ -623,6 +650,7 @@ const FacultyView = () => (
 );
 const StudentView = () => (
   <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
+          <ErrorModal />
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
           ) : (

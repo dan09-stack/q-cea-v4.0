@@ -8,9 +8,12 @@ import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { generateCaptcha } from '../../../utils/captcha'; // We'll create this
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+
 
 
 export default function Login() {
+  const auth = getAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberPassword, setRememberPassword] = useState(false);
@@ -64,30 +67,73 @@ export default function Login() {
 
   const handleLogin = async (email: string, password: string) => {
     try {
-      if (!email || !password) { 
-        setErrorMessage('Please fill in both email and password.');
+      setIsLoading(true);
+  
+      // Trim email and password to remove unwanted spaces
+      email = email.trim();
+      password = password.trim();
+  
+      // Validate input fields
+      if (!email || !password) {
+        setErrorMessage('Please enter both email and password.');
         setErrorModalVisible(true);
-        return; 
+        return;
       }
   
-      setIsLoading(true);
-      await auth.signInWithEmailAndPassword(email, password); 
+      // Ensure Firebase Auth is initialized
+      if (!auth) {
+        console.error("Firebase Auth is not initialized!");
+        setErrorMessage("Internal error: Authentication service unavailable.");
+        setErrorModalVisible(true);
+        return;
+      }
   
-      // Call saveCredentials function after successful login
-      await saveCredentials();
+      // Attempt login
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
   
-      router.push('/(tabs)/home'); 
-
+      console.log("Login Success:", userCredential.user);
+  
+      // Save credentials if login succeeds
+      try {
+        await saveCredentials();
+      } catch (credError) {
+        console.error("Error saving credentials:", credError);
+      }
+  
+      // Navigate to home screen
+      if (router) {
+        router.push('/(tabs)/home');
+      } else {
+        console.error("Router is undefined. Unable to navigate.");
+      }
+  
     } catch (error: any) {
-      console.log("Firebase Error:", error);
-      let errorMessage = 'Incorrect password/email. Please try again.';
+      console.error("Full Error Object:", error);
+      console.error("Error Code:", error.code);
+      console.error("Error Message:", error.message);
   
-      if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password. Please try again.';
-      } else if (error.code === 'auth/user-not-found') {
-        errorMessage = 'User not found. Please check your email.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address.';
+      let errorMessage = "Incorrect email or password. Please try again.";
+  
+      // Handle specific Firebase errors
+      switch (error.code) {
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'User not found. Please check your email.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format. Please check your email.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your internet connection.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many failed attempts. Please try again later.';
+          break;
+        case 'auth/invalid-credential': 
+          errorMessage = 'Invalid login credentials. Please check your email / password.';
+          break;
       }
   
       setErrorMessage(errorMessage);
@@ -96,7 +142,6 @@ export default function Login() {
       setIsLoading(false);
     }
   };
-
   return (
     <ImageBackground
       source={require('../../../assets/green.jpg')}
@@ -197,11 +242,12 @@ export default function Login() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Wrong Credentials</Text>
-            <Text style={styles.modalItemText}>{errorMessage}</Text>
+            <Text style={[styles.modalTitle, { textAlign : 'center', color: '#d32f2f' }]}>Wrong Credentials</Text>
+            <Text style={[styles.modalItemText, {textAlign : 'center'}]}>{errorMessage}</Text>
             <CustomButton
               title="Close"
               onPress={() => setErrorModalVisible(false)}
+              color="#d32f2f"
             />
           </View>
         </View>
