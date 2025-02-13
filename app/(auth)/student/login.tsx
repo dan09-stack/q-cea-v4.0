@@ -153,15 +153,23 @@ export default function Login() {
         </View>
 
         <View style={styles.checkboxContainer}>
-          <TouchableOpacity style={styles.checkboxWrapper} onPress={() => setRememberPassword(!rememberPassword)}>
-            <Checkbox value={rememberPassword} onValueChange={setRememberPassword} color={rememberPassword ? '#2c6b2f' : undefined} />
-            <Text style={styles.checkboxLabel}>Remember Password</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
+  <View style={styles.checkboxWrapper}>
+    <Checkbox 
+      value={rememberPassword} 
+      onValueChange={setRememberPassword} 
+      color={rememberPassword ? '#2c6b2f' : undefined} 
+    />
+    <Text style={styles.checkboxLabel}>Remember Password</Text>
+  </View>
+
+  <TouchableOpacity 
+    style={styles.forgotPasswordWrapper} 
+    onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}
+  >
+    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+  </TouchableOpacity>
+</View>
+
 
         {/* Sign In Button */}
         <TouchableOpacity
@@ -348,34 +356,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    width: '100%', 
-    marginBottom: 15 
+    marginBottom: 15,
+    width: '100%',
+   
   },
   checkboxWrapper: { 
     flexDirection: 'row', 
-    alignItems: 'center' 
+    alignItems: 'center',
+    flexShrink: 1,
+
   },
   checkboxLabel: { 
     marginLeft: 8, 
-    fontSize: 15, 
+    fontSize: 14, 
     color: 'white' 
+  },
+  forgotPasswordWrapper: { 
+    flexDirection: 'row', 
+    alignItems: 'center',
+    marginLeft: 8, 
+
   },
   forgotPasswordText: { 
     marginBottom: 1, 
     color: 'white', 
-    fontSize: 14 
+    fontSize: 14,
+    
   },
   signupContainer: { 
     marginTop: 10, 
     flexDirection: 'row', 
-    alignItems: 'center' 
+    alignItems: 'center',
   },
   linkText: {
-    color: '#2c6b2f',
+    color: 'white',
     fontWeight: 'bold',
   },
-  
-
   modalContent: { 
     backgroundColor: 'white', 
     padding: 20, 
@@ -383,7 +399,6 @@ const styles = StyleSheet.create({
     width: '80%', 
     maxHeight: '80%' 
   },
-  
   modalItem: { 
     padding: 15, 
     borderBottomWidth: 1, 

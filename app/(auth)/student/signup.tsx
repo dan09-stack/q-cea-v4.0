@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 30,
   },
   loginContainer: {
     flexDirection: 'row',
@@ -270,11 +270,9 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     width: '100%',
-    height: '100%',
   },
   container: {
     width: '90%',
-    height: '90%',
     maxWidth: 600,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
@@ -282,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderColor: 'white',
     borderWidth: 1,
-    
+    flex: 1 
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 

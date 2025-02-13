@@ -216,7 +216,7 @@ export default function Profile(): JSX.Element {
                source={require('../../assets/id.png')} 
                style={styles.icon} 
               />
-                <Text style={styles.infoLabel}>ID Number:</Text>
+                <Text style={styles.infoLabel}>ID Number:</Text> 
                 <Text style={styles.infoValue}>{userData.idNumber}</Text>
               </View>
               <View style={styles.infoText}>
@@ -276,22 +276,22 @@ const styles = StyleSheet.create({
     borderColor: '#008000',
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    alignSelf: 'flex-end', 
-    padding: 40,
-    marginTop: 10,
+    position: 'absolute',
+    top: 20, 
+    right: 20, 
+    zIndex: 10,
   },
   container: {
     width: '100%',
     flex: 1,
     alignItems: 'center',
     padding: 5,
+    
   },
   contentContainer: {
     width: '100%',
     alignItems: 'center',
+    marginTop: 40
   },
   title: {
     fontSize: 24,
@@ -301,24 +301,25 @@ const styles = StyleSheet.create({
   infoContainer: {
     backgroundColor: '#005000',
     width: '100%',
-    height: '50%',
-    marginBottom: 30,
+    marginBottom: 15,
     padding: 15,
     borderRadius: 10,
     maxWidth: 1000,
+    
   },
   infoText: {
     fontSize: 16,
     color: '#f3f3f3',
     marginBottom: 15,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    
   },
   infoLabel: {
     fontWeight: 'bold',
     width: 120, 
     color: '#f3f3f3',
-    fontSize: 15,
+    fontSize: 15,   
   },
   icon: {
     width: 30,   
@@ -326,8 +327,8 @@ const styles = StyleSheet.create({
     marginRight: 8, 
   },
   infoValue: {
-    flex: 1,
-    color: 'white'
+    color: 'white',
+    flex: 1
   },
   modalView: {
     backgroundColor: 'white',
