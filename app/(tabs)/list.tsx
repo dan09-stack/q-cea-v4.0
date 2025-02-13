@@ -197,7 +197,7 @@ export default function List() {
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
           <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
-          <Text style={[styles.headerText, { flex: 1.5 }]}>TIMESTAMP</Text>
+          <Text style={[styles.headerText, { flex: 1.5 }]}>QUEUE TIME</Text>
         </View>
         <FlatList
           data={studentData}

@@ -132,7 +132,7 @@ export default function Login() {
           errorMessage = 'Too many failed attempts. Please try again later.';
           break;
         case 'auth/invalid-credential': 
-          errorMessage = 'Invalid login credentials. Please check your email / password.';
+          errorMessage = 'Invalid login credentials. Please check your email or password.';
           break;
       }
   
