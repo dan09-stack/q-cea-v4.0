@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   loginText: {
     color: '#2c6b2f',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
