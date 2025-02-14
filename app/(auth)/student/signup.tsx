@@ -58,7 +58,10 @@ export default function Signup(): JSX.Element {
       source={require('../../../assets/green p2.jpg')}
       style={styles.background}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>   
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsHorizontalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}>   
         <View style={styles.container}>
           <View style={styles.blurBackground} />
           <Text style={styles.heading}>Signup</Text>
@@ -161,7 +164,7 @@ export default function Signup(): JSX.Element {
           </View>
 
           <Modal
-            animationType="slide"
+            animationType="fade"
             transparent={true}
             visible={modalVisible}
             onRequestClose={() => setModalVisible(false)}
@@ -261,6 +264,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 30,
+    paddingHorizontal: 20, // Add horizontal padding
+    width: '100%', // Ensure width is constrained
   },
   loginContainer: {
     flexDirection: 'row',
@@ -272,7 +277,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   container: {
-    width: '90%',
+    width: '100%',
     maxWidth: 600,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
