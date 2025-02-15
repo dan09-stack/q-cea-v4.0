@@ -37,30 +37,35 @@ export function EditProfileModal({
         <ScrollView style={styles.modalScroll}>
           <Text style={styles.modalTitle}>Edit Profile</Text>
           
+          <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Name</Text>
           <TextInput
             style={styles.input}
             placeholder="Full Name"
             value={editableData.fullName}
             onChangeText={(text) => setEditableData({...editableData, fullName: text})}
           />
+          <Text style= {{fontSize: 16, fontWeight: 'bold' }}>ID Number</Text>
           <TextInput
             style={styles.input}
             placeholder="ID Number"
             value={editableData.idNumber}
             onChangeText={(text) => setEditableData({...editableData, idNumber: text})}
           />
+          <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Program</Text>
           <TextInput
             style={styles.input}
             placeholder="Course"
             value={editableData.program}
             onChangeText={(text) => setEditableData({...editableData, program: text})}
           />
+          <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Phone Number</Text>
           <TextInput
             style={styles.input}
             placeholder="Phone Number"
             value={editableData.phoneNumber}
             onChangeText={(text) => setEditableData({...editableData, phoneNumber: text})}
           />
+          <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Password</Text>
           <TextInput
             style={styles.input}
             placeholder="New Password (optional)"
