@@ -65,7 +65,27 @@ const [isInitialLoad, setIsInitialLoad] = useState(true);
 const [errorModalVisible, setErrorModalVisible] = useState(false);
 const [errorMessage, setErrorMessage] = useState('');
 const [nextStudentDetails, setNextStudentDetails] = useState<{fullName: string, phoneNumber: string} | null>(null);
+// useEffect(() => {
+//   const checkAndCancelAfterHours = () => {
+//     const now = new Date();
+//     const hours = now.getHours();
+    
+//     if (hours >= 18) { // 6 PM
+//       const currentUser = auth.currentUser;
+//       if (currentUser && isRequested) {
+//         handleCancel();
+//       }
+//     }
+//   };
 
+//   // Run check immediately
+//   checkAndCancelAfterHours();
+
+//   // Set up interval to check every minute
+//   const interval = setInterval(checkAndCancelAfterHours, 60000);
+
+//   return () => clearInterval(interval);
+// }, [isRequested]);
 
 useEffect(() => {
   const loadNextStudent = async () => {
@@ -777,11 +797,11 @@ const FacultyView = () => (
             <Text style={[styles.boldText, {fontSize: 18 , marginTop: 20}]}>Concern</Text>
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No concerns to display' : ticketStudentData.concern}</Text>
             {nextStudentDetails && (
-  <View>
-    <Text>Next Student: {nextStudentDetails.fullName}</Text>
-    <Text>Phone: {nextStudentDetails.phoneNumber}</Text>
-  </View>
-)}
+                <View>
+                  <Text>Next Student: {nextStudentDetails.fullName}</Text>
+                  <Text>Phone: {nextStudentDetails.phoneNumber}</Text>
+                </View>
+              )}
 
             <View style={styles.buttonContainer}>
               <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
@@ -948,7 +968,7 @@ const StudentView = () => (
         </View>
 );
   return (
-  <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
+  <ImageBackground source={require('../../assets/green.png')} style={styles.background}>
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     <AlertModal />

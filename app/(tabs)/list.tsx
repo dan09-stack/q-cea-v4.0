@@ -5,6 +5,8 @@ import { auth, db } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function List() {
+  const [displayedTicket, setDisplayedTicket] = useState(0);
+
   const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [activeSearch, setActiveSearch] = useState(false);
@@ -122,18 +124,17 @@ export default function List() {
     }
   
     useEffect(() => {
-      // Get current faculty name
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userDocRef = doc(db, 'student', currentUser.uid);
         getDoc(userDocRef).then((docSnap) => {
           if (docSnap.exists()) {
             setCurrentFacultyName(docSnap.data().fullName || '');
+            setDisplayedTicket(docSnap.data().displayedTicket || 0);
           }
         });
       }
   
-      // Listen for students with matching faculty
       const studentCollectionRef = collection(db, 'student');
       const unsubscribe = onSnapshot(studentCollectionRef, (snapshot) => {
         const students: StudentItem[] = snapshot.docs
@@ -146,14 +147,51 @@ export default function List() {
             ticketNumber: doc.data().userTicketNumber || 0,
             program: doc.data().program ||''
           }))
-          .filter(student => student.faculty === currentFacultyName)
-          .sort((a,b) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
+          .filter(student => 
+            student.faculty === currentFacultyName && 
+            student.ticketNumber > displayedTicket
+          )
+          .sort((a,b) => a.ticketNumber - b.ticketNumber);
         
         setStudentData(students);
       });
   
       return () => unsubscribe();
-    }, [currentFacultyName]);
+    }, [currentFacultyName, displayedTicket]);  useEffect(() => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userDocRef = doc(db, 'student', currentUser.uid);
+        getDoc(userDocRef).then((docSnap) => {
+          if (docSnap.exists()) {
+            setCurrentFacultyName(docSnap.data().fullName || '');
+            setDisplayedTicket(docSnap.data().displayedTicket || 0);
+          }
+        });
+      }
+  
+      const studentCollectionRef = collection(db, 'student');
+      const unsubscribe = onSnapshot(studentCollectionRef, (snapshot) => {
+        const students: StudentItem[] = snapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            name: doc.data().fullName || '',
+            faculty: doc.data().faculty || '',
+            concerns: doc.data().concern || '',
+            otherConcern: doc.data().otherConcern|| '',
+            ticketNumber: doc.data().userTicketNumber || 0,
+            program: doc.data().program ||''
+          }))
+          .filter(student => 
+            student.faculty === currentFacultyName && 
+            student.ticketNumber > displayedTicket
+          )
+          .sort((a,b) => a.ticketNumber - b.ticketNumber);
+        
+        setStudentData(students);
+      });
+  
+      return () => unsubscribe();
+    }, [currentFacultyName, displayedTicket]);
   
     const renderStudent = ({ item }: { item: StudentItem }) => (
       <View style={styles.row}>
