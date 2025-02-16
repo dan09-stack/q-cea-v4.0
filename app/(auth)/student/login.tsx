@@ -195,7 +195,7 @@ export default function Login() {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Error</Text>
             <Text style={styles.modalItemText}>{errorMessage}</Text>
-            <CustomButton title="Close" onPress={() => setErrorModalVisible(false)} />
+            <CustomButton title="Close"  onPress={() => setErrorModalVisible(false)}  />
           </View>
         </View>
       </Modal>
@@ -212,9 +212,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center'
   },
   captchaBox: {
     backgroundColor: '#f0f0f0',

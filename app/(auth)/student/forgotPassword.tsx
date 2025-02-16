@@ -183,9 +183,5 @@ const styles = StyleSheet.create({
   reset: {
       width: 100,
       height: 100,
-      top: 220,
-      position: 'absolute',
-      
-
   },
 });
