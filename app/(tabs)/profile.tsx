@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Button, TextInput, Modal, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Button, TextInput, Modal, ScrollView, TouchableOpacity, ImageBackground, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth, db, storage } from '@/firebaseConfig';
 import { signOut } from '@/services/auth';
@@ -20,6 +20,9 @@ interface UserData {
 }
 
 export default function Profile(): JSX.Element {
+  
+  
+  
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -84,6 +87,43 @@ export default function Profile(): JSX.Element {
     }
   };
   
+  const sendEmail = async () => {
+    const templateParams = {
+      to_email: userData.email,
+      to_name: userData.fullName,
+      message: `Profile Update Confirmation for ${userData.fullName}`,
+      user_email: userData.email
+    };
+  
+    const url = 'https://api.emailjs.com/api/v1.0/email/send';
+    const data = {
+          
+    service_id: 'service_asuvj8v',
+    template_id: 'template_v5us19b',
+    user_id: 'pZqYyUnGW_4TJ0uuN',
+
+      template_params: templateParams
+    };
+  
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+  
+      if (response.ok) {
+        Alert.alert("Success", "Email sent successfully!");
+      } else {
+        Alert.alert("Error", "Failed to send email");
+      }
+    } catch (error) {
+      Alert.alert("Error", "An unexpected error occurred");
+    }
+  };
+  
   
   
   const router = useRouter();
@@ -100,8 +140,9 @@ export default function Profile(): JSX.Element {
         if (user) {
           if (!user.emailVerified) {
             setIsVerified(false);
-            // Use replace instead of push for auth flows
-            router.replace('/student/login');
+            setTimeout(() => {
+              router.replace('/student/login');
+            }, 0);
           } else {
             setIsVerified(true);
             const userDoc = await db.collection('student').doc(user.uid).get();
@@ -112,7 +153,9 @@ export default function Profile(): JSX.Element {
             }
           }
         } else {
-          router.replace('/student/login');
+          setTimeout(() => {
+            router.replace('/student/login');
+          }, 0);
         }
       } finally {
         setLoading(false);
@@ -121,6 +164,7 @@ export default function Profile(): JSX.Element {
   
     fetchUserData();
   }, []);
+  
   
   const handleUpdateProfile = async () => {
     try {
@@ -237,7 +281,7 @@ export default function Profile(): JSX.Element {
               </View>
             </View>
             <CustomButton title="Edit Profile" onPress={() => setModalVisible(true)} />
-
+            <Button title="Send Email" onPress={sendEmail} />
             <EditProfileModal 
               modalVisible={modalVisible}
               setModalVisible={setModalVisible}

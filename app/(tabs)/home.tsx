@@ -407,12 +407,23 @@ useEffect(() => {
         where('faculty', '==', currentStudent.name),
         orderBy('userTicketNumber', 'asc'),
       ), 
-      (snapshot) => {
+      async (snapshot) => {  // Add async here
         const tickets = snapshot.docs
           .filter(doc => doc.data().userTicketNumber)
           .map(doc => `${String(doc.data().userTicketNumber).padStart(4, '0')}`);
         setAllTickets(tickets);
         setCurrentQueue(tickets.length);
+
+        // Add the new code here
+        if (tickets.length === 0) {
+          const currentUser = auth.currentUser;
+          if (currentUser && userType === 'FACULTY') {
+            const userRef = doc(db, 'student', currentUser.uid);
+            await updateDoc(userRef, {
+              displayedTicket: null
+            });
+          }
+        }
       }
     );
 
@@ -775,6 +786,7 @@ const FacultyView = () => (
             </Text>
             <Text style={[styles.ticketNumber, {color:'#d9ab0e', fontSize: 22}]}>STUDENT TICKET NUMBER</Text>
             {allTickets.length === 0 ? (
+              
               <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
                 <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
                   No tickets in queue
