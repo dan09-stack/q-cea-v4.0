@@ -1,7 +1,7 @@
 import { View, Text, TextInput, Button, ActivityIndicator, Alert, ImageBackground, Modal, TouchableOpacity, Pressable, Platform } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
-import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc,QuerySnapshot, query, where, orderBy, limit, increment, DocumentData } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { setDoc } from 'firebase/firestore';
@@ -566,6 +566,44 @@ const handleNext = async () => {
       const studentData = querySnapshot.docs[0].data();
        handleSendSMS(studentData.phoneNumber);
     }
+    const sendEmailToStudent = async (querySnapshot: QuerySnapshot<DocumentData>) => {
+      // if (!querySnapshot.empty) {
+      //   const studentData = querySnapshot.docs[0].data();
+        
+      //   const templateParams = {
+      //     to_email: studentData.email,
+      //     to_name: studentData.fullName,
+      //     user_email: studentData.email
+      //   };
+    
+      //   const url = 'https://api.emailjs.com/api/v1.0/email/send';
+      //   const data = {
+      //     service_id: 'service_asuvj8v',
+      //     template_id: 'template_v5us19b', 
+      //     user_id: 'pZqYyUnGW_4TJ0uuN',
+      //     template_params: templateParams
+      //   };
+    
+      //   try {
+      //     const response = await fetch(url, {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json'
+      //       },
+      //       body: JSON.stringify(data)
+      //     });
+    
+      //     if (response.ok) {
+      //       Alert.alert("Success", "Email sent successfully!");
+      //     } else {
+      //       Alert.alert("Error", "Failed to send email");
+      //     }
+      //   } catch (error) {
+      //     Alert.alert("Error", "An unexpected error occurred");
+      //   }
+      // }
+    };
+    sendEmailToStudent(querySnapshot);
   }
   if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
     showAlert('No ticket on queue');
