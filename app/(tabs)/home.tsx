@@ -10,7 +10,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 export default function Home() {
-  
+  const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
+
   const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
 const [alertMessage, setAlertMessage] = useState('');
 const [alertTitle, setAlertTitle] = useState('');
@@ -172,7 +173,13 @@ const handleSendSMS = async (phoneNumber: string) => {
   }
 };
 
-
+useEffect(() => {
+  if (currentDisplayedTicket && userTicketNumber) {
+    if (Number(currentDisplayedTicket) > Number(userTicketNumber)) {
+      setIsRatingModalVisible(true);
+    }
+  }
+}, [currentDisplayedTicket, userTicketNumber]);
 useEffect(() => {
   const fetchConcerns = async () => {
     const concernDoc = await getDoc(doc(db, 'admin', 'concern'));
@@ -1017,11 +1024,36 @@ const StudentView = () => (
           )}
         </View>
 );
+const RatingModal = () => (
+  <Modal
+    animationType="fade"
+    transparent={true}
+    visible={isRatingModalVisible}
+    onRequestClose={() => setIsRatingModalVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>Rate Your Experience</Text>
+        {/* Add your rating UI components here */}
+        <Button 
+          title="Submit" 
+          onPress={() => {
+            setIsRatingModalVisible(false);
+            handleCancel();
+            // Add logic to handle rating submission
+          }}
+          color="#004000" 
+        />
+      </View>
+    </View>
+  </Modal>
+);
   return (
   <ImageBackground source={require('../../assets/green.png')} style={styles.background}>
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     <AlertModal />
+    <RatingModal />
     </ImageBackground>
   );
 }

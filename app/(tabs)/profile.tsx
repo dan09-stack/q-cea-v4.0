@@ -169,9 +169,7 @@ export default function Profile(): JSX.Element {
 
   if (!isVerified) {
     return (
-      <View style={styles.container}>
-        <Text>Redirecting to email verification...</Text>
-      </View>
+      <ImageBackground></ImageBackground>
     );
   }
 
