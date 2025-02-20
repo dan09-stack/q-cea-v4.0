@@ -11,7 +11,8 @@ import { router } from 'expo-router';
 
 export default function Home() {
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
-
+const [rating, setRating] = useState(0);
+const [feedback, setFeedback] = useState('');
   const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
 const [alertMessage, setAlertMessage] = useState('');
 const [alertTitle, setAlertTitle] = useState('');
@@ -145,41 +146,35 @@ const getPhoneNumberForTicket = async (ticketNumber: string) => {
     return null;
   }
 };
-const handleSendSMS = async (phoneNumber: string) => {
-  try {
-    const formattedPhone = phoneNumber
-      .replace(/\D/g, '')
-      .replace(/^0+/, '+63');
-    
-    const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': 'Bearer 1308|QzHqnNuiO7xjeEzknr6f1lBKEkbhDBF08Wsrx90l'
-      },
-      body: JSON.stringify({
-        recipient: formattedPhone,
-        sender_id: 'PhilSMS',
-        type: 'plain',
-        message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
-      })
-    });
 
-    const data = await response.json();
-    console.log('SMS Response:', data);
-  } catch (error) {
-    console.error('SMS Error:', error);
-  }
+const handleSendSMS = async (phoneNumber: string) => {
+  // try {
+  //   const formattedPhone = phoneNumber
+  //     .replace(/\D/g, '')
+  //     .replace(/^0+/, '+63');
+    
+  //   const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //       'Accept': 'application/json',
+  //       'Authorization': 'Bearer 1308|QzHqnNuiO7xjeEzknr6f1lBKEkbhDBF08Wsrx90l'
+  //     },
+  //     body: JSON.stringify({
+  //       recipient: formattedPhone,
+  //       sender_id: 'PhilSMS',
+  //       type: 'plain',
+  //       message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
+  //     })
+  //   });
+
+  //   const data = await response.json();
+  //   console.log('SMS Response:', data);
+  // } catch (error) {
+  //   console.error('SMS Error:', error);
+  // }
 };
 
-useEffect(() => {
-  if (currentDisplayedTicket && userTicketNumber) {
-    if (Number(currentDisplayedTicket) > Number(userTicketNumber)) {
-      setIsRatingModalVisible(true);
-    }
-  }
-}, [currentDisplayedTicket, userTicketNumber]);
 useEffect(() => {
   const fetchConcerns = async () => {
     const concernDoc = await getDoc(doc(db, 'admin', 'concern'));
@@ -644,6 +639,7 @@ const handleNext = async () => {
   setCurrentTicketIndex(newIndex);
   await updateFacultyTicketIndex(newIndex);
 };
+
 const handleBack = async () => {
   if (currentTicketIndex === 0) return;
   const newIndex = currentTicketIndex > 0 ? currentTicketIndex - 1 : allTickets.length - 1;
@@ -749,6 +745,11 @@ const handleRequest = async () => {
     setIsLoading(false);
   }
 };
+const handleDone = () => {
+  router.push('/rating');
+};
+
+
 const handleCancel = async () => {
   try {
     const currentUser = auth.currentUser;
@@ -861,13 +862,14 @@ const FacultyView = () => (
               )}
 
             <View style={styles.buttonContainer}>
-              <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
+              {/* <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   /> */}
               <CustomButton title="NEXT" onPress={handleNext}  />
             </View>
           </View>
         </View>
 );
 const StudentView = () => (
+  
   <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
@@ -909,7 +911,11 @@ const StudentView = () => (
                   
                 </View>
                 <View style={styles.buttonContainer}>
-                  <CustomButton title="CANCEL" onPress={handleCancel} color="#c8c4c4" />
+                <CustomButton 
+                  title={userTicketNumber === currentDisplayedTicket ? "DONE" : "CANCEL"} 
+                  onPress={userTicketNumber === currentDisplayedTicket ? handleDone : handleCancel} 
+                  color="#c8c4c4" 
+                />
                 </View>
               </View>
             ) : (
@@ -1024,36 +1030,41 @@ const StudentView = () => (
           )}
         </View>
 );
-const RatingModal = () => (
-  <Modal
-    animationType="fade"
-    transparent={true}
-    visible={isRatingModalVisible}
-    onRequestClose={() => setIsRatingModalVisible(false)}
-  >
-    <View style={styles.modalContainer}>
-      <View style={styles.modalContent}>
-        <Text style={styles.modalTitle}>Rate Your Experience</Text>
-        {/* Add your rating UI components here */}
-        <Button 
-          title="Submit" 
-          onPress={() => {
-            setIsRatingModalVisible(false);
-            handleCancel();
-            // Add logic to handle rating submission
-          }}
-          color="#004000" 
-        />
-      </View>
-    </View>
-  </Modal>
-);
+useEffect(() => {
+  const updateQueueNumber = async () => {
+    if (userTicketNumber === currentDisplayedTicket) {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const userRef = doc(db, 'student', currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        const facultyName = userDoc.data()?.faculty;
+
+        if (facultyName) {
+          const facultyQuery = query(
+            collection(db, 'student'),
+            where('fullName', '==', facultyName),
+            where('userType', '==', 'FACULTY')
+          );
+
+          const facultySnapshot = await getDocs(facultyQuery);
+          if (!facultySnapshot.empty) {
+            const facultyDoc = facultySnapshot.docs[0];
+            await updateDoc(doc(db, 'student', facultyDoc.id), {
+              numOnQueue: increment(-1)
+            });
+          }
+        }
+      }
+    }
+  };
+
+  updateQueueNumber();
+}, [userTicketNumber, currentDisplayedTicket]);
   return (
   <ImageBackground source={require('../../assets/green.png')} style={styles.background}>
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     <AlertModal />
-    <RatingModal />
     </ImageBackground>
   );
 }

@@ -1,6 +1,25 @@
 import { StyleSheet } from 'react-native';
 
 export const homeStyles = StyleSheet.create({
+  ratingContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
+  feedbackInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    height: 100,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+  },
   speedText: {
     fontSize: 12,
     marginLeft: 4,
