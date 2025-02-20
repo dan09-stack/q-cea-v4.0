@@ -208,7 +208,7 @@ export default function Profile(): JSX.Element {
                source={require('../../assets/phone.png')} 
                style={styles.icon} 
               />
-                <Text style={styles.infoLabel}>Phone Number:</Text>
+                <Text style={styles.infoLabel}>Phone #:</Text>
                 <Text style={styles.infoValue}>{userData.phoneNumber}</Text>
               </View>
               <View style={styles.infoText}>
