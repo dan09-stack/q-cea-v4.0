@@ -5,12 +5,11 @@ import { auth, db } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function List() {
-  const [displayedTicket, setDisplayedTicket] = useState(0);
-
   const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [activeSearch, setActiveSearch] = useState(false);
   const [userType, setUserType] = useState('');
+  const [displayedTicket, setDisplayedTicket] = useState(0);  
   interface FacultyItem {
     id: string;
     name: string;
@@ -69,14 +68,14 @@ export default function List() {
         }
       }
     });
-
+  
     return () => unsubscribe();
   }, []);
   
   const StudentView = () => (
     <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF FACULTY</Text>
-        {/* <View style={styles.searchContainer}>
+        <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Search faculty..."
@@ -94,11 +93,11 @@ export default function List() {
           <TouchableOpacity onPress={handleSearch}>
             <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           </TouchableOpacity>
-        </View> */}
+        </View>
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
-          <Text style={[styles.headerText, { flex: 1 }]}>IN QUEUE</Text>
+          <Text style={[styles.headerText, { flex: 1 }]}>WAITING</Text>
         </View>
         <FlatList
           data={filteredFacultyData}
@@ -121,9 +120,12 @@ export default function List() {
       otherConcern: string;
       ticketNumber: number;
       program: string;
+      requestDate: string;
+
     }
   
     useEffect(() => {
+      // Get current faculty name
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userDocRef = doc(db, 'student', currentUser.uid);
@@ -138,54 +140,32 @@ export default function List() {
       const studentCollectionRef = collection(db, 'student');
       const unsubscribe = onSnapshot(studentCollectionRef, (snapshot) => {
         const students: StudentItem[] = snapshot.docs
-          .map(doc => ({
+        .map(doc => {
+          const timestamp = doc.data().requestDate;
+          const formattedDate = timestamp ? new Date(timestamp.seconds * 1000).toLocaleString('en-US', {
+            timeZone: 'Asia/Manila',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: true
+          }) : '';
+      
+          return {
             id: doc.id,
             name: doc.data().fullName || '',
             faculty: doc.data().faculty || '',
             concerns: doc.data().concern || '',
             otherConcern: doc.data().otherConcern|| '',
             ticketNumber: doc.data().userTicketNumber || 0,
-            program: doc.data().program ||''
-          }))
-          .filter(student => 
-            student.faculty === currentFacultyName && 
-            student.ticketNumber > displayedTicket
-          )
-          .sort((a,b) => a.ticketNumber - b.ticketNumber);
-        
-        setStudentData(students);
-      });
-  
-      return () => unsubscribe();
-    }, [currentFacultyName, displayedTicket]);  useEffect(() => {
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        const userDocRef = doc(db, 'student', currentUser.uid);
-        getDoc(userDocRef).then((docSnap) => {
-          if (docSnap.exists()) {
-            setCurrentFacultyName(docSnap.data().fullName || '');
-            setDisplayedTicket(docSnap.data().displayedTicket || 0);
-          }
-        });
-      }
-  
-      const studentCollectionRef = collection(db, 'student');
-      const unsubscribe = onSnapshot(studentCollectionRef, (snapshot) => {
-        const students: StudentItem[] = snapshot.docs
-          .map(doc => ({
-            id: doc.id,
-            name: doc.data().fullName || '',
-            faculty: doc.data().faculty || '',
-            concerns: doc.data().concern || '',
-            otherConcern: doc.data().otherConcern|| '',
-            ticketNumber: doc.data().userTicketNumber || 0,
-            program: doc.data().program ||''
-          }))
-          .filter(student => 
-            student.faculty === currentFacultyName && 
-            student.ticketNumber > displayedTicket
-          )
-          .sort((a,b) => a.ticketNumber - b.ticketNumber);
+            program: doc.data().program ||'',
+            requestDate: formattedDate
+            };
+          })
+          .filter(student => student.faculty === currentFacultyName)
+          .sort((b,a) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
         
         setStudentData(students);
       });
@@ -206,6 +186,8 @@ export default function List() {
           <Text>{item.concerns}</Text>
           <Text>{item.otherConcern ? `   ${item.otherConcern}` : ''}</Text>
         </Text>
+        <View style={styles.verticalSeparator} />
+        <Text style={[styles.name, { flex: 1.5, textAlign: 'center' }]}>{item.requestDate}</Text>
       </View>
     );
   
@@ -216,6 +198,7 @@ export default function List() {
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
           <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
+          <Text style={[styles.headerText, { flex: 1.5 }]}>QUEUE TIME</Text>
         </View>
         <FlatList
           data={studentData}
@@ -298,6 +281,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: '5%',
+    paddingVertical: '5%',
+  },
   listContainer: {
     backgroundColor: '#1f4e21',
     borderRadius: 10,
@@ -356,18 +346,21 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
-  button: {
-    backgroundColor: '#1f4e21',
-    padding: 15,
-    borderRadius: 10,
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     position: 'absolute',
     bottom: 20,
-    alignSelf: 'center',
+    width: '100%',
+    paddingHorizontal: 20,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  iconImage: {
+    width: 50,
+    height: 35,
+    resizeMode: 'contain',
+  },
+  icon: {
+    marginHorizontal: 50,
+    marginVertical: 10,
   },
 });

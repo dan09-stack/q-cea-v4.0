@@ -277,6 +277,10 @@ useEffect(() => {
     if (user) {
       const userDoc = await getDoc(doc(db, 'student', user.uid));
       if (userDoc.exists()) {
+        if (!user.emailVerified) {
+          router.push('/verify');
+          return;
+        }
         const userData = userDoc.data();
         if (!userData.isVerified) {
           router.push('/verifyByAdmin');
@@ -549,6 +553,7 @@ const getNextStudentDetails = async () => {
 
 // Queue control handlers
 const handleNext = async () => {
+  if (currentTicketIndex === 0) return;
   if (allTickets.length === 0) {
     showAlert('No ticket on queue');
     return;
@@ -745,9 +750,40 @@ const handleRequest = async () => {
     setIsLoading(false);
   }
 };
-const handleDone = () => {
+
+const handleDone = async () => {
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    const userRef = doc(db, 'student', currentUser.uid);
+    const userDoc = await getDoc(userRef);
+    const facultyName = userDoc.data()?.faculty;
+
+    if (facultyName) {
+      const facultyQuery = query(
+        collection(db, 'student'),
+        where('fullName', '==', facultyName),
+        where('userType', '==', 'FACULTY')
+      );
+      
+      const facultySnapshot = await getDocs(facultyQuery);
+      if (!facultySnapshot.empty) {
+        const facultyDoc = facultySnapshot.docs[0];
+        const facultyData = facultyDoc.data();
+        const currentQueueCount = facultyData.numOnQueue || 0;
+        
+
+        if (currentQueueCount > 0) {
+          await updateDoc(doc(db, 'student', facultyDoc.id), {
+            numOnQueue: currentQueueCount - 1
+          });
+        }
+      }
+    }
+  }
+  
   router.push('/rating');
 };
+
 
 
 const handleCancel = async () => {
@@ -862,7 +898,7 @@ const FacultyView = () => (
               )}
 
             <View style={styles.buttonContainer}>
-              {/* <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   /> */}
+              <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
               <CustomButton title="NEXT" onPress={handleNext}  />
             </View>
           </View>
@@ -895,9 +931,9 @@ const StudentView = () => (
                     <View>
                       <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NOW SERVING</Text>
                       <Text style={[styles.ticketInfo, {fontSize: 20}]}>
-                      {currentDisplayedTicket ? 
-                      `${currentDisplayedProgram ? `${currentDisplayedProgram}-` : ''}${String(currentDisplayedTicket).padStart(4, '0')}` 
-                      : 'No ticket displayed'}
+                      {currentDisplayedTicket && currentDisplayedProgram ? 
+                        `${currentDisplayedProgram}-${String(currentDisplayedTicket).padStart(4, '0')}` 
+                        : '-'}
                       </Text>
                     </View>
                   </View>
@@ -968,7 +1004,7 @@ const StudentView = () => (
                 </View>
 
                 <Modal
-                  animationType="slide"
+                  animationType="fade"
                   transparent={true}
                   visible={facultyModalVisible}
                   onRequestClose={() => setFacultyModalVisible(false)}
@@ -1001,7 +1037,7 @@ const StudentView = () => (
                 </Modal>
 
                 <Modal
-                  animationType="slide"
+                  animationType="fade"
                   transparent={true}
                   visible={concernModalVisible}
                   onRequestClose={() => setConcernModalVisible(false)}
@@ -1049,9 +1085,13 @@ useEffect(() => {
           const facultySnapshot = await getDocs(facultyQuery);
           if (!facultySnapshot.empty) {
             const facultyDoc = facultySnapshot.docs[0];
-            await updateDoc(doc(db, 'student', facultyDoc.id), {
-              numOnQueue: increment(-1)
-            });
+            const currentQueueCount = facultyDoc.data().numOnQueue || 0;
+            
+            if (currentQueueCount > 0) {
+              await updateDoc(doc(db, 'student', facultyDoc.id), {
+                numOnQueue: currentQueueCount - 1
+              });
+            }
           }
         }
       }
@@ -1060,6 +1100,7 @@ useEffect(() => {
 
   updateQueueNumber();
 }, [userTicketNumber, currentDisplayedTicket]);
+
   return (
   <ImageBackground source={require('../../assets/green.png')} style={styles.background}>
 

@@ -65,14 +65,7 @@ export default function Profile(): JSX.Element {
       const storage = getStorage();
       const imageRef = ref(storage, `profilePictures/${user.uid}.jpg`);
       
-      const metadata = {
-        contentType: 'image/jpeg',
-        customMetadata: {
-          'Access-Control-Allow-Origin': '*'
-        }
-      };
-      
-      const uploadTask = await uploadBytes(imageRef, blob, metadata);
+      const uploadTask = await uploadBytes(imageRef, blob);
       const downloadURL = await getDownloadURL(uploadTask.ref);
   
       await db.collection('student').doc(user.uid).update({
@@ -86,7 +79,6 @@ export default function Profile(): JSX.Element {
       alert('Image upload failed. Please try again.');
     }
   };
-  
   
   
   const router = useRouter();
@@ -221,7 +213,7 @@ export default function Profile(): JSX.Element {
                source={require('../../assets/phone.png')} 
                style={styles.icon} 
               />
-                <Text style={styles.infoLabel}>Phone Number:</Text>
+                <Text style={styles.infoLabel}>Phone #:</Text>
                 <Text style={styles.infoValue}>{userData.phoneNumber}</Text>
               </View>
               <View style={styles.infoText}>
@@ -278,6 +270,7 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignItems: 'center',
+    marginBottom: 20,
   },
   profileImage: {
     width: 120,
@@ -291,7 +284,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     alignSelf: 'flex-end', 
-    padding: 20,
+    padding: 40,
     marginTop: 10,
   },
   container: {
@@ -312,7 +305,7 @@ const styles = StyleSheet.create({
   infoContainer: {
     backgroundColor: '#005000',
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 30,
     padding: 15,
     borderRadius: 10,
     maxWidth: 1000,

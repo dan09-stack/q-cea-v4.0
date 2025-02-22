@@ -18,6 +18,8 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState('');
   const [loginAttempts, setLoginAttempts] = useState(0); // Track failed attempts
   const [lockoutTime, setLockoutTime] = useState<number | null>(null); // Track lockout time
+  const [lockoutDuration, setLockoutDuration] = useState(30000); // Initial 30 seconds
+
   const router = useRouter();
   // const generateNewCaptcha = () => {
   //   const newCaptcha = generateCaptcha(6); // 6 characters long
@@ -61,51 +63,73 @@ export default function Login() {
     // Check if user is locked out
     if (lockoutTime && Date.now() < lockoutTime) {
       const remainingLockoutTime = Math.ceil((lockoutTime - Date.now()) / 1000);
-      setErrorMessage(`Too many failed attempts. Please wait ${remainingLockoutTime} seconds.`);
+      setErrorMessage(`Account locked. Please wait ${remainingLockoutTime} seconds before trying again.`);
       setErrorModalVisible(true);
       return;
     }
-
+  
     if (!email || !password) {
       setErrorMessage('Please fill in both email and password.');
       setErrorModalVisible(true);
       return;
     }
-
+  
     setIsLoading(true);
     try {
       await auth.signInWithEmailAndPassword(email, password);
       
-      // Reset login attempts on successful login
+      // Reset everything on successful login
       setLoginAttempts(0);
       setLockoutTime(null);
-
-      // Save credentials
+      setLockoutDuration(30000); // Reset to initial 30 seconds
       await saveCredentials();
-
       router.push('/(tabs)/home');
+      
     } catch (error: any) {
-      let errorMessage = 'Incorrect password/email. Please try again.';
-      if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password. Please try again.';
-      } else if (error.code === 'auth/user-not-found') {
-        errorMessage = 'User not found. Please check your email.';
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Invalid email address.';
+      let errorMessage = 'An error occurred during login';
+      
+      switch (error.code) {
+        case 'auth/wrong-password':
+          errorMessage = 'Incorrect password. Please try again.';
+          break;
+        case 'auth/user-not-found':
+          errorMessage = 'User not found. Please check your email.';
+          break;
+        case 'auth/invalid-email':
+          errorMessage = 'Invalid email format.';
+          break;
+        case 'auth/user-disabled':
+          errorMessage = 'This account has been disabled.';
+          break;
+        case 'auth/too-many-requests':
+          errorMessage = 'Too many login attempts. Please try again later.';
+          break;
+        case 'auth/network-request-failed':
+          errorMessage = 'Network error. Please check your internet connection.';
+          break;
+        case 'auth/operation-not-allowed':
+          errorMessage = 'Login is not enabled. Please contact support.';
+          break;
       }
-
+  
       setErrorMessage(errorMessage);
       setErrorModalVisible(true);
-
-      // Increment login attempts and lock out user after 3 failed attempts
+  
+      // Handle progressive lockout
       setLoginAttempts(prevAttempts => {
         const newAttempts = prevAttempts + 1;
+        
         if (newAttempts >= 3) {
-          const lockDuration = 30000; // 30 seconds
-          setLockoutTime(Date.now() + lockDuration); // Lockout for 30 seconds
-          setErrorMessage('Too many failed attempts. Please try again later.');
+          // Double the lockout duration for each subsequent failure after 3 attempts
+          const newLockoutDuration = newAttempts === 3 ? lockoutDuration : lockoutDuration * 2;
+          setLockoutDuration(newLockoutDuration);
+          setLockoutTime(Date.now() + newLockoutDuration);
+          
+          const lockoutSeconds = newLockoutDuration / 1000;
+          setErrorMessage(`Too many failed attempts. Account locked for ${lockoutSeconds} seconds.`);
           setErrorModalVisible(true);
         }
+        
         return newAttempts;
       });
     } finally {
@@ -182,12 +206,14 @@ export default function Login() {
                         </Text>
          </TouchableOpacity>
 
-        <View style={styles.signupContainer}>
-        <Text style={{ color: 'white' }}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/student/signup')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
+         <View style={styles.signupContainer}>
+  <Text style={{ color: 'white' }}>Don't have an account? </Text>
+  <TouchableOpacity onPress={() => router.push('/student/signup')}>
+    <Text style={styles.linkText}>Sign Up</Text>
+  </TouchableOpacity>
+  
+</View>
+
       </View>
 
       <Modal animationType="fade" transparent={true} visible={errorModalVisible} onRequestClose={() => setErrorModalVisible(false)}>
@@ -204,6 +230,13 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  timerText: {
+    color: 'white',
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: 'bold'
+  },
+  
   modalContainer: {
     backgroundColor: 'white',
     padding: 20,
