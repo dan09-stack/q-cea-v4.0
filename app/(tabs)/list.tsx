@@ -57,7 +57,14 @@ export default function List() {
           numOnQueue: doc.data().numOnQueue|| 0
         }))
         .filter(user => user.userType === 'FACULTY')
-        .sort((a, b) => a.name.localeCompare(b.name));
+        .sort((a, b) => {
+          // First sort by status (ONLINE first)
+          if (a.status !== b.status) {
+            return a.status === 'ONLINE' ? -1 : 1;
+          }
+          // If status is the same, sort by name
+          return a.name.localeCompare(b.name);
+        });
       
       setFacultyData(faculty);
       const currentUser = auth.currentUser;
@@ -75,7 +82,7 @@ export default function List() {
   const StudentView = () => (
     <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF FACULTY</Text>
-        <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Search faculty..."
@@ -93,7 +100,7 @@ export default function List() {
           <TouchableOpacity onPress={handleSearch}>
             <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           </TouchableOpacity>
-        </View>
+        </View> */}
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
@@ -165,7 +172,7 @@ export default function List() {
             };
           })
           .filter(student => student.faculty === currentFacultyName)
-          .sort((b,a) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
+          .sort((a,b) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
         
         setStudentData(students);
       });
