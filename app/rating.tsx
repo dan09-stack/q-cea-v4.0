@@ -115,10 +115,12 @@ export default function RatingPage() {
         const userRef = doc(db, 'student', currentUser.uid);
         const userDoc = await getDoc(userRef);
         const facultyName = userDoc.data()?.faculty;
+        const concern = userDoc.data()?.concern;
 
         await setDoc(doc(db, 'ratings', `${currentUser.uid}_${Date.now()}`), {
           userId: currentUser.uid,
           faculty: facultyName,
+          concern: concern,
           overallRating: rating,
           feedback: feedback,
           surveyAnswers: surveyAnswers,

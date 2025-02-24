@@ -172,12 +172,12 @@ export default function Profile(): JSX.Element {
         style={styles.background}
       >
         <View style={styles.container}>
-        <TouchableOpacity 
-          style={styles.logoutButton} 
-          onPress={() => signOut(router)}
-        >
-          <MaterialIcons name="logout" size={30} color="white" />
-        </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.logoutButton} 
+            onPress={() => signOut(router)}
+          >
+            <MaterialIcons name="logout" size={30} color="white" />
+          </TouchableOpacity>
         <View style={styles.container}>
         {loading ? (
           <ActivityIndicator size="large" color="#008000" />
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   profileImage: {
     width: 120,
@@ -285,7 +285,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignSelf: 'flex-end', 
     padding: 40,
-    marginTop: 10,
   },
   container: {
     width: '100%',
@@ -300,12 +299,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   infoContainer: {
     backgroundColor: '#005000',
     width: '100%',
-    marginBottom: 30,
+    marginBottom: 20,
     padding: 15,
     borderRadius: 10,
     maxWidth: 1000,
@@ -313,7 +312,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: 16,
     color: '#f3f3f3',
-    marginBottom: 15,
+    marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },

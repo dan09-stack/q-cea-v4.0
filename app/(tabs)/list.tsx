@@ -199,7 +199,7 @@ export default function List() {
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
           <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
-          <Text style={[styles.headerText, { flex: 1.5 }]}>QUEUE TIME</Text>
+          <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
         </View>
         <FlatList
           data={studentData}
@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: '#d9ab0e',
-    fontSize: 20,
+    fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 10,
