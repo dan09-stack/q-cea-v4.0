@@ -7,19 +7,20 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { router } from 'expo-router';
 
 type SurveyAnswerKeys = 
-  | 'easyAccess'
-  | 'preventsCutting'
-  | 'preventsDistractions'
-  | 'notifications'
-  | 'adviserAvailability'
-  | 'reducesStress'
-  | 'secureSpot'
-  | 'specifyConcern'
-  | 'timeManagement'
-  | 'internetRequirement';
+| 'userExperience'
+| 'navigation'
+| 'performance'
+| 'reliability'
+| 'features'
+| 'missingFeatures'
+| 'design'
+| 'stability'
+| 'recommendation'
+| 'additionalFeedback';
 
-type SurveyAnswers = Record<SurveyAnswerKeys, number>;
-
+type SurveyAnswers = Record<Exclude<SurveyAnswerKeys, 'additionalFeedback'>, number> & {
+  additionalFeedback: string;
+};
 type SurveyQuestion = {
   key: SurveyAnswerKeys;
   text: string;
@@ -29,32 +30,78 @@ export default function RatingPage() {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({
-    easyAccess: 0,
-    preventsCutting: 0,
-    preventsDistractions: 0,
-    notifications: 0,
-    adviserAvailability: 0,
-    reducesStress: 0,
-    secureSpot: 0,
-    specifyConcern: 0,
-    timeManagement: 0,
-    internetRequirement: 0
+    userExperience: 0,
+    navigation: 0,
+    performance: 0,
+    reliability: 0,
+    features: 0,
+    missingFeatures: 0,
+    design: 0,
+    stability: 0,
+    recommendation: 0,
+    additionalFeedback: ''
   });
 
   const surveyQuestions: SurveyQuestion[] = [
-    { key: 'easyAccess', text: 'Q-CEA app is easy to access' },
-    { key: 'preventsCutting', text: 'Q-CEA avoids cutting in line' },
-    { key: 'preventsDistractions', text: 'Q-CEA helps to avoid distractions to the faculty inside the office' },
-    { key: 'notifications', text: 'Q-CEA notifies the user for his/her turn' },
-    { key: 'adviserAvailability', text: 'Q-CEA helps you to know if the adviser is available' },
-    { key: 'reducesStress', text: 'Q-CEA Helps reduce stress among faculty by providing organized queuing management' },
-    { key: 'secureSpot', text: "Q-CEA ensures to secure the user's spot in the queue with a real time monitoring" },
-    { key: 'specifyConcern', text: 'Q-CEA helps to specify the department concern of the user' },
-    { key: 'timeManagement', text: 'Q-CEA can be beneficial for time management' },
-    { key: 'internetRequirement', text: 'Q-CEA requires a stable internet connection to function effectively' }
+    { 
+      key: 'userExperience', 
+      text: 'How would you rate the overall user experience of the app?' 
+    },
+    { 
+      key: 'navigation', 
+      text: 'How easy is it to navigate the app?' 
+    },
+    { 
+      key: 'performance', 
+      text: 'How would you rate the app\'s speed and performance?' 
+    },
+    { 
+      key: 'reliability', 
+      text: 'Have you experienced any crashes or bugs?' 
+    },
+    { 
+      key: 'features', 
+      text: 'How satisfied are you with the app\'s features?' 
+    },
+    
+    { 
+      key: 'design', 
+      text: 'How would you rate the app\'s design and visual appeal?' 
+    },
+    { 
+      key: 'stability', 
+      text: 'How would you rate the app\'s reliability?' 
+    },
+    { 
+      key: 'recommendation', 
+      text: 'How likely are you to recommend this app to others?' 
+    },
+    { 
+      key: 'missingFeatures', 
+      text: 'Are there any features you think are missing or need improvement?' 
+    },
+    { 
+      key: 'additionalFeedback', 
+      text: 'Do you have any suggestions?' 
+    }
   ];
-
-  const handleSurveyRating = (question: SurveyAnswerKeys, value: number) => {
+  const YesNoButtons = ({ value, onChange }: { value: number, onChange: (val: number) => void }) => (
+    <View style={styles.ratingContainer}>
+      <TouchableOpacity
+        onPress={() => onChange(5)}
+        style={[styles.yesNoButton, value === 5 && styles.selectedButton]}
+      >
+        <Text style={value === 5 ? styles.selectedButtonText : styles.buttonText}>Yes</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => onChange(1)}
+        style={[styles.yesNoButton, value === 1 && styles.selectedButton]}
+      >
+        <Text style={value === 1 ? styles.selectedButtonText : styles.buttonText}>No</Text>
+      </TouchableOpacity>
+    </View>
+  );
+  const handleSurveyRating = (question: SurveyAnswerKeys, value: number | string) => {
     setSurveyAnswers(prev => ({
       ...prev,
       [question]: value
@@ -114,19 +161,35 @@ export default function RatingPage() {
 
       <ScrollView style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.modalTitle}>Overall Experience</Text>
+        <Text style={styles.modalTitle}>Overall Experience</Text>
           <RatingStars value={rating} onChange={setRating} />
-          
+
           <Text style={styles.sectionTitle}>Please rate the following aspects:</Text>
           {surveyQuestions.map((question) => (
-            <View key={question.key} style={styles.questionContainer}>
-              <Text style={styles.questionText}>{question.text}</Text>
-              <RatingStars 
-                value={surveyAnswers[question.key]} 
-                onChange={(value) => handleSurveyRating(question.key, value)} 
-              />
-            </View>
-          ))}
+  <View key={question.key} style={styles.questionContainer}>
+    <Text style={styles.questionText}>{question.text}</Text>
+    {question.key === 'additionalFeedback' ? (
+      <TextInput
+        style={styles.feedbackInput}
+        placeholder="Type your feedback here..."
+        value={surveyAnswers[question.key].toString()}
+        onChangeText={(text) => handleSurveyRating(question.key, text)}
+        multiline
+      />
+    ) : (question.key === 'reliability' || question.key === 'missingFeatures') ? (
+      <YesNoButtons 
+        value={surveyAnswers[question.key]} 
+        onChange={(value) => handleSurveyRating(question.key, value)} 
+      />
+    ) : (
+      <RatingStars 
+        value={surveyAnswers[question.key]} 
+        onChange={(value) => handleSurveyRating(question.key, value)} 
+      />
+    )}
+  </View>
+))}
+
 
           <TextInput
             style={styles.feedbackInput}
@@ -149,6 +212,26 @@ export default function RatingPage() {
 }
 
 const styles = StyleSheet.create({
+  yesNoButton: {
+    padding: 10,
+    marginHorizontal: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#d9ab0e',
+    width: 80,
+    alignItems: 'center',
+  },
+  selectedButton: {
+    backgroundColor: '#d9ab0e',
+  },
+  buttonText: {
+    color: '#d9ab0e',
+    fontSize: 16,
+  },
+  selectedButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
     background: {
         flex: 1,
         width: '100%',

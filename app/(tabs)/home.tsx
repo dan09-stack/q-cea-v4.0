@@ -174,7 +174,33 @@ const handleSendSMS = async (phoneNumber: string) => {
     console.error('SMS Error:', error);
   }
 };
+const handleSendFacultySMS = async (phoneNumber: string) => {
+  try {
+    const formattedPhone = phoneNumber
+      .replace(/\D/g, '')
+      .replace(/^0+/, '+63');
+    
+    const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer 1308|QzHqnNuiO7xjeEzknr6f1lBKEkbhDBF08Wsrx90l'
+      },
+      body: JSON.stringify({
+        recipient: formattedPhone,
+        sender_id: 'PhilSMS',
+        type: 'plain',
+        message: 'A student is waiting for you! Please open the QCEA Web App to accept and see their concern. Thank you!',
+      })
+    });
 
+    const data = await response.json();
+    console.log('SMS Response:', data);
+  } catch (error) {
+    console.error('SMS Error:', error);
+  }
+};
 useEffect(() => {
   const fetchConcerns = async () => {
     const concernDoc = await getDoc(doc(db, 'admin', 'concern'));
@@ -554,7 +580,9 @@ const getNextStudentDetails = async () => {
 // Queue control handlers
 const handleNext = async () => {
   if (allTickets.length === 0) {
-    showAlert('No ticket on queue');
+    setAlertTitle('Queue Status');
+    setAlertMessage('No ticket on queue');
+    setIsAlertModalVisible(true);
     return;
   }
   const newIndex = currentTicketIndex < allTickets.length - 1 ? currentTicketIndex + 1 : currentTicketIndex;
@@ -612,13 +640,17 @@ const handleNext = async () => {
     sendEmailToStudent(querySnapshot);
   }
   if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
-    showAlert('No ticket on queue');
+    setAlertTitle('Queue Status');
+setAlertMessage('No ticket on queue');
+setIsAlertModalVisible(true);
     return;
   }
 
   const ticketToSave = allTickets[newIndex];
   if (!ticketToSave) {
-    showAlert('No ticket on queue');
+    setAlertTitle('Queue Status');
+setAlertMessage('No ticket on queue');
+setIsAlertModalVisible(true);
     return ;
   }
 
@@ -707,6 +739,49 @@ const handleRequest = async () => {
     const facultySnapshot = await getDocs(facultyQuery);
     if (!facultySnapshot.empty) {
       const facultyDoc = facultySnapshot.docs[0];
+      const facultyData = facultyDoc.data();
+      
+      // If queue is empty (numOnQueue is 0), send SMS to faculty
+      if (facultyData.numOnQueue === 0 || facultyData.numOnQueue === 1 ) {
+        // await handleSendFacultySMS(facultyData.phoneNumber);
+        const handleSendfacutyEmail = async (querySnapshot: QuerySnapshot<DocumentData>) => {
+          if (!querySnapshot.empty) {
+            
+            const templateParams = {
+              to_email: facultyData.email,
+              to_name: facultyData.fullName,
+              user_email: facultyData.email
+            };
+        
+            const url = 'https://api.emailjs.com/api/v1.0/email/send';
+            const data = {
+              service_id: 'service_asuvj8v',
+              template_id: 'template_jbfj8p6', 
+              user_id: 'pZqYyUnGW_4TJ0uuN',
+              template_params: templateParams
+            };
+        
+            try {
+              const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+              });
+        
+              if (response.ok) {
+                Alert.alert("Success", "Email sent successfully!");
+              } else {
+                Alert.alert("Error", "Failed to send email");
+              }
+            } catch (error) {
+              Alert.alert("Error", "An unexpected error occurred");
+            }
+          }
+        };
+        await handleSendfacutyEmail(facultySnapshot);
+      }
       await updateDoc(doc(db, 'student', facultyDoc.id), {
         numOnQueue: increment(1)
       });
@@ -881,7 +956,7 @@ const FacultyView = () => (
             ) : (
               <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
                 <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
-                  Ticket Number has been cancelled by student. Please click next to view available tickets
+                  Ticket Number has been cancelled by student. 
                 </Text>
               </View>
             )}
@@ -898,7 +973,7 @@ const FacultyView = () => (
               )}
 
             <View style={styles.buttonContainer}>
-              {/* <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   /> */}
+              { <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   /> }
               <CustomButton title="NEXT" onPress={handleNext}  />
             </View>
           </View>
@@ -941,6 +1016,8 @@ const StudentView = () => (
                   <Text style={[styles.waitText,{ marginTop: 30 , marginBottom: -10 , fontSize: 23}]}>
                     {userTicketNumber === currentDisplayedTicket
                       ? "YOUR TURN"
+                      : userTicketNumber < currentDisplayedTicket
+                      ? ""
                       : "PLEASE WAIT"
                     }
                   </Text>
@@ -948,9 +1025,9 @@ const StudentView = () => (
                 </View>
                 <View style={styles.buttonContainer}>
                 <CustomButton 
-                  title={userTicketNumber === currentDisplayedTicket ? "DONE" : "CANCEL"} 
-                  onPress={userTicketNumber === currentDisplayedTicket ? handleDone : handleCancel} 
-                  color="#c8c4c4" 
+                  title={userTicketNumber <= currentDisplayedTicket ? "DONE" : "CANCEL"} 
+                  onPress={userTicketNumber <= currentDisplayedTicket ? handleDone : handleCancel} 
+                  color={userTicketNumber <= currentDisplayedTicket ? "#004000" : "#c8c4c4"} 
                 />
                 </View>
               </View>

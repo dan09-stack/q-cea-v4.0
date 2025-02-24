@@ -1,6 +1,6 @@
 import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -10,20 +10,24 @@ export default function List() {
   const [activeSearch, setActiveSearch] = useState(false);
   const [userType, setUserType] = useState('');
   const [displayedTicket, setDisplayedTicket] = useState(0);  
+
   interface FacultyItem {
     id: string;
     name: string;
     status: 'ONLINE' | 'OFFLINE';
     numOnQueue: number;
   }
+
   const handleSearch = () => {
     setActiveSearch(true);
   };
+
   const NoResults = () => (
     <View style={styles.noResultsContainer}>
       <Text style={styles.noResultsText}>No faculty members found</Text>
     </View>
   );
+
   const filteredFacultyData = !activeSearch 
     ? facultyData 
     : facultyData.filter(faculty =>
@@ -49,20 +53,28 @@ export default function List() {
     const facultyCollectionRef = collection(db, 'student');
     const unsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
       const faculty: FacultyItem[] = snapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          name: doc.data().fullName || '',
-          status: doc.data().status || 'OFFLINE',
-          userType: doc.data().userType || '',
-          numOnQueue: doc.data().numOnQueue|| 0
-        }))
+        .map(doc => {
+          let queueCount = doc.data().numOnQueue || 0;
+          
+          if (queueCount < 0) {
+            const docRef = doc.ref;
+            updateDoc(docRef, { numOnQueue: 0 });
+            queueCount = 0;
+        }
+
+          return {
+            id: doc.id,
+            name: doc.data().fullName || '',
+            status: doc.data().status || 'OFFLINE',
+            userType: doc.data().userType || '',
+            numOnQueue: queueCount
+          };
+        })
         .filter(user => user.userType === 'FACULTY')
         .sort((a, b) => {
-          // First sort by status (ONLINE first)
           if (a.status !== b.status) {
             return a.status === 'ONLINE' ? -1 : 1;
           }
-          // If status is the same, sort by name
           return a.name.localeCompare(b.name);
         });
       
@@ -82,25 +94,6 @@ export default function List() {
   const StudentView = () => (
     <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF FACULTY</Text>
-        {/* <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search faculty..."
-              placeholderTextColor="#999"
-              value={inputValue}
-              onChangeText={(text) => {
-                setInputValue(text);
-                if (text === '') {
-                  setActiveSearch(false);
-                }
-              }}
-              onSubmitEditing={handleSearch}
-              returnKeyType="search"
-            />
-          <TouchableOpacity onPress={handleSearch}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-          </TouchableOpacity>
-        </View> */}
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
@@ -115,6 +108,7 @@ export default function List() {
         />
       </View>
   )
+
   const FacultyView = () => {
     const [currentFacultyName, setCurrentFacultyName] = useState('');
     const [studentData, setStudentData] = useState<StudentItem[]>([]);
@@ -128,11 +122,9 @@ export default function List() {
       ticketNumber: number;
       program: string;
       requestDate: string;
-
     }
   
     useEffect(() => {
-      // Get current faculty name
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userDocRef = doc(db, 'student', currentUser.uid);
@@ -169,13 +161,13 @@ export default function List() {
             ticketNumber: doc.data().userTicketNumber || 0,
             program: doc.data().program ||'',
             requestDate: formattedDate
-            };
-          })
-          .filter(student => 
-            student.faculty === currentFacultyName && 
-            student.ticketNumber >= displayedTicket
-          )
-          .sort((a,b) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
+          };
+        })
+        .filter(student => 
+          student.faculty === currentFacultyName && 
+          student.ticketNumber >= displayedTicket
+        )
+        .sort((a,b) => a.ticketNumber - b.ticketNumber);
         
         setStudentData(students);
       });
@@ -186,7 +178,6 @@ export default function List() {
     const renderStudent = ({ item }: { item: StudentItem }) => (
       <View style={styles.row}>
         <Text style={[styles.name, { flex: 1 }]}>
-          {/* {item.program}- */}
           {String(item.ticketNumber).padStart(4, '0')}
         </Text>
         <View style={styles.verticalSeparator} />
@@ -224,6 +215,7 @@ export default function List() {
       </View>
     );
   };
+
   return (
     <ImageBackground
       source={require('../../assets/green p2.jpg')}
@@ -254,7 +246,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#f3f3f3',
     textAlign: 'center',
-    
   },
   noResultsContainer: {
     flex: 1,
@@ -344,14 +335,12 @@ const styles = StyleSheet.create({
     color: '#f3f3f3',
     textAlign: 'center',
     alignSelf: 'center' 
-
   },
   status: {
     flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
     textAlign: 'center',
-    
   },
   list: {
     flex: 1,
