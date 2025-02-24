@@ -740,9 +740,9 @@ const handleRequest = async () => {
     if (!facultySnapshot.empty) {
       const facultyDoc = facultySnapshot.docs[0];
       const facultyData = facultyDoc.data();
-      
+      //facultyData.numOnQueue === 1 
       // If queue is empty (numOnQueue is 0), send SMS to faculty
-      if (facultyData.numOnQueue === 0 || facultyData.numOnQueue === 1 ) {
+      if (facultyData.numOnQueue === 0  ) {
         // await handleSendFacultySMS(facultyData.phoneNumber);
         const handleSendfacutyEmail = async (querySnapshot: QuerySnapshot<DocumentData>) => {
           if (!querySnapshot.empty) {
@@ -965,12 +965,12 @@ const FacultyView = () => (
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No students in queue' : ticketStudentData.name}</Text>
             <Text style={[styles.boldText, {fontSize: 18 , marginTop: 20}]}>Concern</Text>
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No concerns to display' : ticketStudentData.concern}</Text>
-            {nextStudentDetails && (
+            {/* {nextStudentDetails && (
                 <View>
                   <Text>Next Student: {nextStudentDetails.fullName}</Text>
                   <Text>Phone: {nextStudentDetails.phoneNumber}</Text>
                 </View>
-              )}
+              )} */}
 
             <View style={styles.buttonContainer}>
               { <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   /> }
@@ -1025,9 +1025,9 @@ const StudentView = () => (
                 </View>
                 <View style={styles.buttonContainer}>
                 <CustomButton 
-                  title={userTicketNumber <= currentDisplayedTicket ? "DONE" : "CANCEL"} 
-                  onPress={userTicketNumber <= currentDisplayedTicket ? handleDone : handleCancel} 
-                  color={userTicketNumber <= currentDisplayedTicket ? "#004000" : "#c8c4c4"} 
+                  title={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "DONE" : "CANCEL"} 
+                  onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleDone : handleCancel} 
+                  color={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "#004000" : "#c8c4c4"} 
                 />
                 </View>
               </View>

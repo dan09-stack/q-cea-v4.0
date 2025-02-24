@@ -1,10 +1,12 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, ImageBackground, Image } from 'react-native';
 import React, { useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { auth, db } from '@/firebaseConfig';
 import { doc, getDoc, updateDoc, setDoc, increment, collection, query, where, getDocs } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { router } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 type SurveyAnswerKeys = 
 | 'userExperience'
@@ -16,11 +18,14 @@ type SurveyAnswerKeys =
 | 'design'
 | 'stability'
 | 'recommendation'
+| 'bugDescription'
 | 'additionalFeedback';
 
-type SurveyAnswers = Record<Exclude<SurveyAnswerKeys, 'additionalFeedback'>, number> & {
+type SurveyAnswers = Record<Exclude<SurveyAnswerKeys, 'additionalFeedback' | 'bugDescription'>, number> & {
   additionalFeedback: string;
+  bugDescription: string;
 };
+
 type SurveyQuestion = {
   key: SurveyAnswerKeys;
   text: string;
@@ -29,6 +34,7 @@ type SurveyQuestion = {
 export default function RatingPage() {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [image, setImage] = useState<string | null>(null);
   const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({
     userExperience: 0,
     navigation: 0,
@@ -39,6 +45,7 @@ export default function RatingPage() {
     design: 0,
     stability: 0,
     recommendation: 0,
+    bugDescription: '',
     additionalFeedback: ''
   });
 
@@ -56,14 +63,9 @@ export default function RatingPage() {
       text: 'How would you rate the app\'s speed and performance?' 
     },
     { 
-      key: 'reliability', 
-      text: 'Have you experienced any crashes or bugs?' 
-    },
-    { 
       key: 'features', 
       text: 'How satisfied are you with the app\'s features?' 
     },
-    
     { 
       key: 'design', 
       text: 'How would you rate the app\'s design and visual appeal?' 
@@ -83,8 +85,17 @@ export default function RatingPage() {
     { 
       key: 'additionalFeedback', 
       text: 'Do you have any suggestions?' 
-    }
+    },
+    { 
+      key: 'reliability', 
+      text: 'Have you experienced any crashes or bugs?' 
+    },
+    { 
+      key: 'bugDescription', 
+      text: 'Please describe the bugs you encountered:' 
+    },
   ];
+
   const YesNoButtons = ({ value, onChange }: { value: number, onChange: (val: number) => void }) => (
     <View style={styles.ratingContainer}>
       <TouchableOpacity
@@ -101,11 +112,63 @@ export default function RatingPage() {
       </TouchableOpacity>
     </View>
   );
+
   const handleSurveyRating = (question: SurveyAnswerKeys, value: number | string) => {
     setSurveyAnswers(prev => ({
       ...prev,
       [question]: value
     }));
+  };
+
+  const pickImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      alert('Permission to access camera roll is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const takePicture = async () => {
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      alert('Permission to access camera is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadImage = async (uri: string) => {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    
+    const storage = getStorage();
+    const filename = `bugs/${auth.currentUser?.uid}_${Date.now()}`;
+    const storageRef = ref(storage, filename);
+    
+    await uploadBytes(storageRef, blob);
+    return await getDownloadURL(storageRef);
   };
 
   const handleSubmitRating = async () => {
@@ -116,6 +179,11 @@ export default function RatingPage() {
         const userDoc = await getDoc(userRef);
         const facultyName = userDoc.data()?.faculty;
         const concern = userDoc.data()?.concern;
+        
+        let imageUrl = null;
+        if (image) {
+          imageUrl = await uploadImage(image);
+        }
 
         await setDoc(doc(db, 'ratings', `${currentUser.uid}_${Date.now()}`), {
           userId: currentUser.uid,
@@ -124,6 +192,7 @@ export default function RatingPage() {
           overallRating: rating,
           feedback: feedback,
           surveyAnswers: surveyAnswers,
+          bugScreenshot: imageUrl,
           timestamp: new Date()
         });
 
@@ -133,7 +202,6 @@ export default function RatingPage() {
           faculty: null,
         });
 
-       
         router.replace('/(tabs)/home');
       }
     } catch (error) {
@@ -160,38 +228,69 @@ export default function RatingPage() {
 
   return (
     <View style={styles.background}>
-
       <ScrollView style={styles.container}>
         <View style={styles.content}>
-        <Text style={styles.modalTitle}>Overall Experience</Text>
+          <Text style={styles.modalTitle}>Overall Experience</Text>
           <RatingStars value={rating} onChange={setRating} />
 
           <Text style={styles.sectionTitle}>Please rate the following aspects:</Text>
-          {surveyQuestions.map((question) => (
-  <View key={question.key} style={styles.questionContainer}>
-    <Text style={styles.questionText}>{question.text}</Text>
-    {question.key === 'additionalFeedback' ? (
-      <TextInput
-        style={styles.feedbackInput}
-        placeholder="Type your feedback here..."
-        value={surveyAnswers[question.key].toString()}
-        onChangeText={(text) => handleSurveyRating(question.key, text)}
-        multiline
-      />
-    ) : (question.key === 'reliability' || question.key === 'missingFeatures') ? (
-      <YesNoButtons 
-        value={surveyAnswers[question.key]} 
-        onChange={(value) => handleSurveyRating(question.key, value)} 
-      />
-    ) : (
-      <RatingStars 
-        value={surveyAnswers[question.key]} 
-        onChange={(value) => handleSurveyRating(question.key, value)} 
-      />
-    )}
-  </View>
-))}
+          {surveyQuestions.map((question) => {
+            // Only show bug description field if user said Yes to experiencing bugs
+            if (question.key === 'bugDescription' && surveyAnswers.reliability !== 5) {
+              return null;
+            }
+            
+            return (
+              <View key={question.key} style={styles.questionContainer}>
+                <Text style={styles.questionText}>{question.text}</Text>
+                {question.key === 'additionalFeedback' || question.key === 'bugDescription' ? (
+                  <TextInput
+                    style={styles.feedbackInput}
+                    placeholder={`Type your ${question.key === 'bugDescription' ? 'bug description' : 'feedback'} here...`}
+                    value={surveyAnswers[question.key].toString()}
+                    onChangeText={(text) => handleSurveyRating(question.key, text)}
+                    multiline
+                  />
+                ) : (question.key === 'reliability' || question.key === 'missingFeatures') ? (
+                  <YesNoButtons 
+                    value={surveyAnswers[question.key]} 
+                    onChange={(value) => handleSurveyRating(question.key, value)} 
+                  />
+                ) : (
+                  <RatingStars 
+                    value={surveyAnswers[question.key]} 
+                    onChange={(value) => handleSurveyRating(question.key, value)} 
+                  />
+                )}
+              </View>
+            );
+          })}
 
+          {/* Image uploader section - only show if reliability is "Yes" (5) */}
+          {surveyAnswers.reliability === 5 && (
+            <View style={styles.imageSection}>
+              <Text style={styles.questionText}>Upload a screenshot of the bug (optional):</Text>
+              <View style={styles.imageButtonContainer}>
+                <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
+                  <MaterialIcons name="photo-library" size={24} color="#004000" />
+                  <Text style={styles.imageButtonText}>Choose from gallery</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.imageButton} onPress={takePicture}>
+                  <MaterialIcons name="camera-alt" size={24} color="#004000" />
+                  <Text style={styles.imageButtonText}>Take a photo</Text>
+                </TouchableOpacity>
+              </View>
+              
+              {image && (
+                <View style={styles.imagePreviewContainer}>
+                  <Image source={{ uri: image }} style={styles.imagePreview} />
+                  <TouchableOpacity style={styles.removeImageButton} onPress={() => setImage(null)}>
+                    <MaterialIcons name="close" size={24} color="white" />
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
 
           <TextInput
             style={styles.feedbackInput}
@@ -234,11 +333,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
   },
-    background: {
-        flex: 1,
-        width: '100%',
-        backgroundColor: '#ffffff',
-      },
+  background: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#ffffff',
+  },
   container: {
     flex: 1,
   },
@@ -306,5 +405,61 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginVertical: 20,
     alignItems: 'center',
-  }
+  },
+  imageSection: {
+    marginVertical: 15,
+    padding: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  
+  imageButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 10,
+  },
+  imageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(217, 171, 14, 0.1)',
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d9ab0e',
+  },
+  imageButtonText: {
+    marginLeft: 8,
+    color: '#004000',
+    fontSize: 14,
+  },
+  imagePreviewContainer: {
+    alignItems: 'center',
+    marginTop: 15,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    resizeMode: 'contain',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
