@@ -148,31 +148,31 @@ const getPhoneNumberForTicket = async (ticketNumber: string) => {
 };
 
 const handleSendSMS = async (phoneNumber: string) => {
-  // try {
-  //   const formattedPhone = phoneNumber
-  //     .replace(/\D/g, '')
-  //     .replace(/^0+/, '+63');
+  try {
+    const formattedPhone = phoneNumber
+      .replace(/\D/g, '')
+      .replace(/^0+/, '+63');
     
-  //   const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
-  //     method: 'POST',
-  //     headers: {
-  //       'Content-Type': 'application/json',
-  //       'Accept': 'application/json',
-  //       'Authorization': 'Bearer 1308|QzHqnNuiO7xjeEzknr6f1lBKEkbhDBF08Wsrx90l'
-  //     },
-  //     body: JSON.stringify({
-  //       recipient: formattedPhone,
-  //       sender_id: 'PhilSMS',
-  //       type: 'plain',
-  //       message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
-  //     })
-  //   });
+    const response = await fetch('https://app.philsms.com/api/v3/sms/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer 1308|QzHqnNuiO7xjeEzknr6f1lBKEkbhDBF08Wsrx90l'
+      },
+      body: JSON.stringify({
+        recipient: formattedPhone,
+        sender_id: 'PhilSMS',
+        type: 'plain',
+        message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
+      })
+    });
 
-  //   const data = await response.json();
-  //   console.log('SMS Response:', data);
-  // } catch (error) {
-  //   console.error('SMS Error:', error);
-  // }
+    const data = await response.json();
+    console.log('SMS Response:', data);
+  } catch (error) {
+    console.error('SMS Error:', error);
+  }
 };
 
 useEffect(() => {
@@ -553,7 +553,6 @@ const getNextStudentDetails = async () => {
 
 // Queue control handlers
 const handleNext = async () => {
-  if (currentTicketIndex === 0) return;
   if (allTickets.length === 0) {
     showAlert('No ticket on queue');
     return;
@@ -574,41 +573,41 @@ const handleNext = async () => {
        handleSendSMS(studentData.phoneNumber);
     }
     const sendEmailToStudent = async (querySnapshot: QuerySnapshot<DocumentData>) => {
-      // if (!querySnapshot.empty) {
-      //   const studentData = querySnapshot.docs[0].data();
+      if (!querySnapshot.empty) {
+        const studentData = querySnapshot.docs[0].data();
         
-      //   const templateParams = {
-      //     to_email: studentData.email,
-      //     to_name: studentData.fullName,
-      //     user_email: studentData.email
-      //   };
+        const templateParams = {
+          to_email: studentData.email,
+          to_name: studentData.fullName,
+          user_email: studentData.email
+        };
     
-      //   const url = 'https://api.emailjs.com/api/v1.0/email/send';
-      //   const data = {
-      //     service_id: 'service_asuvj8v',
-      //     template_id: 'template_v5us19b', 
-      //     user_id: 'pZqYyUnGW_4TJ0uuN',
-      //     template_params: templateParams
-      //   };
+        const url = 'https://api.emailjs.com/api/v1.0/email/send';
+        const data = {
+          service_id: 'service_asuvj8v',
+          template_id: 'template_v5us19b', 
+          user_id: 'pZqYyUnGW_4TJ0uuN',
+          template_params: templateParams
+        };
     
-      //   try {
-      //     const response = await fetch(url, {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json'
-      //       },
-      //       body: JSON.stringify(data)
-      //     });
+        try {
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+          });
     
-      //     if (response.ok) {
-      //       Alert.alert("Success", "Email sent successfully!");
-      //     } else {
-      //       Alert.alert("Error", "Failed to send email");
-      //     }
-      //   } catch (error) {
-      //     Alert.alert("Error", "An unexpected error occurred");
-      //   }
-      // }
+          if (response.ok) {
+            Alert.alert("Success", "Email sent successfully!");
+          } else {
+            Alert.alert("Error", "Failed to send email");
+          }
+        } catch (error) {
+          Alert.alert("Error", "An unexpected error occurred");
+        }
+      }
     };
     sendEmailToStudent(querySnapshot);
   }
@@ -776,6 +775,7 @@ const handleDone = async () => {
           await updateDoc(doc(db, 'student', facultyDoc.id), {
             numOnQueue: currentQueueCount - 1
           });
+          
         }
       }
     }
@@ -898,7 +898,7 @@ const FacultyView = () => (
               )}
 
             <View style={styles.buttonContainer}>
-              <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
+              {/* <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   /> */}
               <CustomButton title="NEXT" onPress={handleNext}  />
             </View>
           </View>

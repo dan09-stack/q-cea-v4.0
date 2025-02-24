@@ -116,8 +116,8 @@ export default function List() {
       </View>
   )
   const FacultyView = () => {
-    const [studentData, setStudentData] = useState<StudentItem[]>([]);
     const [currentFacultyName, setCurrentFacultyName] = useState('');
+    const [studentData, setStudentData] = useState<StudentItem[]>([]);
   
     interface StudentItem {
       id: string;
@@ -171,7 +171,10 @@ export default function List() {
             requestDate: formattedDate
             };
           })
-          .filter(student => student.faculty === currentFacultyName)
+          .filter(student => 
+            student.faculty === currentFacultyName && 
+            student.ticketNumber >= displayedTicket
+          )
           .sort((a,b) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
         
         setStudentData(students);
@@ -203,7 +206,7 @@ export default function List() {
         <Text style={styles.title}>LIST OF STUDENT CONCERN</Text>
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
-          <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
+          <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
           <Text style={[styles.headerText, { flex: 1.5 }]}>QUEUE TIME</Text>
         </View>
