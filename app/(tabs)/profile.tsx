@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
+
 interface UserData {
   fullName: string;
   email: string;
@@ -22,7 +23,8 @@ interface UserData {
 export default function Profile(): JSX.Element {
   
   
-  
+  const [oldPassword, setOldPassword] = useState('');
+
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
@@ -121,7 +123,7 @@ export default function Profile(): JSX.Element {
   }, []);
   
   
-  const handleUpdateProfile = async () => {
+  const handleUpdateProfile = async (): Promise<boolean> => {
     try {
       const user = auth.currentUser;
       if (user) {
@@ -133,31 +135,35 @@ export default function Profile(): JSX.Element {
           program: editableData.program,
           phoneNumber: editableData.phoneNumber,
         });
-
+  
         // Update email in Firebase Auth if changed
         if (editableData.email !== userData.email) {
           await user.updateEmail(editableData.email);
         }
-
+  
         // Update password if provided
         if (newPassword) {
           await user.updatePassword(newPassword);
         }
-
+  
         // Update local state
         setUserData(editableData);
         setModalVisible(false);
         setNewPassword('');
-        alert('Profile updated successfully!');
+        
+        return true; // Return success
       }
-    }  catch (error: unknown) {
+      return false; // Return failure if no user
+    } catch (error: unknown) {
       if (error instanceof Error) {
-        alert('Error updating profile: ' + error.message);
+        // alert('Error updating profile: ' + error.message);
       } else {
         alert('An unexpected error occurred while updating profile');
       }
+      return false; // Return failure on error
     }
   };
+  
 
   if (!isVerified) {
     return (
@@ -234,11 +240,13 @@ export default function Profile(): JSX.Element {
               </View>
             </View>
             <CustomButton title="Edit Profile" onPress={() => setModalVisible(true)} />
-            <EditProfileModal 
+            <EditProfileModal
               modalVisible={modalVisible}
               setModalVisible={setModalVisible}
               editableData={editableData}
               setEditableData={setEditableData}
+              oldPassword={oldPassword}               // Add this line
+              setOldPassword={setOldPassword}         // Add this line
               newPassword={newPassword}
               setNewPassword={setNewPassword}
               handleUpdateProfile={handleUpdateProfile}
