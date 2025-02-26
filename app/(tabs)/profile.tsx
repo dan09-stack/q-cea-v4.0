@@ -167,10 +167,7 @@ export default function Profile(): JSX.Element {
 
   return (
     <PageContainer>
-      <ImageBackground
-        source={require('../../assets/green.jpg')}
-        style={styles.background}
-      >
+         <View style={styles.background}>
         <View style={styles.container}>
         <TouchableOpacity 
           style={styles.logoutButton} 
@@ -247,7 +244,7 @@ export default function Profile(): JSX.Element {
         )}
         </View>
       </View>
-      </ImageBackground>
+      </View>
     </PageContainer>
   );
 }
@@ -255,10 +252,7 @@ export default function Profile(): JSX.Element {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#034041', 
   },
   editIconContainer: {
     position: 'absolute',

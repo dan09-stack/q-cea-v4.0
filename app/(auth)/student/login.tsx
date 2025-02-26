@@ -8,6 +8,7 @@ import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
 
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -114,12 +115,7 @@ export default function Login() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../../assets/green.jpg')}
-      style={styles.background}
-      imageStyle={{ resizeMode: 'cover' }}        
-    >
-      
+    <View style={styles.background}>
       <View style={styles.container}>
         <View style={styles.blurBackground} />
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
@@ -200,7 +196,7 @@ export default function Login() {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+      </View>
   );
 }
 
@@ -249,12 +245,11 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 10,
   },
-  background: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    width: '100%', 
-    height: '100%' 
+  background: {
+    flex: 1,
+    backgroundColor: '#034041', 
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 

@@ -94,10 +94,7 @@ export default function Signup(): JSX.Element {
   };
   
   return (
-    <ImageBackground
-      source={require('../../../assets/green.jpg')}
-      style={styles.background}
-    >
+    <View style={styles.background}>
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
           <ErrorModal />
@@ -324,7 +321,7 @@ export default function Signup(): JSX.Element {
             </View>
            </View>
           </ScrollView>
-       </ImageBackground>  
+       </View>  
   );
 }
 
@@ -449,8 +446,8 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    width: '100%',
-    height: '120%',
+    backgroundColor: '#034041', 
+    
   },
   container: {
     width: '90%',

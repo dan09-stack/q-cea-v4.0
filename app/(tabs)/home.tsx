@@ -1102,11 +1102,12 @@ useEffect(() => {
 }, [userTicketNumber, currentDisplayedTicket]);
 
   return (
-  <ImageBackground source={require('../../assets/green.jpg')} style={styles.background}>
+  <View style={[styles.background, {backgroundColor: '#034041'}]}>
+  
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
     <AlertModal />
-    </ImageBackground>
+    </View>
   );
 }
 
