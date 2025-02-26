@@ -160,6 +160,9 @@ export const FacultyView = ({
       setModalMessage('Comment saved successfully');
       setIsModalVisible(true);
       setComment(''); // Clear the comment field
+      
+      // Reset the nextClickTime to stop the timer
+      setNextClickTime(null);
     } catch (error) {
       console.error('Error saving comment:', error);
       Alert.alert('Error', 'Failed to save comment. Please try again.');
@@ -167,6 +170,7 @@ export const FacultyView = ({
       setIsSaving(false);
     }
   };
+  
   
   // Format duration from seconds to a human-readable string
   const formatDuration = (seconds: number): string => {

@@ -247,7 +247,9 @@ export default function List() {
     const renderStudent = ({ item }: { item: StudentItem }) => (
       <View style={styles.row}>
         <Text style={[styles.name, { flex: 1 }]}>
-          {String(item.ticketNumber).padStart(4, '0')}
+          {String(item.ticketNumber).padStart(4, '0')}{'\n'}
+          {item.concerns !== "Other" ? <Text>{item.concerns}</Text> : null}
+        <Text>{item.otherConcern ? `${item.concerns !== "Other" ? "   " : ""}${item.otherConcern}` : ''}</Text>
         </Text>
         <View style={styles.verticalSeparator} />
         <Text style={[styles.name,{flex: 1.5, width: 100,  textAlign: 'center'}]} >{item.name}</Text>

@@ -635,6 +635,9 @@ export default function Home() {
               status: 'cancelled',
               userTicketNumber: null,
               faculty: null,
+              concern: null,
+              otherConcern: null,
+              specificDetails: null,
             });
           }
           state.setIsRequested(false);

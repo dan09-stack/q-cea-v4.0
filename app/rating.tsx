@@ -9,7 +9,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
 type SurveyAnswerKeys = 
-| 'userExperience'
+// | 'userExperience'
 | 'navigation'
 | 'performance'
 | 'reliability'
@@ -19,7 +19,8 @@ type SurveyAnswerKeys =
 | 'stability'
 | 'recommendation'
 | 'bugDescription'
-| 'additionalFeedback';
+| 'additionalFeedback'
+| 'consultationRating';
 
 type SurveyAnswers = Record<Exclude<SurveyAnswerKeys, 'additionalFeedback' | 'bugDescription'>, number> & {
   additionalFeedback: string;
@@ -36,7 +37,7 @@ export default function RatingPage() {
   const [feedback, setFeedback] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({
-    userExperience: 0,
+    // userExperience: 0,
     navigation: 0,
     performance: 0,
     reliability: 0,
@@ -46,14 +47,16 @@ export default function RatingPage() {
     stability: 0,
     recommendation: 0,
     bugDescription: '',
-    additionalFeedback: ''
+    additionalFeedback: '',
+    consultationRating: 0 
   });
 
   const surveyQuestions: SurveyQuestion[] = [
     { 
-      key: 'userExperience', 
-      text: 'How would you rate the overall user experience of the app?' 
+      key: 'consultationRating', 
+      text: 'How would you rate the consultation service you received?' 
     },
+   
     { 
       key: 'navigation', 
       text: 'How easy is it to navigate the app?' 
@@ -99,16 +102,16 @@ export default function RatingPage() {
   const YesNoButtons = ({ value, onChange }: { value: number, onChange: (val: number) => void }) => (
     <View style={styles.ratingContainer}>
       <TouchableOpacity
-        onPress={() => onChange(5)}
-        style={[styles.yesNoButton, value === 5 && styles.selectedButton]}
-      >
-        <Text style={value === 5 ? styles.selectedButtonText : styles.buttonText}>Yes</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
         onPress={() => onChange(1)}
         style={[styles.yesNoButton, value === 1 && styles.selectedButton]}
       >
-        <Text style={value === 1 ? styles.selectedButtonText : styles.buttonText}>No</Text>
+        <Text style={value === 1 ? styles.selectedButtonText : styles.buttonText}>Yes</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={() => onChange(5)}
+        style={[styles.yesNoButton, value === 5 && styles.selectedButton]}
+      >
+        <Text style={value === 5 ? styles.selectedButtonText : styles.buttonText}>No</Text>
       </TouchableOpacity>
     </View>
   );
@@ -180,11 +183,6 @@ export default function RatingPage() {
         const facultyName = userDoc.data()?.faculty;
         const concern = userDoc.data()?.concern;
         
-        let imageUrl = null;
-        if (image) {
-          imageUrl = await uploadImage(image);
-        }
-
         await setDoc(doc(db, 'ratings', `${currentUser.uid}_${Date.now()}`), {
           userId: currentUser.uid,
           faculty: facultyName,
@@ -192,7 +190,6 @@ export default function RatingPage() {
           overallRating: rating,
           feedback: feedback,
           surveyAnswers: surveyAnswers,
-          bugScreenshot: imageUrl,
           timestamp: new Date()
         });
 
@@ -200,6 +197,9 @@ export default function RatingPage() {
           status: 'completed',
           userTicketNumber: null,
           faculty: null,
+          concern: null,
+          otherConcern: null,
+          specificDetails: null,
         });
 
         router.replace('/(tabs)/home');
@@ -230,8 +230,7 @@ export default function RatingPage() {
     <View style={styles.background}>
       <ScrollView style={styles.container}>
         <View style={styles.content}>
-          <Text style={styles.modalTitle}>Overall Experience</Text>
-          <RatingStars value={rating} onChange={setRating} />
+          
 
           <Text style={styles.sectionTitle}>Please rate the following aspects:</Text>
           {surveyQuestions.map((question) => {
@@ -266,31 +265,7 @@ export default function RatingPage() {
             );
           })}
 
-          {/* Image uploader section - only show if reliability is "Yes" (5) */}
-          {surveyAnswers.reliability === 5 && (
-            <View style={styles.imageSection}>
-              <Text style={styles.questionText}>Upload a screenshot of the bug (optional):</Text>
-              <View style={styles.imageButtonContainer}>
-                <TouchableOpacity style={styles.imageButton} onPress={pickImage}>
-                  <MaterialIcons name="photo-library" size={24} color="#004000" />
-                  <Text style={styles.imageButtonText}>Choose from gallery</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.imageButton} onPress={takePicture}>
-                  <MaterialIcons name="camera-alt" size={24} color="#004000" />
-                  <Text style={styles.imageButtonText}>Take a photo</Text>
-                </TouchableOpacity>
-              </View>
-              
-              {image && (
-                <View style={styles.imagePreviewContainer}>
-                  <Image source={{ uri: image }} style={styles.imagePreview} />
-                  <TouchableOpacity style={styles.removeImageButton} onPress={() => setImage(null)}>
-                    <MaterialIcons name="close" size={24} color="white" />
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
+         
 
           <TextInput
             style={styles.feedbackInput}
@@ -300,6 +275,8 @@ export default function RatingPage() {
             multiline
           />
           
+          <Text style={styles.modalTitle}>Overall Experience</Text>
+          <RatingStars value={rating} onChange={setRating} />
           <View style={styles.buttonContainer}>
             <CustomButton 
               title="Submit Feedback" 
