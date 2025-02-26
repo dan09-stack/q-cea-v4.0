@@ -5,7 +5,7 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/firebaseConfig';
 import { CommentSection } from './components/CommentSection';
-
+import { AlertModal } from '@/components/queue/AlertModal';
 interface FacultyViewProps {
   allTickets: string[];
   currentTicketIndex: number;
@@ -24,6 +24,8 @@ interface Comment {
   id: string;
   comment: string;
   timestamp: any;
+  duration?: number;
+  durationFormatted?: string;
   faculty: string;
 }
 
@@ -32,8 +34,12 @@ export const FacultyView = ({
   currentTicketIndex, 
   ticketStudentData, 
   handleBack, 
-  handleNext 
+  handleNext: originalHandleNext 
 }: FacultyViewProps) => {
+  const [nextClickTime, setNextClickTime] = useState<Date | null>(null);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
   const [comment, setComment] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -42,7 +48,10 @@ export const FacultyView = ({
   // Get window dimensions for responsive layout
   const { width } = useWindowDimensions();
   const isSmallScreen = width <= 700;
-
+  const handleNext = () => {
+    setNextClickTime(new Date());
+    originalHandleNext();
+  };
   const currentTicketNumber = allTickets[currentTicketIndex] 
     ? `${ticketStudentData.program}-${allTickets[currentTicketIndex]}` 
     : '';
@@ -107,38 +116,49 @@ export const FacultyView = ({
       Alert.alert('Error', 'Please enter a comment');
       return;
     }
-
+  
     if (!currentTicketNumber) {
       Alert.alert('Error', 'No active ticket to comment on');
       return;
     }
-
+  
     setIsSaving(true);
     try {
-      // Create a separate comments collection
+      // Calculate duration since next was clicked
+      const saveTime = new Date();
+      const duration = nextClickTime ? (saveTime.getTime() - nextClickTime.getTime()) / 1000 : 0; // Duration in seconds
+      
+      // Create a comment data object with duration information
       const commentData = {
         ticketNumber: currentTicketNumber,
         studentName: ticketStudentData.name,
         comment: comment,
+        concern: ticketStudentData.concern || null,
+        specificDetails: ticketStudentData.specificDetails || null,
+        otherConcern: ticketStudentData.otherConcern || null,
         timestamp: serverTimestamp(),
-        faculty: facultyName, // Replace with actual faculty name or ID from auth
-        createdAt: new Date().toISOString() // Fallback date in case serverTimestamp fails
+        duration: duration, // Duration in seconds
+        durationFormatted: formatDuration(duration), // Human-readable duration
+        faculty: facultyName,
+        createdAt: saveTime.toISOString()
       };
       
       const docRef = await addDoc(collection(db, 'ticketComments'), commentData);
       
-      // Add the new comment to the local state
-      setComments([
-        {
-          id: docRef.id,
-          comment: comment,
-          timestamp: { toDate: () => new Date() }, // Local timestamp for immediate display
-          faculty: facultyName, 
-        },
-        ...comments
-      ]);
+      // Add the new comment to the local state with duration information
+      const newComment = {
+        id: docRef.id,
+        comment: comment,
+        timestamp: { toDate: () => saveTime },
+        duration: duration,
+        durationFormatted: formatDuration(duration),
+        faculty: facultyName
+      };
       
-      Alert.alert('Success', 'Comment saved successfully');
+      setComments([newComment, ...comments]);
+      
+      setModalMessage('Comment saved successfully');
+      setIsModalVisible(true);
       setComment(''); // Clear the comment field
     } catch (error) {
       console.error('Error saving comment:', error);
@@ -147,6 +167,21 @@ export const FacultyView = ({
       setIsSaving(false);
     }
   };
+  
+  // Format duration from seconds to a human-readable string
+  const formatDuration = (seconds: number): string => {
+    if (!seconds) return 'N/A';
+    
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = Math.round(seconds % 60);
+    
+    if (minutes === 0) {
+      return `${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`;
+    }
+    
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`;
+  };
+
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Just now';
@@ -205,6 +240,13 @@ export const FacultyView = ({
 
   return (
     <View style={[styles.container, {width: '100%', maxWidth: 900, }]}>
+      <AlertModal
+      isVisible={isModalVisible}
+      title="Success"
+      message={modalMessage}
+      onClose={() => setIsModalVisible(false)}
+      style={{ maxWidth: 100, alignSelf: 'center' }}
+    />
       <ScrollView style={{width: '100%'}}>
         <View style={[styles.ticketBox, {width: '100%'}]}>
           <Text style={styles.queueText}>

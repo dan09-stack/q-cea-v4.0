@@ -1,6 +1,6 @@
-import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput } from 'react-native'
+import { View, Text, ImageBackground, StyleSheet, FlatList, TouchableOpacity, Image, TextInput, Modal } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { collection, doc, getDoc, onSnapshot, updateDoc, query, orderBy } from 'firebase/firestore'
 import { auth, db } from '@/firebaseConfig';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -112,6 +112,9 @@ export default function List() {
   const FacultyView = () => {
     const [currentFacultyName, setCurrentFacultyName] = useState('');
     const [studentData, setStudentData] = useState<StudentItem[]>([]);
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyData, setHistoryData] = useState<CommentItem[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
   
     interface StudentItem {
       id: string;
@@ -123,8 +126,37 @@ export default function List() {
       program: string;
       requestDate: string;
     }
+
+    interface CommentItem {
+      id: string;
+      comment: string;
+      timestamp: any;
+      duration?: number;
+      durationFormatted?: string;
+      faculty: string;
+      ticketNumber?: string;
+      studentName?: string;
+      concern?: string;
+      otherConcern?: string;
+      specificDetails?: string;
+    }
+
+    // Format timestamp for history items
+    const formatDate = (timestamp: any) => {
+      if (!timestamp) return '';
+      return new Date(timestamp.seconds * 1000).toLocaleString('en-US', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
   
     useEffect(() => {
+      // Existing effect for faculty data and student queue remains unchanged
       const currentUser = auth.currentUser;
       if (currentUser) {
         const userDocRef = doc(db, 'student', currentUser.uid);
@@ -174,7 +206,44 @@ export default function List() {
   
       return () => unsubscribe();
     }, [currentFacultyName, displayedTicket]);
-  
+    
+    // New effect to fetch history when showHistory changes
+    useEffect(() => {
+      if (showHistory && currentFacultyName) {
+        setIsLoading(true);
+        const historyQuery = query(
+          collection(db, 'ticketComments'),
+          orderBy('timestamp', 'desc')
+        );
+        
+        const unsubscribeHistory = onSnapshot(historyQuery, (snapshot) => {
+          const comments: CommentItem[] = snapshot.docs
+            .map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                comment: data.comment || '',
+                timestamp: data.timestamp,
+                faculty: data.faculty || '',
+                ticketNumber: data.ticketNumber || '',
+                studentName: data.studentName || '',
+                concern: data.concern || '',
+                otherConcern: data.otherConcern || '',
+                specificDetails: data.specificDetails || '',
+                duration: data.duration || 0,
+                durationFormatted: data.durationFormatted || '',
+              };
+            })
+            .filter(comment => comment.faculty === currentFacultyName);
+            
+          setHistoryData(comments);
+          setIsLoading(false);
+        });
+        
+        return () => unsubscribeHistory();
+      }
+    }, [showHistory, currentFacultyName]);
+
     const renderStudent = ({ item }: { item: StudentItem }) => (
       <View style={styles.row}>
         <Text style={[styles.name, { flex: 1 }]}>
@@ -184,34 +253,102 @@ export default function List() {
         <Text style={[styles.name,{flex: 1.5, width: 100,  textAlign: 'center'}]} >{item.name}</Text>
         <View style={styles.verticalSeparator} />
         <Text style={styles.concerns}>
-          <Text>{item.concerns}</Text>
-          <Text>{item.otherConcern ? `   ${item.otherConcern}` : ''}</Text>
+        {item.concerns !== "Other" ? <Text>{item.concerns}</Text> : null}
+        <Text>{item.otherConcern ? `${item.concerns !== "Other" ? "   " : ""}${item.otherConcern}` : ''}</Text>
         </Text>
         <View style={styles.verticalSeparator} />
         <Text style={[styles.name, { flex: 1.5, textAlign: 'center' }]}>{item.requestDate}</Text>
       </View>
     );
+    
+    const renderHistoryItem = ({ item }: { item: CommentItem }) => (
+      <View style={styles.row}>
+       <Text style={styles.concerns}>
+        {item.concern !== "Other" ? <Text>{item.concern}</Text> : null}
+        <Text>{item.otherConcern ? `${item.concern !== "Other" ? "   " : ""}${item.otherConcern}` : ''}</Text>
+        - {item.specificDetails || 'N/A'}
+        </Text>
+        
+        <View style={styles.verticalSeparator} />
+        <Text style={[styles.name, { flex: 1.2, textAlign: 'center' }]}>
+          {item.studentName || 'Unknown'}
+        </Text>
+        <View style={styles.verticalSeparator} />
+        <Text style={[styles.name, { flex: 1.4, textAlign: 'left', paddingHorizontal: 10 }]}>
+          {item.comment}
+        </Text>
+        <View style={styles.verticalSeparator} />
+        <Text style={[styles.name, { flex: 1.5, textAlign: 'center' }]}>
+          {formatDate(item.timestamp)}  {'\n'} {item.durationFormatted}
+        </Text>
+      </View>
+    );
   
     return (
       <View style={styles.listContainer}>
-        <Text style={styles.title}>LIST OF STUDENT CONCERN</Text>
-        <View style={styles.header}>
-          <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
-          <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT</Text>
-          <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
-          <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
+        <View style={styles.headerWithButtons}>
+          <Text style={styles.title}>
+            {showHistory ? 'COMMENT HISTORY' : 'LIST OF STUDENT CONCERN'}
+          </Text>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.toggleButton, !showHistory ? styles.activeButton : null]}
+              onPress={() => setShowHistory(false)}
+            >
+              <Text style={[styles.buttonText, !showHistory ? styles.activeButtonText : null]}>Queue</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, showHistory ? styles.activeButton : null]}
+              onPress={() => setShowHistory(true)}
+            >
+              <Text style={[styles.buttonText, showHistory ? styles.activeButtonText : null]}>History</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <FlatList
-          data={studentData}
-          keyExtractor={(item) => item.id}
-          renderItem={renderStudent}
-          style={styles.list}
-          ListEmptyComponent={() => (
-            <View style={styles.noResultsContainer}>
-              <Text style={styles.noResultsText}>No students in queue</Text>
+        
+        {showHistory ? (
+          <>
+            <View style={styles.header}>
+              <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
+              <Text style={[styles.headerText, { flex: 1.2 }]}>STUDENT</Text>
+              <Text style={[styles.headerText, { flex: 1.5 }]}>COMMENT</Text>
+              <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
             </View>
-          )}
-        />
+            <FlatList
+              data={historyData}
+              keyExtractor={(item) => item.id}
+              renderItem={renderHistoryItem}
+              style={styles.list}
+              ListEmptyComponent={() => (
+                <View style={styles.noResultsContainer}>
+                  <Text style={styles.noResultsText}>
+                    {isLoading ? 'Loading history...' : 'No comment history found'}
+                  </Text>
+                </View>
+              )}
+            />
+          </>
+        ) : (
+          <>
+            <View style={styles.header}>
+              <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
+              <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT</Text>
+              <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
+              <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
+            </View>
+            <FlatList
+              data={studentData}
+              keyExtractor={(item) => item.id}
+              renderItem={renderStudent}
+              style={styles.list}
+              ListEmptyComponent={() => (
+                <View style={styles.noResultsContainer}>
+                  <Text style={styles.noResultsText}>No students in queue</Text>
+                </View>
+              )}
+            />
+          </>
+        )}
       </View>
     );
   };
@@ -227,16 +364,46 @@ export default function List() {
 }
 
 const styles = StyleSheet.create({
+  headerWithButtons: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  toggleButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    marginHorizontal: 5,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: 'black',
+  },
+  activeButton: {
+    backgroundColor: 'lightgrey',
+  },
+  buttonText: {
+    color: 'black',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  activeButtonText: {
+    color: 'black',
+  },
+
   verticalSeparator: {
     width: 1,
     height: '100%',
-    backgroundColor: '#ccc',
+    backgroundColor: 'black',
   },
   concerns: {
     flex: 1,
     flexDirection: 'row',
     fontSize: 16,
-    color: 'white',
+    color: 'black',
     textAlign: 'center',
     alignSelf: 'center',
     width: 100,
@@ -244,7 +411,7 @@ const styles = StyleSheet.create({
   studentCount: {
     flex: 1,
     fontSize: 16,
-    color: '#f3f3f3',
+    color: 'black',
     textAlign: 'center',
   },
   noResultsContainer: {
@@ -254,7 +421,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   noResultsText: {
-    color: '#f3f3f3',
+    color: 'black',
     fontSize: 16,
     textAlign: 'center',
   },
@@ -290,7 +457,7 @@ const styles = StyleSheet.create({
     paddingVertical: '5%',
   },
   listContainer: {
-    backgroundColor: '#1f4e21',
+    backgroundColor: 'white',
     borderRadius: 10,
     padding: 10,
     marginTop: 0,
@@ -301,7 +468,6 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   title: {
-    color: '#DAF7A6',
     fontSize: 25,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -311,12 +477,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     borderBottomWidth: 2,
-    borderBottomColor: '#f3f3f3',
+    borderBottomColor: 'black',
     paddingBottom: 5,
     marginBottom: 10,
   },
   headerText: {
-    color: '#d9ab0e',
+    color: 'black',
     fontSize: 12,
     fontWeight: 'bold',
     textAlign: 'center',
@@ -327,12 +493,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f3f3',
+    borderBottomColor: 'black',
   },
   name: {
     flex: 1,
     fontSize: 16,
-    color: '#f3f3f3',
+    color: 'black',
     textAlign: 'center',
     alignSelf: 'center' 
   },

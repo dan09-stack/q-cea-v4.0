@@ -8,6 +8,7 @@ interface AlertModalProps {
   message: string;
   onClose: () => void;
   onOk?: () => void;
+  style?: object;
 }
 
 export const AlertModal = ({ isVisible, title, message, onClose, onOk }: AlertModalProps) => (
@@ -18,7 +19,7 @@ export const AlertModal = ({ isVisible, title, message, onClose, onOk }: AlertMo
     onRequestClose={onClose}
   >
     <View style={styles.modalContainer}>
-      <View style={styles.modalContent}>
+      <View style={[styles.modalContent,{maxWidth: 300, alignSelf: 'center'}]}>
         <Text style={styles.modalTitle}>{title}</Text>
         <Text style={styles.modalItemText}>{message}</Text>
         <Button 

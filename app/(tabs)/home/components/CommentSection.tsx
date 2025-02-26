@@ -68,7 +68,7 @@ export const CommentSection = ({
     </View>
     
     {/* Display Previous Comments */}
-    <View>
+    {/* <View>
       <Text style={[styles.boldText, {fontSize: 18, marginBottom: 5}]}>Previous Comments:</Text>
       
       {isLoading ? (
@@ -98,6 +98,6 @@ export const CommentSection = ({
           No previous comments for this ticket
         </Text>
       )}
-    </View>
+    </View> */}
   </View>
 );
