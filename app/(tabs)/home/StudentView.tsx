@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable, TextInput } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 
@@ -16,6 +16,7 @@ interface StudentViewProps {
   selectedFaculty: string;
   selectedConcern: string;
   otherConcern: string;
+  specificDetails: string; // New property for "Other" concern input
   isLoading: boolean;
   facultyList: Array<{id: string, fullName: string, status: string}>;
   concernsList: string[];
@@ -29,6 +30,7 @@ interface StudentViewProps {
   setSelectedFaculty: (faculty: string) => void;
   setSelectedConcern: (concern: string) => void;
   setOtherConcern: (concern: string) => void;
+  setSpecificDetails: (details: string) => void; // New setter for "Other" concern input
 }
 
 export const StudentView = ({
@@ -44,6 +46,7 @@ export const StudentView = ({
   selectedFaculty,
   selectedConcern,
   otherConcern,
+ specificDetails,
   isLoading,
   facultyList,
   concernsList,
@@ -56,7 +59,8 @@ export const StudentView = ({
   setConcernModalVisible,
   setSelectedFaculty,
   setSelectedConcern,
-  setOtherConcern
+  setOtherConcern,
+  setSpecificDetails
 }: StudentViewProps) => (
   <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
     {isCheckingRequest ? (
@@ -125,7 +129,48 @@ export const StudentView = ({
               {selectedConcern || "Select your concern"}
             </Text>
           </TouchableOpacity>
-          <View style= {{marginTop: 5}}></View>
+          
+          {/* Special input field for "Other" concern */}
+          {selectedConcern === "Other" && (
+            <View>
+              <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Please specify your concern</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  padding: 10,
+                  marginTop: 5,
+                  backgroundColor: '#fff'
+                }}
+                placeholder="Enter your specific concern..."
+                value={otherConcern}
+                onChangeText={setOtherConcern}
+              />
+            </View>
+          )}
+          
+          {/* General details field for all concerns */}
+          <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Specific Details</Text>
+          <TextInput
+            style={{
+              borderWidth: 1,
+              borderColor: '#ccc',
+              borderRadius: 5,
+              padding: 10,
+              marginTop: 5,
+              height: 100,
+              textAlignVertical: 'top',
+              backgroundColor: '#fff'
+            }}
+            placeholder="Please enter the specific details of your concern..."
+            multiline={true}
+            numberOfLines={4}
+            value={specificDetails}
+            onChangeText={setSpecificDetails}
+          />
+          
+          <View style= {{marginTop: 15}}></View>
           <View style={styles.buttonContainer}>
             {isLoading ? (
               <ActivityIndicator size="large" color="#004000" />

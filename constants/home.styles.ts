@@ -60,6 +60,8 @@ export const homeStyles = StyleSheet.create({
       },
 details:{
     fontSize: 18,
+    width: '60%',
+    paddingLeft: 10,
     },
     ticketBox: {
     textAlign: 'center', 
@@ -76,7 +78,6 @@ details:{
     },
     boldText: {
     fontWeight: 'bold',
-    marginTop: 10,
     },
     ticketCode: {
     fontSize: 28,

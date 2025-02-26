@@ -112,9 +112,12 @@ export const getNextStudentDetails = async (allTickets: string[], currentTicketI
     const querySnapshot = await getDocs(studentQuery);
     if (!querySnapshot.empty) {
       const studentData = querySnapshot.docs[0].data();
+      
       return {
         fullName: studentData.fullName,
-        phoneNumber: studentData.phoneNumber
+        phoneNumber: studentData.phoneNumber,
+        otherConcern: studentData.otherConcern || null,
+        specificDetails: studentData.specificDetails 
       };
     }
     return null;

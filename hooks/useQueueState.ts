@@ -15,7 +15,7 @@ export const useQueueState = () => {
   
   // Lists state
   const [concernsList, setConcernsList] = useState<string[]>([]);
-
+  const [specificDetails, setSpecificDetails] = useState<string>('');
   // Queue display state
   const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
   const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
@@ -60,7 +60,14 @@ export const useQueueState = () => {
 
   // Data states
   const [facultyList, setFacultyList] = useState<Array<{id: string, fullName: string, status: string}>>([]);
-  const [ticketStudentData, setTicketStudentData] = useState({ name: '', concern: '', program:'' });
+  const [ticketStudentData, setTicketStudentData] = useState<{
+    name: string;
+    concern: string;
+    program: string;
+    // Add these optional properties:
+    otherConcern?: string;
+    specificDetails?: string;
+  }>({ name: '', concern: '', program: '' , otherConcern: '', specificDetails: '' });
   const [userData, setUserData] = useState({ phoneNumber: '' });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -78,7 +85,8 @@ export const useQueueState = () => {
     
     // Lists
     concernsList, setConcernsList,
-    
+    specificDetails, setSpecificDetails,
+    otherConcern, setOtherConcern,
     // Queue display
     nextDisplayedTicket, setNextDisplayedTicket, nextDisplayedProgram, setNextDisplayedProgram,
     
@@ -92,7 +100,7 @@ export const useQueueState = () => {
     currentDisplayedProgram, setCurrentDisplayedProgram, peopleAhead, setPeopleAhead,
     
     // Form
-    selectedFaculty, setSelectedFaculty, selectedConcern, setSelectedConcern, otherConcern, setOtherConcern,
+    selectedFaculty, setSelectedFaculty, selectedConcern, setSelectedConcern,
     
     // UI
     isRequested, setIsRequested, isLoading, setIsLoading, isCheckingRequest, setIsCheckingRequest,
@@ -106,5 +114,6 @@ export const useQueueState = () => {
     // Error
     errorModalVisible, setErrorModalVisible, errorMessage, setErrorMessage,
     nextStudentDetails, setNextStudentDetails
+    
   };
 };

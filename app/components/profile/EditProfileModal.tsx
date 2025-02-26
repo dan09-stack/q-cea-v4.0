@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TextInput, Modal, ScrollView, TouchableOpacity 
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-
+import { Picker } from '@react-native-picker/picker';
 // Update the interface to indicate handleUpdateProfile returns a Promise<boolean>
 interface EditProfileModalProps {
   modalVisible: boolean;
@@ -22,6 +22,15 @@ interface EditProfileModalProps {
   handleUpdateProfile: () => Promise<boolean>; // Modified to return success/failure status
 }
 
+const courses = [
+  { label: "Select Program", value: "" },
+  { label: "BS Architecture", value: "ARCH" },
+  { label: "BS Civil Engineering", value: "CE" },
+  { label: "BS Computer Engineering", value: "CPE" },
+  { label: "BS Electrical Engineering", value: "EE" },
+  { label: "BS Electronics Engineering", value: "ECE" },
+  { label: "BS Mechanical Engineering", value: "ME" }
+];
 
 export function EditProfileModal({
   modalVisible,
@@ -146,12 +155,17 @@ export function EditProfileModal({
               onChangeText={(text) => setEditableData({...editableData, idNumber: text})}
             />
             <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Program</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Course"
-              value={editableData.program}
-              onChangeText={(text) => setEditableData({...editableData, program: text})}
-            />
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={editableData.program}
+                style={styles.picker}
+                onValueChange={(itemValue) => setEditableData({...editableData, program: itemValue})}
+              >
+                {courses.map((course, index) => (
+                  <Picker.Item key={index} label={course.label} value={course.value} />
+                ))}
+              </Picker>
+            </View>
             <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Phone Number</Text>
             <TextInput
               style={styles.input}
@@ -159,7 +173,6 @@ export function EditProfileModal({
               value={editableData.phoneNumber}
               onChangeText={(text) => setEditableData({...editableData, phoneNumber: text})}
             />
-            
             <Text style= {{fontSize: 16, fontWeight: 'bold', marginTop: 10 }}>Change Password</Text>
             <View style={styles.passwordContainer}>
               <TextInput
@@ -259,6 +272,18 @@ export function EditProfileModal({
 }
 
 const styles = StyleSheet.create({
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 5,
+    marginBottom: 15,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 40,
+    width: '100%',
+    backgroundColor: 'transparent',
+  },
   modalView: {
     backgroundColor: 'white',
     marginTop: 50,

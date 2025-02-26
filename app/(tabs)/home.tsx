@@ -238,8 +238,10 @@ export default function Home() {
           const studentData = querySnapshot.docs[0].data();
           state.setTicketStudentData({
             name: studentData.fullName,
-            concern: studentData.concern || studentData.otherConcern,
+            concern: studentData.concern ,
             program: studentData.program,
+            otherConcern: studentData.otherConcern,
+            specificDetails: studentData.specificDetails
           });
         }
       }
@@ -338,7 +340,11 @@ export default function Home() {
           state.setTicketStudentData({
             name: studentData.fullName,
             concern: studentData.concern || studentData.otherConcern,
-            program: studentData.program
+            program: studentData.program,
+            otherConcern: studentData.otherConcern,
+            specificDetails: studentData.specificDetails
+
+            
           });
 
           // Save displayed ticket number as integer
@@ -413,14 +419,14 @@ export default function Home() {
       const querySnapshot = await getDocs(studentQuery);
       if (!querySnapshot.empty) {
         const studentData = querySnapshot.docs[0].data();
-        await sendNotificationToStudent(studentData.phoneNumber);
+        // await sendNotificationToStudent(studentData.phoneNumber);
         
-        // Send email notification
-        await sendEmailNotification(
-          'template_v5us19b',
-          studentData.email,
-          studentData.fullName
-        );
+        // // Send email notification
+        // await sendEmailNotification(
+        //   'template_v5us19b',
+        //   studentData.email,
+        //   studentData.fullName
+        // );
       }
     }
     
@@ -515,11 +521,11 @@ export default function Home() {
         // If queue is empty, send notification to faculty
         if (facultyData.numOnQueue === 0) {
           // await sendNotificationToFaculty(facultyData.phoneNumber);
-          await sendEmailNotification(
-            'template_jbfj8p6',
-            facultyData.email,
-            facultyData.fullName
-          );
+          // await sendEmailNotification(
+          //   'template_jbfj8p6',
+          //   facultyData.email,
+          //   facultyData.fullName
+          // );
         }
         
         await updateDoc(doc(db, 'student', facultyDoc.id), {
@@ -545,7 +551,8 @@ export default function Home() {
           faculty: state.selectedFaculty,
           concern: state.selectedConcern,
           otherConcern: state.otherConcern,
-          requestDate: new Date(),
+          specificDetails: state.specificDetails,
+          requestDate: new Date(),    
           status: 'waiting'
         });
         
@@ -685,6 +692,7 @@ export default function Home() {
               concernsList={state.concernsList}
               facultyModalVisible={state.facultyModalVisible}
               concernModalVisible={state.concernModalVisible}
+              specificDetails={state.specificDetails}
               handleDone={handleDone}
               handleCancel={handleCancel}
               handleRequest={handleRequest}
@@ -693,6 +701,7 @@ export default function Home() {
               setSelectedFaculty={state.setSelectedFaculty}
               setSelectedConcern={state.setSelectedConcern}
               setOtherConcern={state.setOtherConcern}
+              setSpecificDetails={state.setSpecificDetails}
             />
           )}
           <AlertModal 
@@ -705,6 +714,7 @@ export default function Home() {
                 state.setSelectedFaculty('');
                 state.setSelectedConcern('');
                 state.setOtherConcern('');
+                state.setSpecificDetails('');
               }
             }}
           />
