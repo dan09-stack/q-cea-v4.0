@@ -3,7 +3,24 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, S
 import { useRouter } from 'expo-router';
 import { handleSignup } from '../../../services/auth';
 import { CustomButton } from '@/components/ui/CustomButton';
+import { Ionicons } from '@expo/vector-icons';
+const validateIdNumber = (idNumber: string): boolean => {
+  // Check if ID number matches the format 03-XXXX-XXXXXX
+  const idNumberRegex = /^03-\d{4}-\d{6}$/;
+  return idNumberRegex.test(idNumber);
+};
 
+const validatePhoneNumber = (phoneNumber: string): boolean => {
+  // Check if phone number is in the format 09XXXXXXXXX or +63XXXXXXXXX
+  const phoneRegex = /^(09\d{9}|\+63\d{10})$/;
+  return phoneRegex.test(phoneNumber);
+};
+
+const validateEmail = (email: string): boolean => {
+  // Basic email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
   const [idNumber, setIdNumber] = useState<string>('');
@@ -17,6 +34,7 @@ export default function Signup(): JSX.Element {
   const [userType, setUserType] = useState<'STUDENT' | 'FACULTY'>('STUDENT');
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const ErrorModal = () => (
     <Modal
@@ -27,9 +45,12 @@ export default function Signup(): JSX.Element {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={[styles.modalTitle, { textAlign: 'center', color: '#d32f2f' }]}>Error</Text>
-          <Text style={[styles.modalItemText, { textAlign: 'center', color: '#d32f2f' }]}>{errorMessage}</Text>
-          <CustomButton title="Close" onPress={() => setErrorModalVisible(false)} color="#d32f2f" />
+          <Text style={[styles.modalTitle, { textAlign: 'center',  }]}>Error</Text>
+          <Text style={[styles.modalItemText, { textAlign: 'center', marginBottom: 20 }]}>{errorMessage}</Text>
+          <CustomButton 
+            title="OK" 
+            onPress={() => setErrorModalVisible(false)}
+          />
         </View>
       </View>
     </Modal>
@@ -56,13 +77,36 @@ export default function Signup(): JSX.Element {
       setErrorModalVisible(true);
       return;
     }
-  
+    if (!validateIdNumber(idNumber)) {
+      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
+      setErrorModalVisible(true);
+      return;
+    }
+    
+    // Validate phone number
+    if (!validatePhoneNumber(phoneNumber)) {
+      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
+      setErrorModalVisible(true);
+      return;
+    }
+    
+    // Validate email format
+    if (!validateEmail(email)) {
+      setErrorMessage('Please enter a valid email address');
+      setErrorModalVisible(true);
+      return;
+    }
     if (password.length < 6) {
       setErrorMessage('Password must be at least 6 characters long');
       setErrorModalVisible(true);
       return;
     }
-  
+    if (!fullName.includes(',')) {
+      setErrorMessage('Full Name should be in format: Last Name, First Name MI');
+      setErrorModalVisible(true);
+      return;
+    }
+    
     if (!email.includes('@')) {
       setErrorMessage('Please enter a valid email address');
       setErrorModalVisible(true);
@@ -77,13 +121,32 @@ export default function Signup(): JSX.Element {
         fullName,
         idNumber,
         phoneNumber,
-        selectedProgram,
         email,
         password,
         router
       });
-    } catch {
-      setErrorMessage('Something went wrong. Please try again.');
+    } catch (error: any) {
+      // Enhanced error handling with specific messages
+      if (error.code === 'auth/email-already-in-use') {
+        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage('The email address is not valid.');
+      }
+      if (error.code === 'auth/email-already-in-use') {
+        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage('The email address is not valid.');
+      } else if (error.code === 'auth/weak-password') {
+        setErrorMessage('The password is too weak. Please choose a stronger password.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setErrorMessage('Network error. Please check your internet connection and try again.');
+      } else if (error.message) {
+        // If the error has a message property, use it
+        setErrorMessage(error.message);
+      } else {
+        // Fallback error message
+        setErrorMessage('Something went wrong. Please try again later.');
+      }
       setErrorModalVisible(true);
     } finally {
       setIsLoading(false);
@@ -132,7 +195,7 @@ export default function Signup(): JSX.Element {
               keyboardType="phone-pad"
             />
           </View>
-          <View style={styles.inputContainer}>
+          {/* <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>I am a</Text>
             <View style={styles.userTypeContainer}>
               <TouchableOpacity 
@@ -160,7 +223,7 @@ export default function Signup(): JSX.Element {
                 ]}>Faculty</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </View> */}
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Program</Text>
@@ -188,15 +251,28 @@ export default function Signup(): JSX.Element {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-            />
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity 
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeIconButton}
+              >
+                <Ionicons
+                  name={showPassword ? "eye-outline" : "eye-off-outline"}
+                  size={24}
+                  color="white"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
+
 
           <Modal
             animationType="fade"
@@ -206,7 +282,7 @@ export default function Signup(): JSX.Element {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
-                <Text style={styles.modalHeader}>Select Your Course</Text>
+                <Text style={styles.modalHeader}>Select Your Program</Text>
                 {courses.map((course) => (
                   <TouchableOpacity
                     key={course.value}
@@ -249,6 +325,31 @@ export default function Signup(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor: 'white',
+    borderWidth: 2,
+    borderRadius: 5,
+  },
+  passwordInput: {
+    flex: 1,
+    height: 40,
+    paddingLeft: 10,
+    color: 'white'
+  },
+  eyeIconButton: {
+    paddingHorizontal: 10,
+  },
+  iconText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  errorText: {
+    color: '#d32f2f',
+    fontSize: 14,
+    marginTop: 5,
+  },
   userTypeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
