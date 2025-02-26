@@ -226,7 +226,7 @@ export default function List() {
   };
   return (
     <ImageBackground
-      source={require('../../assets/green p2.jpg')}
+      source={require('../../assets/green.jpg')}
       style={styles.background}
     >
        {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}

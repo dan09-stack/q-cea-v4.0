@@ -168,7 +168,7 @@ export default function Profile(): JSX.Element {
   return (
     <PageContainer>
       <ImageBackground
-        source={require('../../assets/green p2.jpg')}
+        source={require('../../assets/green.jpg')}
         style={styles.background}
       >
         <View style={styles.container}>
