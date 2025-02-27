@@ -248,8 +248,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#034041', 
   },
   container: {
     flex: 1,
@@ -257,6 +256,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: '5%',
     paddingVertical: '5%',
+    backgroundColor: '#1f4e21',
+
   },
   listContainer: {
     backgroundColor: 'white',

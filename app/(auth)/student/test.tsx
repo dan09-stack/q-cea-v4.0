@@ -3,24 +3,7 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, S
 import { useRouter } from 'expo-router';
 import { handleSignup } from '../../../services/auth';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { Ionicons } from '@expo/vector-icons';
-const validateIdNumber = (idNumber: string): boolean => {
-  // Check if ID number matches the format 03-XXXX-XXXXXX
-  const idNumberRegex = /^03-\d{4}-\d{6}$/;
-  return idNumberRegex.test(idNumber);
-};
-
-const validatePhoneNumber = (phoneNumber: string): boolean => {
-  // Check if phone number is in the format 09XXXXXXXXX or +63XXXXXXXXX
-  const phoneRegex = /^(09\d{9}|\+63\d{10})$/;
-  return phoneRegex.test(phoneNumber);
-};
-
-const validateEmail = (email: string): boolean => {
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};import Checkbox from 'expo-checkbox';
+import Checkbox from 'expo-checkbox';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -38,7 +21,6 @@ export default function Signup(): JSX.Element {
   const [isChecked, setIsChecked] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
 
-  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   const ErrorModal = () => (
     <Modal
@@ -49,24 +31,22 @@ export default function Signup(): JSX.Element {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={[styles.modalTitle, { textAlign: 'center',  }]}>Error</Text>
-          <Text style={[styles.modalItemText, { textAlign: 'center', marginBottom: 20 }]}>{errorMessage}</Text>
-          <CustomButton 
-            title="OK" 
-            onPress={() => setErrorModalVisible(false)}
-          />
+          <Text style={[styles.modalTitle, { textAlign: 'center', color: '#d32f2f' }]}>Error</Text>
+          <Text style={[styles.modalItemText, { textAlign: 'center', color: '#d32f2f' }]}>{errorMessage}</Text>
+          <CustomButton title="Close" onPress={() => setErrorModalVisible(false)} color="#d32f2f" />
         </View>
       </View>
     </Modal>
   );
   
   const courses = [
-    { label: "B.S. Architecture", value: "ARCH" },
-    { label: "B.S. Civil Engineering", value: "CE" },
-    { label: "B.S. Computer Engineering", value: "CPE" },
-    { label: "B.S. Electrical Engineering", value: "EE" },
-    { label: "B.S. Electronics Engineering", value: "ECE" },
-    { label: "B.S. Mechanical Engineering", value: "ME" }
+    { label: "Select Program", value: "" },
+    { label: "BS Architecture", value: "ARCH" },
+    { label: "BS Civil Engineering", value: "CE" },
+    { label: "BS Computer Engineering", value: "CPE" },
+    { label: "BS Electrical Engineering", value: "EE" },
+    { label: "BS Electronics Engineering", value: "ECE" },
+    { label: "BS Mechanical Engineering", value: "ME" }
   ];
 
   const selectCourse = (course: string) => {
@@ -80,36 +60,13 @@ export default function Signup(): JSX.Element {
       setErrorModalVisible(true);
       return;
     }
-    if (!validateIdNumber(idNumber)) {
-      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
-      setErrorModalVisible(true);
-      return;
-    }
-    
-    // Validate phone number
-    if (!validatePhoneNumber(phoneNumber)) {
-      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
-      setErrorModalVisible(true);
-      return;
-    }
-    
-    // Validate email format
-    if (!validateEmail(email)) {
-      setErrorMessage('Please enter a valid email address');
-      setErrorModalVisible(true);
-      return;
-    }
+  
     if (password.length < 6) {
       setErrorMessage('Password must be at least 6 characters long');
       setErrorModalVisible(true);
       return;
     }
-    if (!fullName.includes(',')) {
-      setErrorMessage('Full Name should be in format: Last Name, First Name MI');
-      setErrorModalVisible(true);
-      return;
-    }
-    
+  
     if (!email.includes('@')) {
       setErrorMessage('Please enter a valid email address');
       setErrorModalVisible(true);
@@ -124,32 +81,13 @@ export default function Signup(): JSX.Element {
         fullName,
         idNumber,
         phoneNumber,
+        selectedProgram,
         email,
         password,
         router
       });
-    } catch (error: any) {
-      // Enhanced error handling with specific messages
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      } else if (error.code === 'auth/invalid-email') {
-        setErrorMessage('The email address is not valid.');
-      }
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      } else if (error.code === 'auth/invalid-email') {
-        setErrorMessage('The email address is not valid.');
-      } else if (error.code === 'auth/weak-password') {
-        setErrorMessage('The password is too weak. Please choose a stronger password.');
-      } else if (error.code === 'auth/network-request-failed') {
-        setErrorMessage('Network error. Please check your internet connection and try again.');
-      } else if (error.message) {
-        // If the error has a message property, use it
-        setErrorMessage(error.message);
-      } else {
-        // Fallback error message
-        setErrorMessage('Something went wrong. Please try again later.');
-      }
+    } catch {
+      setErrorMessage('Something went wrong. Please try again.');
       setErrorModalVisible(true);
     } finally {
       setIsLoading(false);
@@ -157,7 +95,10 @@ export default function Signup(): JSX.Element {
   };
   
   return (
-    <View style={styles.background}>
+    <ImageBackground
+      source={require('../../../assets/green p2.jpg')}
+      style={styles.background}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
           <ErrorModal />
@@ -194,7 +135,7 @@ export default function Signup(): JSX.Element {
               keyboardType="phone-pad"
             />
           </View>
-          {/* <View style={styles.inputContainer}>
+          <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>I am a</Text>
             <View style={styles.userTypeContainer}>
               <TouchableOpacity 
@@ -222,7 +163,7 @@ export default function Signup(): JSX.Element {
                 ]}>Faculty</Text>
               </TouchableOpacity>
             </View>
-          </View> */}
+          </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Program</Text>
@@ -250,28 +191,15 @@ export default function Signup(): JSX.Element {
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={styles.passwordInput}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity 
-                onPress={() => setShowPassword(!showPassword)}
-                style={styles.eyeIconButton}
-              >
-                <Ionicons
-                  name={showPassword ? "eye-outline" : "eye-off-outline"}
-                  size={24}
-                  color="white"
-                />
-              </TouchableOpacity>
-            </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+            />
           </View>
-
 
           <Modal
             animationType="fade"
@@ -281,7 +209,7 @@ export default function Signup(): JSX.Element {
           >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
-                <Text style={styles.modalHeader}>Select Your Program</Text>
+                <Text style={styles.modalHeader}>Select Your Course</Text>
                 {courses.map((course) => (
                   <TouchableOpacity
                     key={course.value}
@@ -303,11 +231,9 @@ export default function Signup(): JSX.Element {
 
           <View style={styles.consentContainer}>
             <Checkbox value={isChecked} onValueChange={setIsChecked} color={isChecked ? "#4CAF50" : undefined} />
-            <Text style={styles.consentText}> I agree to the{' '}
-  <TouchableOpacity onPress={() => setPrivacyModalVisible(true)}>
-    <Text style={styles.linkText}>Data Privacy Policy</Text>
-  </TouchableOpacity>
-</Text>
+            <TouchableOpacity onPress={() => setPrivacyModalVisible(true)}>
+              <Text style={styles.consentText}>I agree to the <Text style={styles.linkText}>Data Privacy Policy</Text></Text>
+            </TouchableOpacity>
           </View>
 
           <TouchableOpacity
@@ -325,69 +251,55 @@ export default function Signup(): JSX.Element {
             transparent={true}
             visible={privacyModalVisible}
             onRequestClose={() => setPrivacyModalVisible(false)}
-          >
-          <ScrollView contentContainerStyle={styles.scrollView}>
+          ></Modal>
           <View style={styles.modalContainer}>
-          
   <View style={styles.modalContent}>
     <Text style={styles.modalTitle}>Data Privacy Policy</Text>
-    <Text style={styles.modalText}>
-  Welcome to <Text style={styles.boldText}>Q-CEA</Text>. Your privacy is important to us. 
-  This Privacy Policy explains how we collect, use, disclose, and protect your personal data.{"\n\n"}
+    <ScrollView style={styles.scrollView}>
+      <Text style={styles.modalText}>
+        <Text style={styles.sectionTitle}>Effective Date:</Text> [Insert Date]{"\n"}
+        <Text style={styles.sectionTitle}>Last Updated:</Text> [Insert Date]{"\n\n"}
 
-  <Text style={styles.sectionTitle}>1. Legal Compliance</Text>{"\n"}
-  We comply with the Republic Act No. 10173, also known as the <Text style={styles.boldText}>Data Privacy Act of 2012</Text>, 
-  ensuring that your personal data is collected, stored, and processed securely and lawfully.{"\n\n"}
+        Welcome to <Text style={styles.boldText}>Q-CEA</Text>. Your privacy is important to us. This Privacy Policy explains how we collect, use, disclose, and protect your personal data.{"\n\n"}
 
-  <Text style={styles.sectionTitle}>2. Information We Collect</Text>{"\n"}
-  - Name{"\n"}
-  - ID Number{"\n"}
-  - Phone Number{"\n"}
-  - Program {"\n"}
-  - Email Address{"\n"}
-  - Password {"\n\n"}
+        <Text style={styles.sectionTitle}>1. Information We Collect</Text>{"\n"}
+        - Name{"\n"}
+        - ID Number{"\n"}
+        - Phone Number{"\n"}
+        - Program (e.g., Engineering, Architecture){"\n"}
+        - Email Address{"\n"}
+        - Password (encrypted){"\n\n"}
 
-  <Text style={styles.sectionTitle}>3. How We Use Your Information</Text>{"\n"}
-  - Register and manage user accounts{"\n"}
-  - Facilitate queue management{"\n"}
-  - Send queue notifications{"\n"}
-  - Improve system functionality{"\n"}
-  - Communicate important updates{"\n"}
-  - Ensure security and prevent fraud{"\n\n"}
+        <Text style={styles.sectionTitle}>2. How We Use Your Information</Text>{"\n"}
+        - Register and manage user accounts{"\n"}
+        - Facilitate queue management{"\n"}
+        - Send queue notifications{"\n"}
+        - Improve system functionality{"\n"}
+        - Communicate important updates{"\n"}
+        - Ensure security and prevent fraud{"\n\n"}
 
-  <Text style={styles.sectionTitle}>4. Data Security</Text>{"\n"}
-  We implement security measures like encryption and access controls. However, users must also safeguard their login credentials.{"\n\n"}
+        <Text style={styles.sectionTitle}>3. Data Security</Text>{"\n"}
+        We implement security measures like encryption and access controls. However, users must also safeguard their login credentials.{"\n\n"}
 
-  <Text style={styles.sectionTitle}>5. Your Rights</Text>{"\n"}
-  - Access, update, or correct your data{"\n"}
-  - Request deletion of your account{"\n\n"}
+        <Text style={styles.sectionTitle}>4. Your Rights</Text>{"\n"}
+        - Access, update, or correct your data{"\n"}
+        - Request deletion of your account{"\n"}
+        - Opt out of notifications{"\n\n"}
 
-  <Text style={styles.sectionTitle}>6. Data Retention</Text>{"\n"}
-  We retain your personal data for as long as necessary to fulfill the purposes outlined in this Privacy Policy. 
-  If you request account deletion, we will remove your data within 30 days, except where retention is required by law.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>7. Third-Party Services</Text>{"\n"}
-  We may use third-party services, such as cloud storage providers, email notification systems, and SMS services, 
-  to enhance Q-CEA. These services are obligated to protect your data and comply with privacy regulations.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>8. Policy Updates</Text>{"\n"}
-  We may update this Privacy Policy from time to time. Changes will be posted on our website, and significant 
-  updates may be communicated via email or app notifications.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>9. Consent Statement</Text>{"\n"}
-  By using Q-CEA, you acknowledge that you have read, understood, and agreed to this Privacy Policy. 
-  If you do not agree, please discontinue use of the platform.{"\n\n"}
-
-</Text>
-
-      <TouchableOpacity style={styles.privacybutton} onPress={() => setPrivacyModalVisible(false)}>
-      <Text style={styles.privacybuttonText}>Close</Text>
+        <Text style={styles.sectionTitle}>5. Contact Us</Text>{"\n"}
+        📧 [Your Contact Email]{"\n"}
+        📍 [Your Business Address]{"\n"}
+      </Text>
+    </ScrollView>
+    
+    {/* Buttons for User Interaction */}
+    <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+      <Text style={styles.buttonText}>I Agree</Text>
     </TouchableOpacity>
-  
   </View>
 </View>
-</ScrollView>
-</Modal>
+
+                <CustomButton title="Close" onPress={() => setPrivacyModalVisible(false)} color="#4CAF50" />
 
           <View style={styles.loginContainer}>
             <Text style={{ color: 'white' }}>Already have an account? </Text>
@@ -397,36 +309,11 @@ export default function Signup(): JSX.Element {
             </View>
            </View>
           </ScrollView>
-       </View>  
+       </ImageBackground>  
   );
 }
 
 const styles = StyleSheet.create({
-  passwordContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderColor: 'white',
-    borderWidth: 2,
-    borderRadius: 5,
-  },
-  passwordInput: {
-    flex: 1,
-    height: 40,
-    paddingLeft: 10,
-    color: 'white'
-  },
-  eyeIconButton: {
-    paddingHorizontal: 10,
-  },
-  iconText: {
-    color: 'white',
-    fontSize: 16,
-  },
-  errorText: {
-    color: '#d32f2f',
-    fontSize: 14,
-    marginTop: 5,
-  },
   linkText: {
     color: 'white',
     textDecorationLine: 'underline',
@@ -436,14 +323,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
-    paddingVertical: 20
   },
   modalContent: {
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
     width: "90%",
-    maxWidth: 500,
   },
   modalTitle: {
     fontSize: 18,
@@ -453,7 +338,8 @@ const styles = StyleSheet.create({
     color: "#004000",
   },
   scrollView: {
-    flexGrow: 1,
+    maxHeight: 300,
+    marginBottom: 10,
   },
   modalText: {
     fontSize: 14,
@@ -466,18 +352,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   boldText: {
-    fontWeight: "bold",
-  },
-  privacybutton: {
-    backgroundColor: "#004000",
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    width: 100,
-    alignSelf: 'center'
-  },
-  privacybuttonText: {
-    color: "#fff",
     fontWeight: "bold",
   },
   consentContainer: {
@@ -547,8 +421,8 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    backgroundColor: '#034041', 
-    
+    width: '100%',
+    height: '120%',
   },
   container: {
     width: '90%',
