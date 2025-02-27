@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface UserData {
   fullName: string;
@@ -173,7 +174,10 @@ export default function Profile(): JSX.Element {
 
   return (
     <PageContainer>
-      <View style={[styles.background, { backgroundColor: '#008000' }]}>
+      <LinearGradient
+        colors={['#045657', '#034041', '#023030']}
+        style={styles.background}
+      >
 
         <View style={styles.container}>
           <TouchableOpacity 
@@ -253,8 +257,7 @@ export default function Profile(): JSX.Element {
         )}
         </View>
       </View>
-      </View>
-      
+      </LinearGradient>
     </PageContainer>
   );
 }
@@ -302,11 +305,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
     marginBottom: 10,
+    color: 'white',
   },
   infoContainer: {
-    backgroundColor: '#005000',
+    backgroundColor: 'white',
     width: '100%',
     marginBottom: 20,
     padding: 15,
@@ -315,7 +318,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 16,
-    color: '#f3f3f3',
+    color: 'black',
     marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -323,7 +326,7 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontWeight: 'bold',
     width: 120, 
-    color: '#f3f3f3',
+    color: 'black',
     fontSize: 15,
   },
   icon: {
@@ -333,7 +336,7 @@ const styles = StyleSheet.create({
   },
   infoValue: {
     flex: 1,
-    color: 'white'
+    color: 'black'
   },
   modalView: {
     backgroundColor: 'white',

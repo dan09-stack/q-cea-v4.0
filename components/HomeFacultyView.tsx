@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '@/firebaseConfig';
 import { CommentSection } from './HomeCommentSection';
 import { AlertModal } from '@/components/queue/AlertModal';
+
 interface FacultyViewProps {
   allTickets: string[];
   currentTicketIndex: number;
@@ -18,6 +19,7 @@ interface FacultyViewProps {
   };
   handleBack: () => void;
   handleNext: () => void;
+  updateTickets?: (tickets: string[]) => void; // Added prop for updating tickets
 }
 
 interface Comment {
@@ -34,10 +36,10 @@ export const FacultyView = ({
   currentTicketIndex, 
   ticketStudentData, 
   handleBack, 
-  handleNext: originalHandleNext 
+  handleNext: originalHandleNext,
+  updateTickets
 }: FacultyViewProps) => {
   const [nextClickTime, setNextClickTime] = useState<Date | null>(null);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
   const [comment, setComment] = useState('');
@@ -45,16 +47,64 @@ export const FacultyView = ({
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [facultyName, setFacultyName] = useState('');
+  const [ticketCancelled, setTicketCancelled] = useState(false);
+  
   // Get window dimensions for responsive layout
   const { width } = useWindowDimensions();
   const isSmallScreen = width <= 700;
+  
   const handleNext = () => {
     setNextClickTime(new Date());
     originalHandleNext();
   };
+  
   const currentTicketNumber = allTickets[currentTicketIndex] 
     ? `${ticketStudentData.program}-${allTickets[currentTicketIndex]}` 
     : '';
+
+  // Add real-time listener for tickets
+  useEffect(() => {
+    checkForNewTickets();
+    // Only set up the listener if we need to
+    const shouldListenForTickets = 
+      allTickets.length > 0 && 
+      !allTickets[currentTicketIndex];
+    
+    if (!shouldListenForTickets) {
+      setTicketCancelled(false);
+      return;
+    }
+    
+    setTicketCancelled(true);
+    
+    // Set up a listener for new tickets in the queue collection
+    const ticketsQuery = query(collection(db, 'queue'), orderBy('timestamp', 'asc'));
+    
+    const unsubscribe = onSnapshot(ticketsQuery, (snapshot) => {
+      const newTickets: string[] = [];
+      
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.ticketNumber) {
+          newTickets.push(data.ticketNumber);
+        }
+      });
+      
+      // If we have new tickets and the updateTickets prop exists
+      if (newTickets.length !== allTickets.length && updateTickets) {
+        updateTickets(newTickets);
+        
+        // If current ticket was cancelled and there are new tickets
+        if (ticketCancelled && newTickets.length > 0) {
+          setModalMessage('New tickets have been added to the queue');
+          setIsModalVisible(true);
+        }
+      }
+    });
+    
+    // Clean up listener
+    return () => unsubscribe();
+  }, [allTickets, currentTicketIndex, ticketCancelled, updateTickets]);
 
   // Fetch previous comments when ticket changes
   useEffect(() => {
@@ -92,8 +142,9 @@ export const FacultyView = ({
     
     fetchComments();
   }, [currentTicketNumber]);
- // Get faculty information when component mounts
- useEffect(() => {
+
+  // Get faculty information when component mounts
+  useEffect(() => {
     const fetchFacultyInfo = async () => {
       const currentUser = auth.currentUser;
       if (currentUser) {
@@ -111,7 +162,47 @@ export const FacultyView = ({
     
     fetchFacultyInfo();
   }, []);
+
+  // Rest of component remains the same
+  
+  // Added function to handle checking for new tickets
+  const checkForNewTickets = () => {
+    if (updateTickets) {
+      const fetchNewTickets = async () => {
+        try {
+          const q = query(collection(db, 'queue'), orderBy('timestamp', 'asc'));
+          const querySnapshot = await getDocs(q);
+          const newTickets: string[] = [];
+          
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.ticketNumber) {
+              newTickets.push(data.ticketNumber);
+            }
+          });
+          
+          if (newTickets.length !== allTickets.length) {
+            updateTickets(newTickets);
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error("Error checking for new tickets:", error);
+          return false;
+        }
+      };
+      
+      fetchNewTickets();
+    }
+  };
+  useEffect(() => {
+    if (allTickets.length > 0 && !allTickets[currentTicketIndex]) {
+      // If we have tickets but the current one is undefined/null (cancelled)
+      handleBack();
+    }
+  }, [allTickets, currentTicketIndex]);
   const handleAddComment = async () => {
+    // Existing comment handling code...
     if (!comment.trim()) {
       Alert.alert('Error', 'Please enter a comment');
       return;
@@ -171,8 +262,6 @@ export const FacultyView = ({
     }
   };
   
-  
-  // Format duration from seconds to a human-readable string
   const formatDuration = (seconds: number): string => {
     if (!seconds) return 'N/A';
     
@@ -185,7 +274,6 @@ export const FacultyView = ({
     
     return `${minutes} minute${minutes !== 1 ? 's' : ''} ${remainingSeconds} second${remainingSeconds !== 1 ? 's' : ''}`;
   };
-
 
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Just now';
@@ -239,18 +327,15 @@ export const FacultyView = ({
     </View>
   );
 
-  // Comment section component
- 
-
   return (
     <View style={[styles.container, {width: '100%', maxWidth: 900, }]}>
       <AlertModal
-      isVisible={isModalVisible}
-      title="Success"
-      message={modalMessage}
-      onClose={() => setIsModalVisible(false)}
-      style={{ maxWidth: 100, alignSelf: 'center' }}
-    />
+        isVisible={isModalVisible}
+        title="Success"
+        message={modalMessage}
+        onClose={() => setIsModalVisible(false)}
+        style={{ maxWidth: 100, alignSelf: 'center' }}
+      />
       <ScrollView style={{width: '100%'}}>
         <View style={[styles.ticketBox, {width: '100%'}]}>
           <Text style={styles.queueText}>
@@ -261,7 +346,7 @@ export const FacultyView = ({
                 : ' No tickets in line'}
             </Text>
           </Text>
-          <Text style={[styles.ticketNumber, {color:'#d9ab0e', fontSize: 22}]}>STUDENT TICKET NUMBER</Text>
+          <Text style={[styles.ticketNumber, {color:'black', fontSize: 22}]}>STUDENT TICKET NUMBER</Text>
           {allTickets.length === 0 ? (
             <View style={[styles.notificationContainer, { alignItems: 'center', padding: 10, backgroundColor: '#f8d7da', borderRadius: 5, margin: 10 }]}>
               <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
@@ -277,6 +362,7 @@ export const FacultyView = ({
               <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
                 Ticket Number has been cancelled by student. 
               </Text>
+             
             </View>
           )}
           

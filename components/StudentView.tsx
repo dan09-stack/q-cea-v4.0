@@ -21,7 +21,7 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
       <Text
         style={[
           styles.status,
-          { color: item.status === 'ONLINE' ? '#00FF00' : '#FF0000' },
+          { color: item.status === 'ONLINE' ? ' rgb(21, 82, 14)' : ' rgb(91, 37, 17)' },
         ]}
       >
         {item.status}
@@ -38,6 +38,8 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
         <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
         <Text style={[styles.headerText, { flex: 1 }]}>WAITING</Text>
       </View>
+        <View style={{ height: 2, backgroundColor: 'black' }} />
+      
       <FlatList
         data={filteredFacultyData}
         keyExtractor={(item) => item.id}

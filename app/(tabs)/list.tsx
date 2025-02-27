@@ -5,6 +5,7 @@ import { auth, db } from '@/firebaseConfig';
 import { FacultyItem } from '@/utils/interfaces';
 import { FacultyView } from '@/components/FacultyView';
 import { StudentView } from '@/components/StudentView';
+import { LinearGradient } from 'expo-linear-gradient';
 
 
 export default function List() {
@@ -70,10 +71,10 @@ export default function List() {
   }, []);
 
   return (
-    <ImageBackground
-      source={require('../../assets/green p2.jpg')}
-      style={styles.background}
-    >
+     <LinearGradient
+          colors={['#045657', '#034041', '#023030']}
+          style={styles.background}
+        >
       {userType === 'FACULTY' ? (
         <FacultyView styles={styles} displayedTicket={displayedTicket} />
       ) : (
@@ -83,7 +84,7 @@ export default function List() {
           styles={styles} 
         />
       )}
-    </ImageBackground>
+    </LinearGradient>
   );
 }
 

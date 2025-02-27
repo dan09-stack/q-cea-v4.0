@@ -8,7 +8,7 @@ interface CustomButtonProps {
   disabled?: boolean;
 }
 
-export const CustomButton = ({ title, onPress, color = '#005000' }: CustomButtonProps) => {
+export const CustomButton = ({ title, onPress, color = 'white' }: CustomButtonProps) => {
   return (
     <TouchableOpacity 
       onPress={onPress}
@@ -16,7 +16,7 @@ export const CustomButton = ({ title, onPress, color = '#005000' }: CustomButton
     >
       <Text style={[
         styles.buttonText,
-        { color: color === 'white' ? '#0009' : 'white' }
+        { color: color === 'white' ? 'black' : 'white' }
       ]}>
         {title}
       </Text>

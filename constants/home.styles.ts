@@ -128,13 +128,15 @@ details:{
     backgroundColor: '#ffffff',
     },
     pickerButton: {
-    backgroundColor: '#005000',
+      borderColor: '#ccc',
+      borderWidth: 1,
+    backgroundColor: 'white',
     padding: 15,
     borderRadius: 5,
     marginVertical: 5,
     },
     pickerButtonText: {
-    color: '#ffffff',
+    color: 'black',
     fontSize: 16,
     },
     input: {
@@ -144,6 +146,7 @@ details:{
     marginTop: 5,
     marginBottom: 10,
     borderRadius: 5,
+  
     height: 50,
     textAlignVertical: 'top', 
     },

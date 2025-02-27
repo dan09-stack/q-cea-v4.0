@@ -21,6 +21,7 @@ const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };import Checkbox from 'expo-checkbox';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -75,46 +76,46 @@ export default function Signup(): JSX.Element {
   };
   
   const onSignup = async () => {
-    if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
-      setErrorMessage('Please fill in all fields');
-      setErrorModalVisible(true);
-      return;
-    }
-    if (!validateIdNumber(idNumber)) {
-      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
-      setErrorModalVisible(true);
-      return;
-    }
+    // if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
+    //   setErrorMessage('Please fill in all fields');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
+    // if (!validateIdNumber(idNumber)) {
+    //   setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
     
-    // Validate phone number
-    if (!validatePhoneNumber(phoneNumber)) {
-      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
-      setErrorModalVisible(true);
-      return;
-    }
+    // // Validate phone number
+    // if (!validatePhoneNumber(phoneNumber)) {
+    //   setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
     
-    // Validate email format
-    if (!validateEmail(email)) {
-      setErrorMessage('Please enter a valid email address');
-      setErrorModalVisible(true);
-      return;
-    }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long');
-      setErrorModalVisible(true);
-      return;
-    }
-    if (!fullName.includes(',')) {
-      setErrorMessage('Full Name should be in format: Last Name, First Name MI');
-      setErrorModalVisible(true);
-      return;
-    }
+    // // Validate email format
+    // if (!validateEmail(email)) {
+    //   setErrorMessage('Please enter a valid email address');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
+    // if (password.length < 6) {
+    //   setErrorMessage('Password must be at least 6 characters long');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
+    // if (!fullName.includes(',')) {
+    //   setErrorMessage('Full Name should be in format: Last Name, First Name MI');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
     
-    if (!email.includes('@')) {
-      setErrorMessage('Please enter a valid email address');
-      setErrorModalVisible(true);
-      return;
-    }
+    // if (!email.includes('@')) {
+    //   setErrorMessage('Please enter a valid email address');
+    //   setErrorModalVisible(true);
+    //   return;
+    // }
   
     setIsLoading(true);
   
@@ -130,34 +131,37 @@ export default function Signup(): JSX.Element {
       });
     } catch (error: any) {
       // Enhanced error handling with specific messages
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      } else if (error.code === 'auth/invalid-email') {
-        setErrorMessage('The email address is not valid.');
-      }
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      } else if (error.code === 'auth/invalid-email') {
-        setErrorMessage('The email address is not valid.');
-      } else if (error.code === 'auth/weak-password') {
-        setErrorMessage('The password is too weak. Please choose a stronger password.');
-      } else if (error.code === 'auth/network-request-failed') {
-        setErrorMessage('Network error. Please check your internet connection and try again.');
-      } else if (error.message) {
-        // If the error has a message property, use it
-        setErrorMessage(error.message);
-      } else {
-        // Fallback error message
-        setErrorMessage('Something went wrong. Please try again later.');
-      }
-      setErrorModalVisible(true);
+      // if (error.code === 'auth/email-already-in-use') {
+      //   setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      // } else if (error.code === 'auth/invalid-email') {
+      //   setErrorMessage('The email address is not valid.');
+      // }
+      // if (error.code === 'auth/email-already-in-use') {
+      //   setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      // } else if (error.code === 'auth/invalid-email') {
+      //   setErrorMessage('The email address is not valid.');
+      // } else if (error.code === 'auth/weak-password') {
+      //   setErrorMessage('The password is too weak. Please choose a stronger password.');
+      // } else if (error.code === 'auth/network-request-failed') {
+      //   setErrorMessage('Network error. Please check your internet connection and try again.');
+      // } else if (error.message) {
+      //   // If the error has a message property, use it
+      //   setErrorMessage(error.message);
+      // } else {
+      //   // Fallback error message
+      //   setErrorMessage('Something went wrong. Please try again later.');
+      // }
+      // setErrorModalVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
   
   return (
-    <View style={styles.background}>
+    <LinearGradient
+         colors={['#045657', '#034041', '#023030']}
+         style={styles.background}
+       >
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
           <ErrorModal />
@@ -397,7 +401,7 @@ export default function Signup(): JSX.Element {
             </View>
            </View>
           </ScrollView>
-       </View>  
+        </LinearGradient>
   );
 }
 

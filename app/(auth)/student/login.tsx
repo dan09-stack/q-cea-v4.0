@@ -8,6 +8,7 @@ import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Colors } from '@/constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -109,8 +110,11 @@ export default function Login() {
     }
   };
 
-  return (
-    <View style={styles.background}>
+  return  (
+    <LinearGradient
+      colors={['#045657', '#034041', '#023030']}
+      style={styles.background}
+    >
       <View style={styles.container}>
         <View style={styles.blurBackground} />
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
@@ -190,7 +194,7 @@ export default function Login() {
           </View>
         </View>
       </Modal>
-    </View>
+      </LinearGradient>
   );
 }
 

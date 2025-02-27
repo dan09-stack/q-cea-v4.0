@@ -16,10 +16,35 @@ import { useQueueState } from '@/hooks/useQueueState';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import { getPhoneNumberForTicket, sendNotificationToStudent, sendNotificationToFaculty, sendEmailNotification, getNextStudentDetails } from '@/services/queueService';
 import { Colors } from '@/constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Home() {
   const state = useQueueState();
   const backgroundColor = "#008000";
+  useEffect(() => {
+      const fetchUserData = async () => {
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            if (!user.emailVerified) {
+              setTimeout(() => {
+                router.replace('/verify');
+              }, 0);
+            } else {
+              const userDoc = await db.collection('student').doc(user.uid).get();
+            
+            }
+          } else {
+            setTimeout(() => {
+              router.replace('/student/login');
+            }, 0);
+          }
+        } finally {
+        }
+      };
+    
+      fetchUserData();
+    }, []);
   useEffect(() => {
     const loadTickets = async () => {
       if (!state.currentStudent.name && auth.currentUser) {
@@ -687,7 +712,10 @@ export default function Home() {
       };
     
       return (
-        <View style={[styles.background, { backgroundColor }]}>
+         <LinearGradient
+              colors={['#045657', '#034041', '#023030']}
+              style={styles.background}
+            >
           {state.userType === 'FACULTY' ? (
             <FacultyView 
               allTickets={state.allTickets}
@@ -741,6 +769,7 @@ export default function Home() {
               }
             }}
           />
-        </View>
+          </LinearGradient>
+       
       );
     }

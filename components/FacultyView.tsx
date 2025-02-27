@@ -77,7 +77,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
             return {
               id: doc.id,
               comment: data.comment || '',
-              timestamp: data.timestamp,
+              timestamp: data.timestamp ? data.timestamp.toDate() : new Date(),
               faculty: data.faculty || '',
               ticketNumber: data.ticketNumber || '',
               studentName: data.studentName || '',
@@ -107,11 +107,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
       </Text>
       <View style={styles.verticalSeparator} />
       <Text style={[styles.name,{flex: 1.5, width: 100, textAlign: 'center'}]} >{item.name}</Text>
-      <View style={styles.verticalSeparator} />
-      <Text style={styles.concerns}>
-        {item.concerns !== "Other" ? <Text>{item.concerns}</Text> : null}
-        <Text>{item.otherConcern ? `${item.concerns !== "Other" ? "   " : ""}${item.otherConcern}` : ''}</Text>
-      </Text>
+      
       <View style={styles.verticalSeparator} />
       <Text style={[styles.name, { flex: 1.5, textAlign: 'center' }]}>{item.requestDate}</Text>
     </View>
@@ -142,7 +138,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           setModalVisible(true);
         }}
       >
-        <Ionicons name="chatbubble-ellipses" size={20} color="#008000" />
+        <Ionicons name="chatbubble-ellipses" size={20} color="#07643d" />
       </TouchableOpacity>
     </View>
   );
@@ -171,7 +167,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           >
             <Text style={[styles.buttonText, showHistory ? styles.activeButtonText : null]}>History</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[
               styles.appointmentButton, 
               { 
@@ -184,7 +180,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
             onPress={navigateToAppointments}
           >
             <Text style={[styles.buttonText, { color: 'black' }]}>Appointments</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
          
         </View>
       </View>
@@ -197,6 +193,8 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
             <Text style={[styles.headerText, { flex: .5}]}>DATE</Text>
             <Text style={[styles.headerText, { flex: .5 }]}>COMMENT</Text>
           </View>
+                  <View style={{ height: 2, backgroundColor: 'black' }} />
+          
           <FlatList
             data={historyData}
             keyExtractor={(item) => item.id}
@@ -214,11 +212,12 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
       ) : (
         <>
           <View style={styles.header}>
-            <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
+            <Text style={[styles.headerText, { flex: 1 }]}>TICKET & CONCERN</Text>
             <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT</Text>
-            <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
             <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
           </View>
+          <View style={{ height: 2, backgroundColor: 'black' }} />
+          
           <FlatList
             data={studentData}
             keyExtractor={(item) => item.id}

@@ -72,7 +72,7 @@ export const StudentView = ({
             People in front of you: {peopleAhead}
           </Text>
           <View style={styles.ticketDetails}>
-            <Text style={[styles.ticketLabel, { color: '#d9ab0e' , fontWeight: 'bold' , fontSize: 22}]}>YOUR TICKET NUMBER</Text>
+            <Text style={[styles.ticketLabel, { color: 'black' , fontWeight: 'bold' , fontSize: 22}]}>YOUR TICKET NUMBER</Text>
             <Text style={[styles.ticketNumber, { fontSize: 25 , marginBottom: 20}]}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
             <View style={styles.ticketInfoContainer}>
               <View>
