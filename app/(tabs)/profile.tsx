@@ -178,85 +178,80 @@ export default function Profile(): JSX.Element {
         colors={['#045657', '#034041', '#023030']}
         style={styles.background}
       >
-
         <View style={styles.container}>
-          <TouchableOpacity 
-            style={styles.logoutButton} 
-            onPress={() => signOut(router)}
-          >
-            <MaterialIcons name="logout" size={30} color="white" />
-          </TouchableOpacity>
-        <View style={styles.container}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#008000" />
-        ) : (
-          <View style={styles.contentContainer}>
-            <View style={styles.profileImageContainer}>
-              <TouchableOpacity onPress={pickImage}>
-                {userData.profilePicture ? (
-                  <Image 
-                    source={{ uri: userData.profilePicture }}
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <MaterialIcons name="account-circle" size={120} color="white" />
-                )}
-                <View style={styles.editIconContainer}>
-                  <MaterialIcons name="edit" size={24} color="white" />
+          <View style={styles.container}>
+            {loading ? (
+              <ActivityIndicator size="large" color="#008000" />
+            ) : (
+              <View style={styles.contentContainer}>
+                <View style={styles.profileImageContainer}>
+                  <TouchableOpacity onPress={pickImage}>
+                    {userData.profilePicture ? (
+                      <Image 
+                        source={{ uri: userData.profilePicture }}
+                        style={styles.profileImage}
+                      />
+                    ) : (
+                      <MaterialIcons name="account-circle" size={120} color="white" />
+                    )}
+                    <View style={styles.editIconContainer}>
+                      <MaterialIcons name="edit" size={24} color="white" />
+                    </View>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.title}>{userData.fullName}</Text>
-            <View style={styles.infoContainer}>
-              <View style={styles.infoText}>
-              <Image 
-               source={require('../../assets/email.png')} 
-               style={styles.icon} 
-              />
-                <Text style={styles.infoLabel}>Email:</Text>
-                <Text style={styles.infoValue}>{userData.email}</Text>
+                <Text style={styles.title}>{userData.fullName}</Text>
+                <View style={styles.infoContainer}>
+                  <View style={styles.infoText}>
+                  <Image 
+                   source={require('../../assets/email.png')} 
+                   style={styles.icon} 
+                  />
+                    <Text style={styles.infoLabel}>Email:</Text>
+                    <Text style={styles.infoValue}>{userData.email}</Text>
+                  </View>
+                  <View style={styles.infoText}>
+                  <Image 
+                   source={require('../../assets/phone.png')} 
+                   style={styles.icon} 
+                  />
+                    <Text style={styles.infoLabel}>Phone #:</Text>
+                    <Text style={styles.infoValue}>{userData.phoneNumber}</Text>
+                  </View>
+                  <View style={styles.infoText}>
+                  <Image 
+                   source={require('../../assets/id.png')} 
+                   style={styles.icon} 
+                  />
+                    <Text style={styles.infoLabel}>ID Number:</Text>
+                    <Text style={styles.infoValue}>{userData.idNumber}</Text>
+                  </View>
+                  <View style={styles.infoText}>
+                  <Image 
+                   source={require('../../assets/course.png')} 
+                   style={styles.icon} 
+                  />
+                    <Text style={styles.infoLabel}>Program:</Text>
+                    <Text style={styles.infoValue}>{userData.program}</Text>
+                  </View>
+                </View>
+                <CustomButton title="Edit Profile" onPress={() => setModalVisible(true)} />
+                <View style={styles.buttonSpacing} />
+                <CustomButton title="Logout" onPress={() => signOut(router)} color="gray" />
+                <EditProfileModal
+                  modalVisible={modalVisible}
+                  setModalVisible={setModalVisible}
+                  editableData={editableData}
+                  setEditableData={setEditableData}
+                  oldPassword={oldPassword}
+                  setOldPassword={setOldPassword}
+                  newPassword={newPassword}
+                  setNewPassword={setNewPassword}
+                  handleUpdateProfile={handleUpdateProfile}
+                />
               </View>
-              <View style={styles.infoText}>
-              <Image 
-               source={require('../../assets/phone.png')} 
-               style={styles.icon} 
-              />
-                <Text style={styles.infoLabel}>Phone #:</Text>
-                <Text style={styles.infoValue}>{userData.phoneNumber}</Text>
-              </View>
-              <View style={styles.infoText}>
-              <Image 
-               source={require('../../assets/id.png')} 
-               style={styles.icon} 
-              />
-                <Text style={styles.infoLabel}>ID Number:</Text>
-                <Text style={styles.infoValue}>{userData.idNumber}</Text>
-              </View>
-              <View style={styles.infoText}>
-              <Image 
-               source={require('../../assets/course.png')} 
-               style={styles.icon} 
-              />
-                <Text style={styles.infoLabel}>Program:</Text>
-                <Text style={styles.infoValue}>{userData.program}</Text>
-              </View>
-            </View>
-            <CustomButton title="Edit Profile" onPress={() => setModalVisible(true)} />
-            <EditProfileModal
-              modalVisible={modalVisible}
-              setModalVisible={setModalVisible}
-              editableData={editableData}
-              setEditableData={setEditableData}
-              oldPassword={oldPassword}               // Add this line
-              setOldPassword={setOldPassword}         // Add this line
-              newPassword={newPassword}
-              setNewPassword={setNewPassword}
-              handleUpdateProfile={handleUpdateProfile}
-            />
+            )}
           </View>
-        )}
         </View>
-      </View>
       </LinearGradient>
     </PageContainer>
   );
@@ -285,13 +280,6 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderWidth: 3,
     borderColor: '#008000',
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    alignSelf: 'flex-end', 
-    padding: 40,
   },
   container: {
     width: '100%',
@@ -337,6 +325,9 @@ const styles = StyleSheet.create({
   infoValue: {
     flex: 1,
     color: 'black'
+  },
+  buttonSpacing: {
+    height: 10,
   },
   modalView: {
     backgroundColor: 'white',
