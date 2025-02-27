@@ -28,8 +28,8 @@ import {
 } from 'firebase/firestore';
 import { auth, db } from '@/firebaseConfig';
 import { router } from 'expo-router';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { formatDate } from '@/app(tabs)/utils/formatters';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { formatDate } from '@/utils/formatters';
 
 interface Appointment {
     id: string;
@@ -48,6 +48,8 @@ interface Student {
     studentId?: string;
   }
 export default function AppointmentScreen() {
+    const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
+const [showTimePicker, setShowTimePicker] = useState(false);
     const [searchText, setSearchText] = useState('');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -64,11 +66,13 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [studentName, setStudentName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState(new Date());
-  const [timeSlot, setTimeSlot] = useState('');
+  const [appointmentTime, setAppointmentTime] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  
   const [concern, setConcern] = useState('');
   const [notes, setNotes] = useState('');
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
     // Add this function to fetch students
     const fetchStudents = async () => {
         try {
@@ -117,7 +121,16 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
     return () => {};
   }, []);
-
+  const showDatePickerModal = () => {
+    setPickerMode('date');
+    setShowDatePicker(true);
+  };
+  
+  const showTimePickerModal = () => {
+    setPickerMode('time');
+    setShowTimePicker(true);
+  };
+  
   useEffect(() => {
     if (!currentFacultyId) return;
     
@@ -235,11 +248,37 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      setShowTimePicker(false);
+    }
+    
     if (selectedDate) {
-      setAppointmentDate(selectedDate);
+      if (pickerMode === 'date') {
+        // Keep the time from the existing date but update the day/month/year
+        const newDate = new Date(selectedDate);
+        newDate.setHours(appointmentDate.getHours());
+        newDate.setMinutes(appointmentDate.getMinutes());
+        setAppointmentDate(newDate);
+        
+        // On Android, we can show the time picker after date selection
+        if (Platform.OS === 'android') {
+          setTimeout(() => {
+            setPickerMode('time');
+            setShowTimePicker(true);
+          }, 500);
+        }
+      } else {
+        // Keep the date but update the time
+        const newDate = new Date(appointmentDate);
+        newDate.setHours(selectedDate.getHours());
+        newDate.setMinutes(selectedDate.getMinutes());
+        setAppointmentDate(newDate);
+      }
     }
   };
+  
+  
 
   const renderAppointment = ({ item }: { item: Appointment }) => (
     <View style={styles.appointmentItem}>
@@ -473,26 +512,37 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
               </View>
               
               <View style={styles.formGroup}>
-                <Text style={styles.formLabel}>Appointment Date *</Text>
-                <TouchableOpacity 
-                  style={styles.datePickerButton}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Text>{formatDate(Timestamp.fromDate(appointmentDate))}</Text>
-                </TouchableOpacity>
+                <Text style={styles.formLabel}>Appointment Date & Time *</Text>
+                <View style={styles.dateTimeContainer}>
+                    <TouchableOpacity 
+                    style={styles.datePickerButton}
+                    onPress={showDatePickerModal}
+                    >
+                    <Text>{appointmentDate.toLocaleDateString()}</Text>
+                    </TouchableOpacity>
+                    
+                    <TouchableOpacity 
+                    style={styles.datePickerButton}
+                    onPress={showTimePickerModal}
+                    >
+                    <Text>{appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+                    </TouchableOpacity>
+                </View>
                 
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={appointmentDate}
-                    mode="date"
-                    display="default"
-                    onChange={onDateChange}
-                    minimumDate={new Date()}
+                {(showDatePicker || showTimePicker) && (
+                    <DateTimePickerModal
+                    isVisible={showDatePicker}
+                    mode={pickerMode}
+                    onConfirm={(date) => {
+                      setAppointmentDate(date);
+                      setShowDatePicker(false);
+                    }}
+                    onCancel={() => setShowDatePicker(false)}
+                    date={appointmentDate}
                   />
                 )}
-              </View>
-              
-              
+                </View>
+
               
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Concern/Purpose *</Text>
@@ -544,6 +594,20 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 }
 
 const styles = StyleSheet.create({
+    dateTimeContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+      },
+      datePickerButton: {
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        flex: 1,
+        marginHorizontal: 5,
+        alignItems: 'center',
+      },
     dropdownButton: {
         borderWidth: 1,
         borderColor: '#ddd',
@@ -751,13 +815,7 @@ const styles = StyleSheet.create({
     height: 100,
     textAlignVertical: 'top',
   },
-  datePickerButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
+ 
   modalButtonsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

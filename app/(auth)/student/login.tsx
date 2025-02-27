@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '@/firebaseConfig';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, ImageBackground, Image, Modal } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Modal } from 'react-native';
 import { handleUserLogin } from '../../../services/auth';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Checkbox from 'expo-checkbox';
 import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
+import { Colors } from '@/constants/Colors';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -19,12 +20,7 @@ export default function Login() {
   const [loginAttempts, setLoginAttempts] = useState(0); // Track failed attempts
   const [lockoutTime, setLockoutTime] = useState<number | null>(null); // Track lockout time
   const router = useRouter();
-  // const generateNewCaptcha = () => {
-  //   const newCaptcha = generateCaptcha(6); // 6 characters long
-  //   setCaptchaText(newCaptcha);
-  //   setUserCaptchaInput('');
-  //   setCaptchaError('');
-  // };
+
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -114,12 +110,7 @@ export default function Login() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../../assets/green.jpg')}
-      style={styles.background}
-      imageStyle={{ resizeMode: 'cover' }}        
-    >
-      
+    <View style={styles.background}>
       <View style={styles.container}>
         <View style={styles.blurBackground} />
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
@@ -153,37 +144,36 @@ export default function Login() {
         </View>
 
         <View style={styles.checkboxContainer}>
-  <View style={styles.checkboxWrapper}>
-    <Checkbox 
-      value={rememberPassword} 
-      onValueChange={setRememberPassword} 
-      color={rememberPassword ? '#2c6b2f' : undefined} 
-    />
-    <Text style={styles.checkboxLabel}>Remember Password</Text>
-  </View>
+          <View style={styles.checkboxWrapper}>
+            <Checkbox 
+              value={rememberPassword} 
+              onValueChange={setRememberPassword} 
+              color={rememberPassword ? '#2c6b2f' : undefined} 
+            />
+            <Text style={styles.checkboxLabel}>Remember Password</Text>
+          </View>
 
-  <TouchableOpacity 
-    style={styles.forgotPasswordWrapper} 
-    onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}
-  >
-    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-  </TouchableOpacity>
-</View>
-
+          <TouchableOpacity 
+            style={styles.forgotPasswordWrapper} 
+            onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Sign In Button */}
         <TouchableOpacity
-                           style={[styles.button, isLoading && styles.buttonDisabled]}
-                           onPress={() => handleLogin(email, password)}
-                           disabled={isLoading}
-         >
-            <Text style={styles.buttonText}>
-                         {isLoading ? 'Logging In...' : 'Log In'}
-                        </Text>
-         </TouchableOpacity>
+          style={[styles.button, isLoading && styles.buttonDisabled]}
+          onPress={() => handleLogin(email, password)}
+          disabled={isLoading}
+        >
+          <Text style={styles.buttonText}>
+            {isLoading ? 'Logging In...' : 'Log In'}
+          </Text>
+        </TouchableOpacity>
 
         <View style={styles.signupContainer}>
-        <Text style={{ color: 'white' }}>Don't have an account? </Text>
+          <Text style={{ color: 'white' }}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
             <Text style={styles.linkText}>Sign Up</Text>
           </TouchableOpacity>
@@ -200,7 +190,7 @@ export default function Login() {
           </View>
         </View>
       </Modal>
-    </ImageBackground>
+    </View>
   );
 }
 
@@ -254,12 +244,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center', 
     width: '100%', 
-    height: '100%' 
+    height: '100%',
+    backgroundColor: '#008000' // Main color replacing the background image
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 
     borderRadius: 12, 
-    backdropFilter: 'blur(10px)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.1)', 
     zIndex: -1, 
   },
   button: {
@@ -287,7 +278,7 @@ const styles = StyleSheet.create({
     padding: 20, 
     borderRadius: 12, 
     alignItems: 'center', 
-    marginTop: 50 ,
+    marginTop: 50,
     borderColor: 'white',
     borderWidth: 1,
   },
@@ -324,7 +315,7 @@ const styles = StyleSheet.create({
     borderWidth: 2, 
     marginBottom: 15, 
     paddingLeft: 10, 
-    borderRadius: 5 ,
+    borderRadius: 5,
     color: 'white'
   },
   passwordContainer: { 
@@ -343,7 +334,7 @@ const styles = StyleSheet.create({
     borderWidth: 2, 
     paddingLeft: 10, 
     borderRadius: 5, 
-    paddingRight: 50 ,
+    paddingRight: 50,
     color: 'white'
   },
   eyeIcon: { 

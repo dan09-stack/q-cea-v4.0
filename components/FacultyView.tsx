@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { collection, doc, getDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { auth, db } from '@/firebaseConfig';
-import { StudentItem, CommentItem } from '../interfaces';
+import { StudentItem, CommentItem } from '../utils/interfaces';
 import { formatDate, formatFullDateTime } from '../utils/formatters';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface FacultyViewProps {
   styles: any;
@@ -17,7 +18,8 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
   const [showHistory, setShowHistory] = useState(false);
   const [historyData, setHistoryData] = useState<CommentItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null);
   useEffect(() => {
     const currentUser = auth.currentUser;
     if (currentUser) {
@@ -116,25 +118,33 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
   
   const renderHistoryItem = ({ item }: { item: CommentItem }) => (
     <View style={styles.row}>
-      <Text style={styles.concerns}>
+      <Text style={[styles.concerns,{ flex: 1.5, textAlign: 'center' }]}>
         {item.concern !== "Other" ? <Text>{item.concern}</Text> : null}
         <Text>{item.otherConcern ? `${item.concern !== "Other" ? "   " : ""}${item.otherConcern}` : ''}</Text>
         - {item.specificDetails || 'N/A'}
       </Text>
       <View style={styles.verticalSeparator} />
-      <Text style={[styles.name, { flex: 1.2, textAlign: 'center' }]}>
+      <Text style={[styles.name, { flex: 1, textAlign: 'center' }]}>
         {item.studentName || 'Unknown'}
       </Text>
+      
       <View style={styles.verticalSeparator} />
-      <Text style={[styles.name, { flex: 2, textAlign: 'left', paddingHorizontal: 10 }]}>
-        {item.comment}
+      <Text style={[styles.name, { flex: 1, textAlign: 'center' }]}>
+        {formatDate(item.timestamp)}  
       </Text>
       <View style={styles.verticalSeparator} />
-      <Text style={[styles.name, { flex: 1.5, textAlign: 'center' }]}>
-        {formatDate(item.timestamp)}  {'\n'} {item.durationFormatted}
-      </Text>
+      <TouchableOpacity 
+        style={[styles.name, { flex: .3,  alignItems: 'center', paddingHorizontal: 10 }]}
+        onPress={() => {
+          setSelectedComment(item);
+          setModalVisible(true);
+        }}
+      >
+        <Ionicons name="chatbubble-ellipses" size={20} color="#008000" />
+      </TouchableOpacity>
     </View>
   );
+  
 
   const navigateToAppointments = () => {
     router.push('../appointment');
@@ -159,22 +169,22 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           >
             <Text style={[styles.buttonText, showHistory ? styles.activeButtonText : null]}>History</Text>
           </TouchableOpacity>
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.toggleButton, styles.appointmentButton]}
             onPress={navigateToAppointments}
           >
             <Text style={[styles.buttonText]}>Appointments</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
       
       {showHistory ? (
         <>
           <View style={styles.header}>
-            <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
-            <Text style={[styles.headerText, { flex: 1.2 }]}>STUDENT</Text>
-            <Text style={[styles.headerText, { flex: 2 }]}>COMMENT</Text>
-            <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
+            <Text style={[styles.headerText, { flex: 1.5 }]}>CONCERN</Text>
+            <Text style={[styles.headerText, { flex: 1 }]}>STUDENT</Text>
+            <Text style={[styles.headerText, { flex: 1}]}>TIME</Text>
+            <Text style={[styles.headerText, { flex: .3 }]}>COMMENT</Text>
           </View>
           <FlatList
             data={historyData}
@@ -211,6 +221,70 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           />
         </>
       )}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Comment Details</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#000" />
+              </TouchableOpacity>
+            </View>
+            
+            {selectedComment && (
+              <ScrollView style={styles.modalBody}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Student:</Text>
+                  <Text style={styles.detailText}>{selectedComment.studentName}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Concern:</Text>
+                  <Text style={styles.detailText}>
+                    {selectedComment.concern !== "Other" ? selectedComment.concern : selectedComment.otherConcern}
+                  </Text>
+                </View>
+                
+                {selectedComment.specificDetails && (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Details:</Text>
+                    <Text style={styles.detailText}>{selectedComment.specificDetails}</Text>
+                  </View>
+                )}
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Time:</Text>
+                  <Text style={styles.detailText}>{formatDate(selectedComment.timestamp)}</Text>
+                </View>
+                
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Duration:</Text>
+                  <Text style={styles.detailText}>{selectedComment.durationFormatted}</Text>
+                </View>
+                
+                <View style={styles.commentContainer}>
+                  <Text style={styles.detailLabel}>Comment:</Text>
+                  <Text style={styles.commentText}>{selectedComment.comment}</Text>
+                </View>
+              </ScrollView>
+            )}
+            
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

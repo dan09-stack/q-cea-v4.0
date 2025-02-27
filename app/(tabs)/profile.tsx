@@ -167,16 +167,14 @@ export default function Profile(): JSX.Element {
 
   if (!isVerified) {
     return (
-      <ImageBackground></ImageBackground>
+      <View style={{ flex: 1, backgroundColor: '#008000' }}></View>
     );
   }
 
   return (
     <PageContainer>
-      <ImageBackground
-        source={require('../../assets/green p2.jpg')}
-        style={styles.background}
-      >
+      <View style={[styles.background, { backgroundColor: '#008000' }]}>
+
         <View style={styles.container}>
           <TouchableOpacity 
             style={styles.logoutButton} 
@@ -255,7 +253,8 @@ export default function Profile(): JSX.Element {
         )}
         </View>
       </View>
-      </ImageBackground>
+      </View>
+      
     </PageContainer>
   );
 }

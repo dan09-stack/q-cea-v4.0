@@ -4,7 +4,7 @@ import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db, auth } from '@/firebaseConfig';
-import { CommentSection } from './components/CommentSection';
+import { CommentSection } from './HomeCommentSection';
 import { AlertModal } from '@/components/queue/AlertModal';
 interface FacultyViewProps {
   allTickets: string[];

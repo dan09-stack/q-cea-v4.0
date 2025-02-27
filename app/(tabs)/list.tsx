@@ -2,9 +2,9 @@ import { View, ImageBackground, StyleSheet, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
 import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore'
 import { auth, db } from '@/firebaseConfig';
-import { FacultyItem } from '@/app(tabs)/interfaces';
-import { FacultyView } from '@/app(tabs)/components/FacultyView';
-import { StudentView } from '@/app(tabs)/components/StudentView';
+import { FacultyItem } from '@/utils/interfaces';
+import { FacultyView } from '@/components/FacultyView';
+import { StudentView } from '@/components/StudentView';
 
 
 export default function List() {
@@ -88,6 +88,76 @@ export default function List() {
 }
 
 const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'black',
+    paddingBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  modalBody: {
+    maxHeight: '70%',
+  },
+  detailRow: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  detailLabel: {
+    fontWeight: 'bold',
+    width: 80,
+    color: '#687076',
+  },
+  detailText: {
+    flex: 1,
+    color: '#11181C',
+  },
+  commentContainer: {
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  commentText: {
+    marginTop: 5,
+    color: '#11181C',
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  closeButton: {
+    backgroundColor: '#008000',
+    padding: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
   headerWithButtons: {
     flexDirection: 'column',
     alignItems: 'center',
@@ -211,6 +281,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 5,
+    
   },
   row: {
     flexDirection: 'row',

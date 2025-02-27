@@ -1,4 +1,4 @@
-import { ImageBackground, Platform } from 'react-native';
+import { ImageBackground, Platform, View } from 'react-native';
 import React, { useEffect } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc } from 'firebase/firestore';
@@ -7,17 +7,19 @@ import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
 // Components
-import { FacultyView } from './home/FacultyView';
-import { StudentView } from './home/StudentView';
+import { FacultyView } from '../../components/HomeFacultyView';
+import { StudentView } from '../../components/HomeStudentView';
 import { AlertModal } from '@/components/queue/AlertModal';
 
 // Hooks and Services
 import { useQueueState } from '@/hooks/useQueueState';
+import { useThemeColor } from '@/hooks/useThemeColor';
 import { getPhoneNumberForTicket, sendNotificationToStudent, sendNotificationToFaculty, sendEmailNotification, getNextStudentDetails } from '@/services/queueService';
+import { Colors } from '@/constants/Colors';
 
 export default function Home() {
   const state = useQueueState();
-  
+  const backgroundColor = "#008000";
   useEffect(() => {
     const loadNextStudent = async () => {
       const details = await getNextStudentDetails(state.allTickets, state.currentTicketIndex);
@@ -667,7 +669,7 @@ export default function Home() {
       };
     
       return (
-        <ImageBackground source={require('../../assets/green.png')} style={styles.background}>
+        <View style={[styles.background, { backgroundColor }]}>
           {state.userType === 'FACULTY' ? (
             <FacultyView 
               allTickets={state.allTickets}
@@ -721,7 +723,6 @@ export default function Home() {
               }
             }}
           />
-        </ImageBackground>
+        </View>
       );
     }
-    
