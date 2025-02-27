@@ -21,6 +21,24 @@ export default function Home() {
   const state = useQueueState();
   const backgroundColor = "#008000";
   useEffect(() => {
+    const loadTickets = async () => {
+      if (!state.currentStudent.name && auth.currentUser) {
+        const userDoc = await getDoc(doc(db, 'student', auth.currentUser.uid));
+        if (userDoc.exists()) {
+          state.setCurrentStudent(prevState => ({
+            ...prevState,
+            name: userDoc.data().fullName || ''
+          }));
+        }
+      }
+    };
+    
+    if (!state.currentStudent.name) {
+      loadTickets();
+    }
+  }, [state.currentStudent.name]);
+  
+  useEffect(() => {
     const loadNextStudent = async () => {
       const details = await getNextStudentDetails(state.allTickets, state.currentTicketIndex);
       if (details) {

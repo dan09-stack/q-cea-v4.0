@@ -129,7 +129,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
       </Text>
       
       <View style={styles.verticalSeparator} />
-      <Text style={[styles.name, { flex: 1, textAlign: 'center' }]}>
+      <Text style={[styles.name, { flex: .5, textAlign: 'center' }]}>
         {formatDate(item.timestamp)}  
       </Text>
       <View style={styles.verticalSeparator} />
@@ -169,12 +169,21 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           >
             <Text style={[styles.buttonText, showHistory ? styles.activeButtonText : null]}>History</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity
-            style={[styles.toggleButton, styles.appointmentButton]}
+          <TouchableOpacity
+            style={[
+              styles.appointmentButton, 
+              { 
+                marginLeft: 'auto', 
+                backgroundColor: '#0a7ea4',
+                paddingHorizontal: 15,
+                paddingVertical: 8,
+                borderRadius: 5
+              }
+            ]}
             onPress={navigateToAppointments}
           >
-            <Text style={[styles.buttonText]}>Appointments</Text>
-          </TouchableOpacity> */}
+            <Text style={[styles.buttonText, { color: '#fff' }]}>Appointments</Text>
+          </TouchableOpacity>
         </View>
       </View>
       
@@ -183,8 +192,8 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           <View style={styles.header}>
             <Text style={[styles.headerText, { flex: 1.5 }]}>CONCERN</Text>
             <Text style={[styles.headerText, { flex: 1 }]}>STUDENT</Text>
-            <Text style={[styles.headerText, { flex: 1}]}>TIME</Text>
-            <Text style={[styles.headerText, { flex: .3 }]}>COMMENT</Text>
+            <Text style={[styles.headerText, { flex: .5}]}>DATE</Text>
+            <Text style={[styles.headerText, { flex: .5 }]}>COMMENT</Text>
           </View>
           <FlatList
             data={historyData}

@@ -184,7 +184,7 @@ export default function RatingPage() {
           <Text style={styles.sectionTitle}>Please rate the following aspects:</Text>
           {surveyQuestions.map((question) => {
             // Only show bug description field if user said Yes to experiencing bugs
-            if (question.key === 'bugDescription' && surveyAnswers.reliability !== 5) {
+            if (question.key === 'bugDescription' && surveyAnswers.reliability !== 1) {
               return null;
             }
             
