@@ -3,9 +3,10 @@ import { View, Text, FlatList, TouchableOpacity, ScrollView, Modal } from 'react
 import { collection, doc, getDoc, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { auth, db } from '@/firebaseConfig';
 import { StudentItem, CommentItem } from '../utils/interfaces';
-import { formatDate, formatFullDateTime } from '../utils/formatters';
+import { formatFullDateTime } from '../utils/formatters';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { formatDate } from '../utils/formatters';
 
 interface FacultyViewProps {
   styles: any;
@@ -130,8 +131,9 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
       
       <View style={styles.verticalSeparator} />
       <Text style={[styles.name, { flex: .5, textAlign: 'center' }]}>
-        {formatDate(item.timestamp)}  
+        {formatDate(item.timestamp, "MM/dd/yyyy")}  
       </Text>
+
       <View style={styles.verticalSeparator} />
       <TouchableOpacity 
         style={[styles.name, { flex: .3,  alignItems: 'center', paddingHorizontal: 10 }]}
@@ -174,7 +176,6 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
               styles.appointmentButton, 
               { 
                 marginLeft: 'auto', 
-                backgroundColor: '#0a7ea4',
                 paddingHorizontal: 15,
                 paddingVertical: 8,
                 borderRadius: 5
@@ -182,8 +183,9 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
             ]}
             onPress={navigateToAppointments}
           >
-            <Text style={[styles.buttonText, { color: '#fff' }]}>Appointments</Text>
+            <Text style={[styles.buttonText, { color: 'black' }]}>Appointments</Text>
           </TouchableOpacity>
+         
         </View>
       </View>
       
@@ -270,7 +272,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
                 
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Time:</Text>
-                  <Text style={styles.detailText}>{formatDate(selectedComment.timestamp)}</Text>
+                  <Text style={styles.detailText}>{formatDate(selectedComment.timestamp, "MM/dd/yyyy HH:mm")}</Text>
                 </View>
                 
                 <View style={styles.detailRow}>

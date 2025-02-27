@@ -88,6 +88,15 @@ export default function List() {
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+    padding: 8,
+    borderRadius: 5,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#2196F3',
+    fontWeight: 'bold',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -269,10 +278,10 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    borderBottomWidth: 2,
-    borderBottomColor: 'black',
-    paddingBottom: 5,
-    marginBottom: 10,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    width: '100%',
   },
   headerText: {
     color: 'black',
@@ -281,7 +290,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 10,
     marginBottom: 5,
-    
+
   },
   row: {
     flexDirection: 'row',
@@ -323,7 +332,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   appointmentButton: {
-    backgroundColor: '#3498db',
+    borderColor: 'black',
+    borderWidth: 1,
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 5,

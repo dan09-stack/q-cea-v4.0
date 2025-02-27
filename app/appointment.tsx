@@ -29,7 +29,7 @@ import {
 import { auth, db } from '@/firebaseConfig';
 import { router } from 'expo-router';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { formatDate } from '@/utils/formatters';
+import {  formatDateTime } from '@/utils/formatters';
 
 interface Appointment {
     id: string;
@@ -48,6 +48,9 @@ interface Student {
     studentId?: string;
   }
 export default function AppointmentScreen() {
+  const [manualDateInput, setManualDateInput] = useState('');
+const [manualTimeInput, setManualTimeInput] = useState('');
+
     const [pickerMode, setPickerMode] = useState<'date' | 'time'>('date');
 const [showTimePicker, setShowTimePicker] = useState(false);
     const [searchText, setSearchText] = useState('');
@@ -73,6 +76,10 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [concern, setConcern] = useState('');
   const [notes, setNotes] = useState('');
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
+
+  const handleBackPress = () => {
+    router.push('/list');
+  };
     // Add this function to fetch students
     const fetchStudents = async () => {
         try {
@@ -131,6 +138,7 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
     setShowTimePicker(true);
   };
   
+  
   useEffect(() => {
     if (!currentFacultyId) return;
     
@@ -182,7 +190,8 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
             studentId,
             facultyName: currentFacultyName,
             facultyId: currentFacultyId,
-            date: Timestamp.fromDate(appointmentDate),
+            date: appointmentDate,
+            time: manualTimeInput,
             status: 'scheduled' as const,
             concern,
             notes,
@@ -299,7 +308,10 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
         <Text style={styles.label}>Concern:</Text>
         <Text style={styles.value}>{item.concern}</Text>
       </View>
-      
+      <View style={styles.appointmentDetails}>
+        <Text style={styles.label}>Date:</Text>
+        <Text style={styles.value}>{formatDateTime(item.date)}</Text>
+      </View>
       {item.notes && (
         <View style={styles.appointmentDetails}>
           <Text style={styles.label}>Notes:</Text>
@@ -355,6 +367,12 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={handleBackPress}
+        >
+          <Text style={styles.backButtonText}>← Back</Text>
+        </TouchableOpacity>
         <Text style={styles.title}>Appointments</Text>
         <TouchableOpacity 
           style={styles.addButton}
@@ -513,35 +531,88 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
               
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Appointment Date & Time *</Text>
-                <View style={styles.dateTimeContainer}>
-                    <TouchableOpacity 
-                    style={styles.datePickerButton}
-                    onPress={showDatePickerModal}
-                    >
-                    <Text>{appointmentDate.toLocaleDateString()}</Text>
-                    </TouchableOpacity>
-                    
-                    <TouchableOpacity 
-                    style={styles.datePickerButton}
-                    onPress={showTimePickerModal}
-                    >
-                    <Text>{appointmentDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
-                    </TouchableOpacity>
-                </View>
-                
-                {(showDatePicker || showTimePicker) && (
-                    <DateTimePickerModal
-                    isVisible={showDatePicker}
-                    mode={pickerMode}
-                    onConfirm={(date) => {
-                      setAppointmentDate(date);
-                      setShowDatePicker(false);
+               
+                {/* Add manual date/time input option */}
+                <View style={styles.manualDateTimeContainer}>
+                  <TextInput
+                    style={[styles.input, styles.dateTimeInput]}
+                    placeholder="MM/DD/YY"
+                    value={manualDateInput}
+                    onChangeText={(text) => {
+                      setManualTimeInput(text);
+                      // Parse time input and update appointmentDate
+                      if (text.match(/^(\d{1,2}):(\d{2}) (AM|PM)$/i)) {
+                        const [timePart, periodPart] = text.split(' ');
+                        const [hourStr, minuteStr] = timePart.split(':');
+                        
+                        let hours = parseInt(hourStr, 10);
+                        const minutes = parseInt(minuteStr, 10);
+                        const isPM = periodPart.toUpperCase() === 'PM';
+                        
+                        // Convert hours to 24-hour format
+                        if (isPM && hours < 12) hours += 12;
+                        if (!isPM && hours === 12) hours = 0;
+                        
+                        // Create new date with current date but updated time
+                        const newDate = new Date(appointmentDate);
+                        newDate.setHours(hours);
+                        newDate.setMinutes(minutes);
+                        setAppointmentDate(newDate);
+                      }
                     }}
-                    onCancel={() => setShowDatePicker(false)}
-                    date={appointmentDate}
                   />
-                )}
+                  <TextInput
+                    style={[styles.input, styles.dateTimeInput]}
+                    placeholder="HH:MM AM/PM"
+                    value={manualTimeInput}
+                    onChangeText={(text) => {
+                      setManualTimeInput(text);
+                      // Add logic to parse time input and update appointmentDate
+                    }}
+                  />
                 </View>
+
+                <DateTimePickerModal
+                  isVisible={showDatePicker || showTimePicker}
+                  mode={pickerMode}
+                  onConfirm={(date) => {
+                    if (pickerMode === 'date') {
+                      // Preserve the current time when setting a new date
+                      const newDate = new Date(date);
+                      newDate.setHours(appointmentDate.getHours());
+                      newDate.setMinutes(appointmentDate.getMinutes());
+                      setAppointmentDate(newDate);
+                      
+                      // Update manual input
+                      const month = (newDate.getMonth() + 1).toString().padStart(2, '0');
+                      const day = newDate.getDate().toString().padStart(2, '0');
+                      const year = newDate.getFullYear().toString().slice(-2);
+                      setManualDateInput(`${month}/${day}/${year}`);
+                    } else {
+                      // Preserve the current date when setting a new time
+                      const newDate = new Date(appointmentDate);
+                      newDate.setHours(date.getHours());
+                      newDate.setMinutes(date.getMinutes());
+                      setAppointmentDate(newDate);
+                      
+                      // Update manual input
+                      let hours = date.getHours();
+                      const minutes = date.getMinutes().toString().padStart(2, '0');
+                      const period = hours >= 12 ? 'PM' : 'AM';
+                      hours = hours % 12 || 12; // Convert to 12-hour format
+                      setManualTimeInput(`${hours}:${minutes} ${period}`);
+                    }
+                    setShowDatePicker(false);
+                    setShowTimePicker(false);
+                  }}
+                  onCancel={() => {
+                    setShowDatePicker(false);
+                    setShowTimePicker(false);
+                  }}
+                  date={appointmentDate}
+                />
+              </View>
+
 
               
               <View style={styles.formGroup}>
@@ -594,6 +665,27 @@ const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 }
 
 const styles = StyleSheet.create({
+  manualDateTimeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  dateTimeInput: {
+    flex: 1,
+    marginHorizontal: 5,
+  },
+      backButton: {
+        padding: 8,
+        borderRadius: 5,
+    },
+    backButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalButtonText: {
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
     dateTimeContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -835,8 +927,5 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
     marginLeft: 10,
   },
-  modalButtonText: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  }
+
 });
