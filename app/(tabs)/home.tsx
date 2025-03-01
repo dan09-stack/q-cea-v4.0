@@ -1,7 +1,7 @@
 import { ImageBackground, Platform, View } from 'react-native';
 import React, { useEffect } from 'react';
 import { auth, db } from '@/firebaseConfig';
-import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc, writeBatch } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
@@ -448,6 +448,10 @@ export default function Home() {
     if (state.allTickets.length === 0) {
       state.setAlertTitle('Queue Status');
       state.setAlertMessage('No ticket on queue');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
       state.setIsAlertModalVisible(true);
       return;
     }
@@ -477,15 +481,116 @@ export default function Home() {
     
     if (newIndex === state.currentTicketIndex && state.currentTicketIndex === state.allTickets.length - 1) {
       state.setAlertTitle('Queue Status');
-      state.setAlertMessage('No ticket on queue');
+      state.setAlertMessage('No ticket in queue. Would you like to finish the consultation?');
+      state.setAlertButtons([
+        {
+          text: 'No',
+          onPress: () => state.setIsAlertModalVisible(false),
+          color: Colors.light.tint
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              const currentUser = auth.currentUser;
+              let facultyName = '';
+
+              if (currentUser) {
+                // Get faculty name from Firestore
+                const userDoc = await getDoc(doc(db, 'student', currentUser.uid));
+                if (userDoc.exists()) {
+                  facultyName = userDoc.data().fullName || '';
+                }
+              }
+              // Get all waiting students in queues
+              const studentsCollectionRef = collection(db, 'student');
+              const waitingStudentsQuery = query(
+                studentsCollectionRef,
+                where('faculty', '==', facultyName),
+                where('userType', '==', 'STUDENT'),
+                where('status', '==', 'waiting'),
+              );
+              
+              const waitingStudentsSnapshot = await getDocs(waitingStudentsQuery);
+              
+              // Batch update to cancel all queues
+              if (!waitingStudentsSnapshot.empty) {
+                const batch = writeBatch(db);
+                
+                waitingStudentsSnapshot.docs.forEach((docSnapshot) => {
+                  const studentRef = doc(db, 'student', docSnapshot.id);
+                  batch.update(studentRef, {
+                    status: 'completed',
+                    userTicketNumber: null,
+                    faculty: null,
+                    concern: null,
+                    otherConcern: null,
+                    requestDate: null,
+                    queuePosition: null
+                  });
+                });
+                
+                await batch.commit();
+                state.setIsAlertModalVisible(false);
+                
+                // Show confirmation after completion
+                setTimeout(() => {
+                  state.setAlertTitle('Success');
+                  state.setAlertMessage(`Cancelled ${waitingStudentsSnapshot.size} queues successfully`);
+                  state.setAlertButtons([{
+                    text: 'OK',
+                    onPress: () => state.setIsAlertModalVisible(false),
+                    color: Colors.light.tint
+                  }]);
+                  state.setIsAlertModalVisible(true);
+                }, 500);
+              } else {
+                state.setIsAlertModalVisible(false);
+                
+                // Show info message
+                setTimeout(() => {
+                  state.setAlertTitle('Info');
+                  state.setAlertMessage('No active queues to cancel');
+                  state.setAlertButtons([{
+                    text: 'OK',
+                    onPress: () => state.setIsAlertModalVisible(false),
+                  }]);
+                  state.setIsAlertModalVisible(true);
+                }, 500);
+              }
+            } catch (error) {
+              console.error('Error cancelling all queues:', error);
+              state.setIsAlertModalVisible(false);
+              
+              // Show error message
+              setTimeout(() => {
+                state.setAlertTitle('Error');
+                state.setAlertMessage('Failed to cancel all queues');
+                state.setAlertButtons([{
+                  text: 'OK',
+                  onPress: () => state.setIsAlertModalVisible(false),
+                }]);
+                state.setIsAlertModalVisible(true);
+              }, 500);
+            }
+          },
+          color: '#FF3B30' // Red color for destructive action
+        }
+      ]);
       state.setIsAlertModalVisible(true);
       return;
     }
+  
+    
 
     const ticketToSave = state.allTickets[newIndex];
     if (!ticketToSave) {
       state.setAlertTitle('Queue Status');
       state.setAlertMessage('No ticket on queue');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
       state.setIsAlertModalVisible(true);
       return;
     }
@@ -527,12 +632,22 @@ export default function Home() {
     if (!state.selectedFaculty) {
       state.setAlertTitle('Error');
       state.setAlertMessage('Please select a faculty');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
       state.setIsAlertModalVisible(true);
       return;
     }
     
     if (!state.selectedConcern && !state.otherConcern) {
-      showAlert('Please select a concern or provide details in Other field');
+      state.setAlertTitle('Select Concern');
+      state.setAlertMessage('Please select a concern');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
+      state.setIsAlertModalVisible(true);
       return;
     }
     
@@ -540,6 +655,10 @@ export default function Home() {
     if (selectedFacultyData?.status !== 'ONLINE') {
       state.setAlertTitle('Faculty Unavailable');
       state.setAlertMessage('The faculty is currently unavailable. Your request has been cancelled.');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
       state.setIsAlertModalVisible(true);
       return;
     }
@@ -759,8 +878,10 @@ export default function Home() {
             isVisible={state.isAlertModalVisible}
             title={state.alertTitle}
             message={state.alertMessage}
+            buttons={state.alertButtons}
             onClose={() => {
               state.setIsAlertModalVisible(false);
+              state.setAlertButtons([]); // Reset buttons when closing
               if (state.alertTitle === 'Faculty Unavailable') {
                 state.setSelectedFaculty('');
                 state.setSelectedConcern('');

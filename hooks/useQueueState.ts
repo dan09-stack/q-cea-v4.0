@@ -12,7 +12,11 @@ export const useQueueState = () => {
   const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertTitle, setAlertTitle] = useState('');
-  
+  const [alertButtons, setAlertButtons] = useState<Array<{
+    text: string;
+    onPress: () => void;
+    color?: string;
+  }>>([]);
   // Lists state
   const [concernsList, setConcernsList] = useState<string[]>([]);
   const [specificDetails, setSpecificDetails] = useState<string>('');
@@ -78,6 +82,8 @@ export const useQueueState = () => {
 
   return {
     // Rating
+    alertButtons,
+    setAlertButtons,
     isRatingModalVisible, setIsRatingModalVisible, rating, setRating, feedback, setFeedback,
     
     // Alert

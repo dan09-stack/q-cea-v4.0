@@ -301,12 +301,12 @@ export const FacultyView = ({
       
       <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
         <Text style={[styles.boldText, {fontSize: 18}]}>Student Name:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? 'No students in queue' : ticketStudentData.name}</Text>
+        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.name}</Text>
       </View>
             
       <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={[styles.boldText, {fontSize: 18}]}>Concern:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? 'No concerns to display' : ticketStudentData.concern}</Text>
+        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.concern}</Text>
       </View>
 
       {/* Display Other Concern if available */}

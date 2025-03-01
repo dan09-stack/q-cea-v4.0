@@ -10,7 +10,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarShowLabel: false, // This line hides the tab labels
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: '#fff',
+        tabBarActiveTintColor: 'rgb(178, 178, 178)',
         tabBarInactiveTintColor: 'rgb(117, 117, 117)',
         tabBarStyle: {
           backgroundColor: Platform.OS === 'web' ? '' : 'transparent',

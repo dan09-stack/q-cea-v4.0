@@ -12,19 +12,20 @@ export default function Index() {
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
-      router.push('/student/login'); // Or any default route you want to redirect to
-    }, 10000);
+      router.push('/student/login'); 
+    }, 3000);
   }, []);
 
   return (
     <View style={styles.loadingContainer}>
+      <View  style={styles.lottieAnimation}>
       <LottieView
         source={require('../assets/animations/loading.json')}
         autoPlay
         loop
-        style={styles.lottieAnimation}
+       
       />
-      <Text style={[styles.loadingText, { color: textColor }]}>Loading...</Text>
+      </View>
     </View>
   );
 }

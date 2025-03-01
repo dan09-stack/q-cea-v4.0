@@ -1,6 +1,13 @@
 import React from 'react';
-import { View, Text, Modal, Button } from 'react-native';
+import { View, Text, Modal, Button, TouchableOpacity } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
+
+interface ButtonProps {
+  text: string;
+  onPress: () => void;
+  color?: string;
+  width?: number;
+}
 
 interface AlertModalProps {
   isVisible: boolean;
@@ -9,9 +16,18 @@ interface AlertModalProps {
   onClose: () => void;
   onOk?: () => void;
   style?: object;
+  buttons?: ButtonProps[]; // New prop for multiple buttons
 }
 
-export const AlertModal = ({ isVisible, title, message, onClose, onOk }: AlertModalProps) => (
+export const AlertModal = ({ 
+  isVisible, 
+  title, 
+  message, 
+  onClose, 
+  onOk, 
+  style, 
+  buttons 
+}: AlertModalProps) => (
   <Modal
     animationType="fade"
     transparent={true}
@@ -19,17 +35,33 @@ export const AlertModal = ({ isVisible, title, message, onClose, onOk }: AlertMo
     onRequestClose={onClose}
   >
     <View style={styles.modalContainer}>
-      <View style={[styles.modalContent,{maxWidth: 300, alignSelf: 'center'}]}>
+      <View style={[styles.modalContent, {maxWidth: 300, alignSelf: 'center'}, style]}>
         <Text style={styles.modalTitle}>{title}</Text>
         <Text style={styles.modalItemText}>{message}</Text>
-        <Button 
-          title="OK" 
-          onPress={() => {
-            onClose();
-            if (onOk) onOk();
-          }} 
-          color="#004000" 
-        />
+        
+        {buttons ? (
+          <View style={{flexDirection: 'row', justifyContent: 'space-around', marginTop: 15}}>
+            {buttons.map((button, index) => (
+              <Button
+                key={index}
+                title={button.text}
+                onPress={button.onPress}
+                color={button.color || "#004000"}
+              />
+            ))}
+          </View>
+        ) : (
+          <Button
+            
+            title="OK"
+            onPress={() => {
+              onClose();
+              if (onOk) onOk();
+            }}
+            color="#004000"
+
+          />
+        )}
       </View>
     </View>
   </Modal>

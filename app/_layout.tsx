@@ -40,7 +40,7 @@ export default function Layout() {
             }
           } else {
             setIsAuthenticated(false);
-            router.replace('/student/login'  );
+            router.replace('/'  );
           }
           // console.log('Last route:', await AsyncStorage.getItem('lastRoute'));
           // console.log('Current auth state:', auth.currentUser);
