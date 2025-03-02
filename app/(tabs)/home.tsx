@@ -5,7 +5,9 @@ import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, 
 import { homeStyles as styles } from '@/constants/home.styles';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
-
+import { useTheme } from '@/contexts/ThemeContext';
+import { shadeColor, getContrastTextColor } from '@/utils/themeUtils';
+import { ThemedButton } from '@/components/ui/ThemedButton';
 // Components
 import { FacultyView } from '../../components/HomeFacultyView';
 import { StudentView } from '../../components/HomeStudentView';
@@ -13,14 +15,22 @@ import { AlertModal } from '@/components/queue/AlertModal';
 
 // Hooks and Services
 import { useQueueState } from '@/hooks/useQueueState';
-import { useThemeColor } from '@/hooks/useThemeColor';
 import { getPhoneNumberForTicket, sendNotificationToStudent, sendNotificationToFaculty, sendEmailNotification, getNextStudentDetails } from '@/services/queueService';
 import { Colors } from '@/constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Home() {
+  const { colors } = useTheme();
   const state = useQueueState();
   const backgroundColor = "#008000";
+  const textColor = getContrastTextColor(colors.backgroundColor);
+  
+  // Create gradient colors
+  const gradientColors = [
+    colors.backgroundColor,
+    shadeColor(colors.backgroundColor, -20),
+    shadeColor(colors.backgroundColor, -40)
+  ] as readonly [string, string, string];
   useEffect(() => {
       const fetchUserData = async () => {
         try {
@@ -836,10 +846,7 @@ export default function Home() {
       };
     
       return (
-         <LinearGradient
-              colors={['#045657', '#034041', '#023030']}
-              style={styles.background}
-            >
+        <LinearGradient colors={gradientColors} style={styles.container}>
           {state.userType === 'FACULTY' ? (
             <FacultyView 
               allTickets={state.allTickets}
@@ -895,7 +902,6 @@ export default function Home() {
               }
             }}
           />
-          </LinearGradient>
-       
+        </LinearGradient>
       );
     }

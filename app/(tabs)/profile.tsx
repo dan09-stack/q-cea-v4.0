@@ -11,6 +11,9 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/contexts/ThemeContext';
+import { ThemeSettings } from '@/components/theme/ThemeSettings';
+import { shadeColor } from '@/utils/themeUtils';
 
 interface UserData {
   fullName: string;
@@ -24,7 +27,7 @@ interface UserData {
 }
 
 export default function Profile(): JSX.Element {
-  
+  const { colors } = useTheme();
   const [userType, setUserType] = useState('');
   const [oldPassword, setOldPassword] = useState('');
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
@@ -205,7 +208,11 @@ export default function Profile(): JSX.Element {
   return (
     <PageContainer>
       <LinearGradient
-        colors={['#045657', '#034041', '#023030']}
+        colors={[
+          colors.backgroundColor, 
+          shadeColor(colors.backgroundColor, -20), 
+          shadeColor(colors.backgroundColor, -40)
+        ] as readonly [string, string, string]}
         style={styles.background}
       >
         <TouchableOpacity 
@@ -272,7 +279,11 @@ export default function Profile(): JSX.Element {
                   </View>
                 </View>
                 <View style={styles.buttonSpacing} />
-                <CustomButton title="Logout" onPress={() => signOut(router)} color="gray" />
+                <CustomButton 
+                  title="Logout" 
+                  onPress={() => signOut(router)} 
+                  color={colors.buttonColor} 
+                />
                 <EditProfileModal
                   modalVisible={modalVisible}
                   setModalVisible={setModalVisible}
@@ -285,7 +296,7 @@ export default function Profile(): JSX.Element {
                   handleUpdateProfile={handleUpdateProfile}
                 />
                     {/* Settings Modal */}
-                    <Modal
+                <Modal
                   visible={settingsModalVisible}
                   transparent={true}
                   animationType="fade"
@@ -317,6 +328,7 @@ export default function Profile(): JSX.Element {
                           </Text>
                         </>
                       )}
+                      <ThemeSettings containerStyle={{ marginTop: 10 }} />
                       <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
                       
                       <View style={styles.buttonContainer}>

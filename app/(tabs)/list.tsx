@@ -6,6 +6,8 @@ import { FacultyItem } from '@/utils/interfaces';
 import { FacultyView } from '@/components/FacultyView';
 import { StudentView } from '@/components/StudentView';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/contexts/ThemeContext';
+import { getContrastTextColor, shadeColor } from '@/utils/themeUtils';
 
 
 export default function List() {
@@ -69,12 +71,20 @@ export default function List() {
   
     return () => unsubscribe();
   }, []);
+// Get theme colors from the context
+  const { colors } = useTheme();
+    
+  // Calculate text color based on background color
+  const textColor = getContrastTextColor(colors.backgroundColor);
 
+  // Create gradient colors
+  const gradientColors = [
+    colors.backgroundColor,
+    shadeColor(colors.backgroundColor, -20),
+    shadeColor(colors.backgroundColor, -40)
+  ] as readonly [string, string, string];
   return (
-     <LinearGradient
-          colors={['#045657', '#034041', '#023030']}
-          style={styles.background}
-        >
+    <LinearGradient colors={gradientColors} style={styles.container}>
       {userType === 'FACULTY' ? (
         <FacultyView styles={styles} displayedTicket={displayedTicket} />
       ) : (
