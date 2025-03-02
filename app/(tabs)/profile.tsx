@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Button, TextInput, Modal, ScrollView, TouchableOpacity, ImageBackground, Alert } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Button, TextInput, Modal, ScrollView, TouchableOpacity, ImageBackground, Alert, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth, db, storage } from '@/firebaseConfig';
 import { signOut } from '@/services/auth';
@@ -19,16 +19,19 @@ interface UserData {
   program: string;
   phoneNumber: string;
   profilePicture?: string;
+  status?: string;
+  userType?: string;
 }
 
 export default function Profile(): JSX.Element {
   
-  
+  const [userType, setUserType] = useState('');
   const [oldPassword, setOldPassword] = useState('');
-
+  const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [isActive, setIsActive] = useState(false);
   const [editableData, setEditableData] = useState<UserData>({
     fullName: '',
     email: '',
@@ -44,6 +47,30 @@ export default function Profile(): JSX.Element {
     program: '',
     phoneNumber: ''
   });
+  const handleSettingsPress = () => {
+    setSettingsModalVisible(true);
+  };
+  const toggleStatus = async (value: boolean) => {
+    setIsActive(value);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        // Update status in Firestore with ONLINE/OFFLINE string value
+        await db.collection('student').doc(user.uid).update({
+          status: value ? 'ONLINE' : 'OFFLINE'
+        });
+        
+        // Update local state
+        setUserData(prev => ({...prev, status: value ? 'ONLINE' : 'OFFLINE'}));
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      Alert.alert('Error', 'Failed to update status. Please try again.');
+      // Revert toggle if update fails
+      setIsActive(!value);
+    }
+  };
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -108,6 +135,9 @@ export default function Profile(): JSX.Element {
               const data = userDoc.data() as UserData;
               setUserData(data);
               setEditableData(data);
+
+              setIsActive(data.status === 'ONLINE');
+              setUserType(data.userType || '');
             }
           }
         } else {
@@ -171,13 +201,20 @@ export default function Profile(): JSX.Element {
       <View style={{ flex: 1, backgroundColor: '#008000' }}></View>
     );
   }
-
+  
   return (
     <PageContainer>
       <LinearGradient
         colors={['#045657', '#034041', '#023030']}
         style={styles.background}
       >
+        <TouchableOpacity 
+          style={styles.settingsIconContainer} 
+          onPress={handleSettingsPress}
+        >
+          <MaterialIcons name="settings" size={28} color="white" />
+        </TouchableOpacity>
+
         <View style={styles.container}>
           <View style={styles.container}>
             {loading ? (
@@ -234,7 +271,6 @@ export default function Profile(): JSX.Element {
                     <Text style={styles.infoValue}>{userData.program}</Text>
                   </View>
                 </View>
-                <CustomButton title="Edit Profile" onPress={() => setModalVisible(true)} />
                 <View style={styles.buttonSpacing} />
                 <CustomButton title="Logout" onPress={() => signOut(router)} color="gray" />
                 <EditProfileModal
@@ -248,6 +284,51 @@ export default function Profile(): JSX.Element {
                   setNewPassword={setNewPassword}
                   handleUpdateProfile={handleUpdateProfile}
                 />
+                    {/* Settings Modal */}
+                    <Modal
+                  visible={settingsModalVisible}
+                  transparent={true}
+                  animationType="fade"
+                  onRequestClose={() => setSettingsModalVisible(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.settingsModalView}>
+                      <Text style={styles.modalTitle}>Settings</Text>
+                      
+                      {userType !== 'STUDENT' && (
+                        <>
+                          <View style={styles.settingItem}>
+                            <Text style={styles.settingLabel}>
+                              Status (Active/Inactive)
+                            </Text>
+                            <Switch
+                              trackColor={{ false: "#767577", true: "#81b0ff" }}
+                              thumbColor={isActive ? "#008000" : "#f4f3f4"}
+                              ios_backgroundColor="#3e3e3e"
+                              onValueChange={toggleStatus}
+                              value={isActive}
+                            />
+                          </View>
+                          
+                          <Text style={styles.statusText}>
+                            You are currently <Text style={{fontWeight: 'bold', color: isActive ? '#008000' : '#FF0000'}}>
+                              {isActive ? 'Active' : 'Inactive'}
+                            </Text>
+                          </Text>
+                        </>
+                      )}
+                      <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
+                      
+                      <View style={styles.buttonContainer}>
+                        <CustomButton 
+                          title="Close" 
+                          onPress={() => setSettingsModalVisible(false)} 
+                          color="#045657"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </Modal>
               </View>
             )}
           </View>
@@ -262,6 +343,37 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#034041', 
   },
+  settingsIconContainer: {
+    position: 'absolute',
+    top: 15,
+    left: 15,
+    zIndex: 10,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 128, 0, 0.7)',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  settingsModalView: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 25,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    width: '80%',
+    maxWidth: 400,
+  },
   editIconContainer: {
     position: 'absolute',
     right: 0,
@@ -269,6 +381,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#008000',
     borderRadius: 15,
     padding: 5,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginVertical: 15,
+    paddingHorizontal: 10,
+  },
+  settingLabel: {
+    fontSize: 16,
+    color: '#333',
+  },
+  statusText: {
+    marginTop: 10,
+    marginBottom: 20,
+    fontSize: 14,
+    color: '#333',
   },
   profileImageContainer: {
     alignItems: 'center',

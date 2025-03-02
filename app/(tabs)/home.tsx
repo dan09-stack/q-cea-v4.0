@@ -501,6 +501,11 @@ export default function Home() {
                 if (userDoc.exists()) {
                   facultyName = userDoc.data().fullName || '';
                 }
+                // Update faculty's numOnQueue to 0
+                const userRef = doc(db, 'student', currentUser.uid);
+                await updateDoc(userRef, {
+                  numOnQueue: 0
+                });
               }
               // Get all waiting students in queues
               const studentsCollectionRef = collection(db, 'student');
@@ -536,7 +541,7 @@ export default function Home() {
                 // Show confirmation after completion
                 setTimeout(() => {
                   state.setAlertTitle('Success');
-                  state.setAlertMessage(`Cancelled ${waitingStudentsSnapshot.size} queues successfully`);
+                  state.setAlertMessage(`Completed ${waitingStudentsSnapshot.size} queues successfully`);
                   state.setAlertButtons([{
                     text: 'OK',
                     onPress: () => state.setIsAlertModalVisible(false),
