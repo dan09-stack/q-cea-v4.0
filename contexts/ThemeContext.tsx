@@ -6,6 +6,7 @@ interface ThemeColors {
   buttonColor: string;
   textColor?: string;
   accentColor?: string;
+
 }
 
 interface ThemeContextType {
@@ -20,6 +21,7 @@ const DEFAULT_COLORS: ThemeColors = {
   buttonColor: '#008000',
   textColor: '#ffffff',
   accentColor: '#07643d',
+
 };
 
 const ThemeContext = createContext<ThemeContextType>({
