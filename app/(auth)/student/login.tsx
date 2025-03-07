@@ -9,6 +9,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Colors } from '@/constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -109,16 +111,19 @@ export default function Login() {
       setIsLoading(false);
     }
   };
+  const { colors } = useTheme();
 
   return  (
-    <LinearGradient
-      colors={['#045657', '#034041', '#023030']}
+    <ThemedGradientContainer
       style={styles.background}
     >
       <View style={styles.container}>
         <View style={styles.blurBackground} />
-        <Image source={require('../../../assets/circle.png')} style={styles.logo} />
-        <Text style={styles.heading}>Login</Text>
+        <Image 
+          source={require('../../../assets/circle.png')} 
+          style={[styles.logo, { borderColor: colors.buttonColor }]} 
+        />
+<Text style={styles.heading}>Login</Text>
         
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
@@ -194,7 +199,7 @@ export default function Login() {
           </View>
         </View>
       </Modal>
-      </LinearGradient>
+      </ThemedGradientContainer>
   );
 }
 
@@ -291,7 +296,6 @@ const styles = StyleSheet.create({
     height: 150, 
     top: -85, 
     position: 'absolute', 
-    borderColor: '#2c6b2f', 
     borderWidth: 5, 
     borderRadius: 100 
   },

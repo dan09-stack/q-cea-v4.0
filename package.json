@@ -18,7 +18,7 @@
     "@expo/cli": "^0.22.1",
     "@expo/server": "^0.5.0",
     "@expo/vector-icons": "^14.0.4",
-    "@lottiefiles/dotlottie-react": "^0.6.5",
+    "@lottiefiles/react-lottie-player": "^3.6.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "^8.2.0",
     "@react-native-community/netinfo": "11.4.1",

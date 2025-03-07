@@ -130,7 +130,7 @@ export const handleSignup = async ({
 export const signOut = async (router) => {
   try {
     await auth.signOut();
-    router.push('/student/login');
+    router.replace('/student/login');
   } catch (error) {
     alert('Logout Failed');
   }

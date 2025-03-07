@@ -22,6 +22,7 @@ const validateEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -158,9 +159,8 @@ export default function Signup(): JSX.Element {
   };
   
   return (
-    <LinearGradient
-         colors={['#045657', '#034041', '#023030']}
-         style={styles.background}
+    <ThemedGradientContainer
+         
        >
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
@@ -401,7 +401,7 @@ export default function Signup(): JSX.Element {
             </View>
            </View>
           </ScrollView>
-        </LinearGradient>
+        </ThemedGradientContainer>
   );
 }
 
