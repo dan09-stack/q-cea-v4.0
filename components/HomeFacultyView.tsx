@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, auth } from '@/firebaseConfig';
 import { CommentSection } from './HomeCommentSection';
 import { AlertModal } from '@/components/queue/AlertModal';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface FacultyViewProps {
   allTickets: string[];
@@ -48,7 +49,7 @@ export const FacultyView = ({
   const [isLoading, setIsLoading] = useState(false);
   const [facultyName, setFacultyName] = useState('');
   const [ticketCancelled, setTicketCancelled] = useState(false);
-  
+  const { colors } = useTheme();
   // Get window dimensions for responsive layout
   const { width } = useWindowDimensions();
   const isSmallScreen = width <= 700;
@@ -290,7 +291,6 @@ export const FacultyView = ({
   const StudentInfoSection = () => (
     <View style={{
       flex: isSmallScreen ? undefined : 1, 
-      marginRight: isSmallScreen ? 0 : 10, 
       marginBottom: isSmallScreen ? 15 : 0,
       padding: 10, 
       borderWidth: 1, 
@@ -313,7 +313,7 @@ export const FacultyView = ({
       {ticketStudentData.otherConcern && (
         <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
           <Text style={[styles.boldText, {fontSize: 18}]}>Other Concern:</Text>
-          <Text style={[styles.details, {fontSize: 18}]}>{ticketStudentData.otherConcern}</Text>
+          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.otherConcern}</Text>
         </View>
       )}
             
@@ -321,11 +321,30 @@ export const FacultyView = ({
       {ticketStudentData.specificDetails && (
         <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text style={[styles.boldText, {fontSize: 18}]}>Specific Details:</Text>
-          <Text style={[styles.details, {fontSize: 18}]}>{ticketStudentData.specificDetails}</Text>
+          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.specificDetails}</Text>
         </View>
       )}
     </View>
   );
+const updateQueueCountInFirebase = async () => {
+  const currentUser = auth.currentUser;
+  if (!currentUser) return;
+  
+  const numOnQueue = (allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1);
+  
+  try {
+    const userRef = doc(db, 'student', currentUser.uid);
+    await updateDoc(userRef, {
+      numOnQueue: numOnQueue
+    });
+    console.log('Updated queue count in Firebase:', numOnQueue);
+  } catch (error) {
+    console.error('Error updating queue count in Firebase:', error);
+  }
+};
+useEffect(() => {
+  updateQueueCountInFirebase();
+}, [allTickets, currentTicketIndex]);
 
   return (
     <View style={[styles.container, {width: '100%', maxWidth: 900, }]}>
@@ -334,7 +353,7 @@ export const FacultyView = ({
         title="Success"
         message={modalMessage}
         onClose={() => setIsModalVisible(false)}
-        style={{ maxWidth: 100, alignSelf: 'center' }}
+        style={{ maxWidth: 600, alignSelf: 'center' }}
       />
       <ScrollView style={{width: '100%'}}>
         <View style={[styles.ticketBox, {width: '100%'}]}>
@@ -344,6 +363,7 @@ export const FacultyView = ({
               {allTickets.length > 0 ? 
                 ` ${(allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1)}` 
                 : ' No tickets in line'}
+                
             </Text>
           </Text>
           <Text style={[styles.ticketNumber, {color:'black', fontSize: 22}]}>STUDENT TICKET NUMBER</Text>
@@ -388,7 +408,7 @@ export const FacultyView = ({
           
           <View style={styles.buttonContainer}>
             <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0} />
-            <CustomButton title="NEXT" onPress={handleNext} />
+            <CustomButton title="NEXT" onPress={handleNext} color={colors.accentColor} />
           </View>
         </View>
       </ScrollView>

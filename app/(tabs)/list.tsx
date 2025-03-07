@@ -265,8 +265,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: '5%',
-    paddingVertical: '5%',
+    padding: 8,
+    paddingBottom:32,
     backgroundColor: '#1f4e21',
 
   },

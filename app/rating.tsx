@@ -20,7 +20,7 @@ type SurveyAnswerKeys =
 | 'recommendation'
 | 'bugDescription'
 | 'additionalFeedback'
-| 'consultationRating';
+;
 
 type SurveyAnswers = Record<Exclude<SurveyAnswerKeys, 'additionalFeedback' | 'bugDescription'>, number> & {
   additionalFeedback: string;
@@ -37,7 +37,6 @@ export default function RatingPage() {
   const [feedback, setFeedback] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [surveyAnswers, setSurveyAnswers] = useState<SurveyAnswers>({
-    // userExperience: 0,
     navigation: 0,
     performance: 0,
     reliability: 0,
@@ -48,14 +47,10 @@ export default function RatingPage() {
     recommendation: 0,
     bugDescription: '',
     additionalFeedback: '',
-    consultationRating: 0 
   });
 
   const surveyQuestions: SurveyQuestion[] = [
-    { 
-      key: 'consultationRating', 
-      text: 'How would you rate the consultation service you received?' 
-    },
+    
    
     { 
       key: 'navigation', 

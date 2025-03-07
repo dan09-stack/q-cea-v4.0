@@ -1,6 +1,35 @@
 import { StyleSheet } from 'react-native';
 
 export const homeStyles = StyleSheet.create({
+  iconContainer: {
+    marginLeft: 10,
+    marginTop: 5,
+    transform: [{ translateX: 0 }],
+  },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  wavingHand: {
+    width: 60,
+    height: 60,
+    marginLeft: 10,
+  },
+  greetingContainer: {
+    width: '100%',
+    padding: 10,
+    paddingBottom:0,
+    alignItems: 'flex-start',
+  },
+  greetingText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  welcomeText: {
+    paddingLeft: 10,
+    fontSize: 16,
+    opacity: 0.8,
+  },
   ratingContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -118,7 +147,8 @@ details:{
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 8,
+    paddingBottom:32
     },
     formGroup: {
     padding: 20,

@@ -121,7 +121,7 @@ export default function Login() {
         <View style={styles.blurBackground} />
         <Image 
           source={require('../../../assets/circle.png')} 
-          style={[styles.logo, { borderColor: colors.buttonColor }]} 
+          style={[styles.logo, { borderColor: colors.accentColor }]} 
         />
 <Text style={styles.heading}>Login</Text>
         

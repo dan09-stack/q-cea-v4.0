@@ -84,6 +84,7 @@ export const handleSignup = async ({
   fullName,
   idNumber,
   phoneNumber,
+  program,
   email,
   password,
   router
@@ -101,9 +102,9 @@ export const handleSignup = async ({
       fullName,
       idNumber,
       phoneNumber,
-      program: "STUDENT",
+      program,
       email,
-      userType,
+      userType: "STUDENT",
       isVerified: userType === 'FACULTY' ? false : true,
       status: userType === 'FACULTY' ? false : true
     });

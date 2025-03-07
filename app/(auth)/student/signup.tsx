@@ -23,6 +23,7 @@ const validateEmail = (email: string): boolean => {
 };import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
+import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -128,7 +129,8 @@ export default function Signup(): JSX.Element {
         phoneNumber,
         email,
         password,
-        router
+        router,
+        program: selectedProgram,
       });
     } catch (error: any) {
       // Enhanced error handling with specific messages
@@ -333,64 +335,9 @@ export default function Signup(): JSX.Element {
           <ScrollView contentContainerStyle={styles.scrollView}>
           <View style={styles.modalContainer}>
           
-  <View style={styles.modalContent}>
-    <Text style={styles.modalTitle}>Data Privacy Policy</Text>
-    <Text style={styles.modalText}>
-  Welcome to <Text style={styles.boldText}>Q-CEA</Text>. Your privacy is important to us. 
-  This Privacy Policy explains how we collect, use, disclose, and protect your personal data.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>1. Legal Compliance</Text>{"\n"}
-  We comply with the Republic Act No. 10173, also known as the <Text style={styles.boldText}>Data Privacy Act of 2012</Text>, 
-  ensuring that your personal data is collected, stored, and processed securely and lawfully.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>2. Information We Collect</Text>{"\n"}
-  - Name{"\n"}
-  - ID Number{"\n"}
-  - Phone Number{"\n"}
-  - Program {"\n"}
-  - Email Address{"\n"}
-  - Password {"\n\n"}
-
-  <Text style={styles.sectionTitle}>3. How We Use Your Information</Text>{"\n"}
-  - Register and manage user accounts{"\n"}
-  - Facilitate queue management{"\n"}
-  - Send queue notifications{"\n"}
-  - Improve system functionality{"\n"}
-  - Communicate important updates{"\n"}
-  - Ensure security and prevent fraud{"\n\n"}
-
-  <Text style={styles.sectionTitle}>4. Data Security</Text>{"\n"}
-  We implement security measures like encryption and access controls. However, users must also safeguard their login credentials.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>5. Your Rights</Text>{"\n"}
-  - Access, update, or correct your data{"\n"}
-  - Request deletion of your account{"\n\n"}
-
-  <Text style={styles.sectionTitle}>6. Data Retention</Text>{"\n"}
-  We retain your personal data for as long as necessary to fulfill the purposes outlined in this Privacy Policy. 
-  If you request account deletion, we will remove your data within 30 days, except where retention is required by law.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>7. Third-Party Services</Text>{"\n"}
-  We may use third-party services, such as cloud storage providers, email notification systems, and SMS services, 
-  to enhance Q-CEA. These services are obligated to protect your data and comply with privacy regulations.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>8. Policy Updates</Text>{"\n"}
-  We may update this Privacy Policy from time to time. Changes will be posted on our website, and significant 
-  updates may be communicated via email or app notifications.{"\n\n"}
-
-  <Text style={styles.sectionTitle}>9. Consent Statement</Text>{"\n"}
-  By using Q-CEA, you acknowledge that you have read, understood, and agreed to this Privacy Policy. 
-  If you do not agree, please discontinue use of the platform.{"\n\n"}
-
-</Text>
-
-      <TouchableOpacity style={styles.privacybutton} onPress={() => setPrivacyModalVisible(false)}>
-      <Text style={styles.privacybuttonText}>Close</Text>
-    </TouchableOpacity>
-  
+  <DataPrivacyPolicy visible={privacyModalVisible} onClose={() => setPrivacyModalVisible(false)} />
   </View>
-</View>
-</ScrollView>
+  </ScrollView>
 </Modal>
 
           <View style={styles.loginContainer}>

@@ -1,5 +1,5 @@
-import { ImageBackground, Platform, View } from 'react-native';
-import React, { useEffect } from 'react';
+import { Animated, Easing, ImageBackground, Platform, Text, useWindowDimensions, View } from 'react-native';
+import React, { useEffect, useRef } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc, writeBatch } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
@@ -18,6 +18,7 @@ import { useQueueState } from '@/hooks/useQueueState';
 import { getPhoneNumberForTicket, sendNotificationToStudent, sendNotificationToFaculty, sendEmailNotification, getNextStudentDetails } from '@/services/queueService';
 import { Colors } from '@/constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
 
 export default function Home() {
   const { colors } = useTheme();
@@ -478,14 +479,14 @@ export default function Home() {
       const querySnapshot = await getDocs(studentQuery);
       if (!querySnapshot.empty) {
         const studentData = querySnapshot.docs[0].data();
-        // await sendNotificationToStudent(studentData.phoneNumber);
+        sendNotificationToStudent(studentData.phoneNumber);
         
-        // // Send email notification
-        // await sendEmailNotification(
-        //   'template_v5us19b',
-        //   studentData.email,
-        //   studentData.fullName
-        // );
+        // Send email notification
+       sendEmailNotification(
+          'template_v5us19b',
+          studentData.email,
+          studentData.fullName
+        );
       }
     }
     
@@ -699,12 +700,12 @@ export default function Home() {
         
         // If queue is empty, send notification to faculty
         if (facultyData.numOnQueue === 0) {
-          // await sendNotificationToFaculty(facultyData.phoneNumber);
-          // await sendEmailNotification(
-          //   'template_jbfj8p6',
-          //   facultyData.email,
-          //   facultyData.fullName
-          // );
+          sendNotificationToFaculty(facultyData.phoneNumber);
+          sendEmailNotification(
+            'template_jbfj8p6',
+            facultyData.email,
+            facultyData.fullName
+          );
         }
         
         await updateDoc(doc(db, 'student', facultyDoc.id), {
@@ -844,9 +845,68 @@ export default function Home() {
           Alert.alert('Queue Status', message);
         }
       };
+      const waveAnim = useRef(new Animated.Value(0)).current;
+  
+  // Start continuous waving animation when component mounts
+  useEffect(() => {
+    // Create a waving sequence
+    const waveSequence = Animated.sequence([
+      Animated.timing(waveAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.sin
+      }),
+      Animated.timing(waveAnim, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.sin
+      })
+    ]);
     
+    // Loop the animation indefinitely
+    Animated.loop(waveSequence, {
+      iterations: -1 // Infinite iterations
+    }).start();
+    
+    // Cleanup animation when component unmounts
+    return () => waveAnim.stopAnimation();
+  }, []);
+  
+  // Create wave rotation transform
+  const waveRotation = waveAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '20deg']
+  });
+  const { width } = useWindowDimensions();
+const isLargeScreen = width >= 768;
       return (
         <LinearGradient colors={gradientColors} style={styles.container}>
+          <View style={styles.greetingContainer}>
+  <View style={styles.greetingRow}>
+    <Text style={[
+      styles.greetingText, 
+      { color: textColor },
+      isLargeScreen && { fontSize: 32, marginRight: 12 } // Larger text on larger screens
+    ]}>
+      Hello, {state.currentStudent.name || 'User'}!
+    </Text>
+    
+    <Animated.View style={[
+      styles.iconContainer, 
+      { transform: [{ rotate: waveRotation }] },
+      isLargeScreen && { transform: [{ rotate: waveRotation }, { scale: 1.5 }] } // Larger icon on larger screens
+    ]}>
+      <FontAwesome5 
+        name="hand-paper" 
+        size={isLargeScreen ? 36 : 24} // Larger icon size on larger screens
+        color={'#FFC107'} 
+      />
+    </Animated.View>
+  </View>
+</View>
+
           {state.userType === 'FACULTY' ? (
             <FacultyView 
               allTickets={state.allTickets}

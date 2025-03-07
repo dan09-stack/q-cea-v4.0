@@ -60,7 +60,7 @@ export const sendNotificationToStudent = async (phoneNumber: string) => {
 export const sendNotificationToFaculty = async (phoneNumber: string) => {
   return sendSMS(
     phoneNumber, 
-    'A student is waiting for you! Please open the QCEA Web App to accept and see their concern. Thank you!'
+    'A student is waiting for you! Please open the QCEA Web App qcea.netlify.app to accept and see their concern. Thank you! '
   );
 };
 

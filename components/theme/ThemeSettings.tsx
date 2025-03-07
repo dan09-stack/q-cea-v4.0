@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
   },
   resetButton: {
-    backgroundColor: '#f44336',
+    backgroundColor: 'rgba(161, 29, 0, 0.8)',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,

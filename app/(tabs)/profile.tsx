@@ -216,7 +216,7 @@ export default function Profile(): JSX.Element {
         style={styles.background}
       >
         <TouchableOpacity 
-          style={styles.settingsIconContainer} 
+          style={[styles.settingsIconContainer, { backgroundColor: colors.accentColor }]} 
           onPress={handleSettingsPress}
         >
           <MaterialIcons name="settings" size={28} color="white" />
@@ -233,13 +233,13 @@ export default function Profile(): JSX.Element {
                     {userData.profilePicture ? (
                       <Image 
                         source={{ uri: userData.profilePicture }}
-                        style={styles.profileImage}
+                        style={[styles.profileImage]}
                       />
                     ) : (
                       <MaterialIcons name="account-circle" size={120} color="white" />
                     )}
-                    <View style={styles.editIconContainer}>
-                      <MaterialIcons name="edit" size={24} color="white" />
+                    <View style={[styles.editIconContainer, { backgroundColor: colors.accentColor }]}>
+                      <MaterialIcons name="edit" size={24} color={'white'} />
                     </View>
                   </TouchableOpacity>
                 </View>
@@ -282,7 +282,7 @@ export default function Profile(): JSX.Element {
                 <CustomButton 
                   title="Logout" 
                   onPress={() => signOut(router)} 
-                  color={colors.buttonColor} 
+                  color={colors.accentColor} 
                 />
                 <EditProfileModal
                   modalVisible={modalVisible}
@@ -296,51 +296,59 @@ export default function Profile(): JSX.Element {
                   handleUpdateProfile={handleUpdateProfile}
                 />
                     {/* Settings Modal */}
-                <Modal
-                  visible={settingsModalVisible}
-                  transparent={true}
-                  animationType="fade"
-                  onRequestClose={() => setSettingsModalVisible(false)}
-                >
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.settingsModalView}>
-                      <Text style={styles.modalTitle}>Settings</Text>
-                      
-                      {userType !== 'STUDENT' && (
-                        <>
-                          <View style={styles.settingItem}>
-                            <Text style={styles.settingLabel}>
-                              Status (Active/Inactive)
-                            </Text>
-                            <Switch
-                              trackColor={{ false: "#767577", true: "#81b0ff" }}
-                              thumbColor={isActive ? "#008000" : "#f4f3f4"}
-                              ios_backgroundColor="#3e3e3e"
-                              onValueChange={toggleStatus}
-                              value={isActive}
-                            />
-                          </View>
+                    <Modal
+                      visible={settingsModalVisible}
+                      transparent={true}
+                      animationType="fade"
+                      onRequestClose={() => setSettingsModalVisible(false)}
+                    >
+                      <View style={styles.modalOverlay}>
+                        <View style={styles.settingsModalView}>
+                          <Text style={styles.modalTitle}>Settings</Text>
                           
-                          <Text style={styles.statusText}>
-                            You are currently <Text style={{fontWeight: 'bold', color: isActive ? '#008000' : '#FF0000'}}>
-                              {isActive ? 'Active' : 'Inactive'}
-                            </Text>
-                          </Text>
-                        </>
-                      )}
-                      <ThemeSettings containerStyle={{ marginTop: 10 }} />
-                      <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
-                      
-                      <View style={styles.buttonContainer}>
-                        <CustomButton 
-                          title="Close" 
-                          onPress={() => setSettingsModalVisible(false)} 
-                          color="#045657"
-                        />
+                          <ScrollView 
+                            style={styles.modalScroll} 
+                            contentContainerStyle={{alignItems: 'center', width: '100%'}}
+                            showsVerticalScrollIndicator={true}
+                          >
+                            {userType !== 'STUDENT' && (
+                              <>
+                                <View style={styles.settingItem}>
+                                  <Text style={styles.settingLabel}>
+                                    Status (Active/Inactive)
+                                  </Text>
+                                  <Switch
+                                    trackColor={{ false: "#767577", true: "#81b0ff" }}
+                                    thumbColor={isActive ? "#008000" : "#f4f3f4"}
+                                    ios_backgroundColor="#3e3e3e"
+                                    onValueChange={toggleStatus}
+                                    value={isActive}
+                                  />
+                                </View>
+                                
+                                <Text style={styles.statusText}>
+                                  You are currently <Text style={{fontWeight: 'bold', color: isActive ? '#008000' : '#FF0000'}}>
+                                    {isActive ? 'Active' : 'Inactive'}
+                                  </Text>
+                                </Text>
+                              </>
+                            )}
+                            <ThemeSettings containerStyle={{ marginTop: 10 }} />
+                            <View style={{ width: '90%', alignSelf: 'center', marginBottom:10 }}>
+                              <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
+                            </View>
+
+                            <View style={{ width: '90%', alignSelf: 'center', marginTop: 10, marginBottom: 10 }}>
+                              <CustomButton
+                                title="Close"
+                                onPress={() => setSettingsModalVisible(false)}
+                                color="#045657"
+                              />
+                            </View>
+                          </ScrollView>
+                        </View>
                       </View>
-                    </View>
-                  </View>
-                </Modal>
+                    </Modal>
               </View>
             )}
           </View>
@@ -354,6 +362,8 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: '#034041', 
+    padding:8,
+    paddingTop:32
   },
   settingsIconContainer: {
     position: 'absolute',
@@ -362,7 +372,6 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 128, 0, 0.7)',
   },
   modalOverlay: {
     flex: 1,
@@ -383,14 +392,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    width: '80%',
-    maxWidth: 400,
+    width: '95%',
+    height: '95%',
+    maxWidth: 500,
   },
   editIconContainer: {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    backgroundColor: '#008000',
     borderRadius: 15,
     padding: 5,
   },
@@ -408,7 +417,6 @@ const styles = StyleSheet.create({
   },
   statusText: {
     marginTop: 10,
-    marginBottom: 20,
     fontSize: 14,
     color: '#333',
   },
@@ -421,7 +429,6 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 3,
-    borderColor: '#008000',
   },
   container: {
     width: '100%',
@@ -487,7 +494,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
     textAlign: 'center',
   },
   input: {

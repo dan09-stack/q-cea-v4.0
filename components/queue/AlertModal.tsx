@@ -35,7 +35,7 @@ export const AlertModal = ({
     onRequestClose={onClose}
   >
     <View style={styles.modalContainer}>
-      <View style={[styles.modalContent, {maxWidth: 300, alignSelf: 'center'}, style]}>
+      <View style={[styles.modalContent, {maxWidth: 500, alignSelf: 'center'}, style]}>
         <Text style={styles.modalTitle}>{title}</Text>
         <Text style={styles.modalItemText}>{message}</Text>
         
