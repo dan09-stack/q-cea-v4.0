@@ -11,6 +11,7 @@ import { Colors } from '@/constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
 import { useTheme } from '@/contexts/ThemeContext';
+import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -113,17 +114,15 @@ export default function Login() {
   };
   const { colors } = useTheme();
 
-  return  (
-    <ThemedGradientContainer
-      style={styles.background}
-    >
+  return (
+    <GradientBackgroundContainer style={styles.background}>
       <View style={styles.container}>
         <View style={styles.blurBackground} />
         <Image 
-          source={require('../../../assets/circle.png')} 
+          source={require('../../../assets/q-cea logo.png')} 
           style={[styles.logo, { borderColor: colors.accentColor }]} 
         />
-<Text style={styles.heading}>Login</Text>
+        <Text style={styles.heading}>Login</Text>
         
         <View style={styles.inputContainer}>
           <Text style={styles.label}>Email</Text>
@@ -199,11 +198,17 @@ export default function Login() {
           </View>
         </View>
       </Modal>
-      </ThemedGradientContainer>
+      </GradientBackgroundContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    opacity: 0.6, // Semi-transparent to blend with the gradient
+  },
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -254,12 +259,12 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     width: '100%', 
     height: '100%',
-    backgroundColor: '#008000' // Main color replacing the background image
+    backgroundColor: '#008000' // Main gradient color
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 
     borderRadius: 12, 
-    backgroundColor: 'rgba(0, 0, 0, 0.1)', 
+    backgroundColor: 'rgba(0, 0, 0, 0.33)', 
     zIndex: -1, 
   },
   button: {
@@ -290,6 +295,7 @@ const styles = StyleSheet.create({
     marginTop: 50,
     borderColor: 'white',
     borderWidth: 1,
+    zIndex: 1, // Make sure the container appears above the background image
   },
   logo: { 
     width: 150, 
@@ -405,6 +411,6 @@ const styles = StyleSheet.create({
   },
   modalItemText: { 
     fontSize: 16, 
-    textAlign: 'center' 
+    textAlign: 'center'
   },
 });

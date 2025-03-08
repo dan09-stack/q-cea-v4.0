@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ThemeSettings } from '@/components/theme/ThemeSettings';
 import { shadeColor } from '@/utils/themeUtils';
+import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 
 interface UserData {
   fullName: string;
@@ -206,15 +207,8 @@ export default function Profile(): JSX.Element {
   }
   
   return (
-    <PageContainer>
-      <LinearGradient
-        colors={[
-          colors.backgroundColor, 
-          shadeColor(colors.backgroundColor, -20), 
-          shadeColor(colors.backgroundColor, -40)
-        ] as readonly [string, string, string]}
-        style={styles.background}
-      >
+      <GradientBackgroundContainer style={styles.background}>
+      
         <TouchableOpacity 
           style={[styles.settingsIconContainer, { backgroundColor: colors.accentColor }]} 
           onPress={handleSettingsPress}
@@ -353,8 +347,7 @@ export default function Profile(): JSX.Element {
             )}
           </View>
         </View>
-      </LinearGradient>
-    </PageContainer>
+      </GradientBackgroundContainer>
   );
 }
 
@@ -362,8 +355,6 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: '#034041', 
-    padding:8,
-    paddingTop:32
   },
   settingsIconContainer: {
     position: 'absolute',

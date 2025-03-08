@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions } from 'react-native';
+import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions, TouchableOpacity, Image, Modal } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -7,6 +7,7 @@ import { db, auth } from '@/firebaseConfig';
 import { CommentSection } from './HomeCommentSection';
 import { AlertModal } from '@/components/queue/AlertModal';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 
 interface FacultyViewProps {
   allTickets: string[];
@@ -17,6 +18,7 @@ interface FacultyViewProps {
     program: string;
     otherConcern?: string;
     specificDetails?: string;
+    proofOfPaymentImage?: string | null; 
   };
   handleBack: () => void;
   handleNext: () => void;
@@ -198,12 +200,12 @@ export const FacultyView = ({
   };
   useEffect(() => {
     if (allTickets.length > 0 && !allTickets[currentTicketIndex]) {
-      // If we have tickets but the current one is undefined/null (cancelled)
+
       handleBack();
     }
   }, [allTickets, currentTicketIndex]);
   const handleAddComment = async () => {
-    // Existing comment handling code...
+
     if (!comment.trim()) {
       Alert.alert('Error', 'Please enter a comment');
       return;
@@ -252,8 +254,7 @@ export const FacultyView = ({
       setModalMessage('Comment saved successfully');
       setIsModalVisible(true);
       setComment(''); // Clear the comment field
-      
-      // Reset the nextClickTime to stop the timer
+
       setNextClickTime(null);
     } catch (error) {
       console.error('Error saving comment:', error);
@@ -286,46 +287,138 @@ export const FacultyView = ({
       return 'Date unavailable';
     }
   };
+  const [paymentProofVisible, setPaymentProofVisible] = useState(false);
+  const [paymentProofUrl, setPaymentProofUrl] = useState('');
 
-  // Student information section component
-  const StudentInfoSection = () => (
-    <View style={{
-      flex: isSmallScreen ? undefined : 1, 
-      marginBottom: isSmallScreen ? 15 : 0,
-      padding: 10, 
-      borderWidth: 1, 
-      borderColor: '#eee', 
-      borderRadius: 5
-    }}>
-      <Text style={[styles.boldText, {fontSize: 20, marginBottom: 15, textAlign: 'center'}]}>Student Information</Text>
+  const viewPaymentProof = async () => {
+    console.log("Button clicked", ticketStudentData.proofOfPaymentImage);
+
+    if (!currentTicketNumber) return;
+    
+    try {
+      // Add console logs to troubleshoot
+      console.log("Looking for ticket:", allTickets[currentTicketIndex]);
+      console.log("Current full ticket number:", currentTicketNumber);
       
-      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
-        <Text style={[styles.boldText, {fontSize: 18}]}>Student Name:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.name}</Text>
-      </View>
-            
-      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={[styles.boldText, {fontSize: 18}]}>Concern:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.concern}</Text>
-      </View>
+      // Try querying with just the number part first
+      let queueRef = query(
+        collection(db, 'student'), 
+        where('ticketNumber', '==', allTickets[currentTicketIndex])
+      );
+      setPaymentProofUrl(ticketStudentData.proofOfPaymentImage || '');
+      setPaymentProofVisible(true);
+      console.log("Modal should be visible now");
 
-      {/* Display Other Concern if available */}
-      {ticketStudentData.otherConcern && (
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-          <Text style={[styles.boldText, {fontSize: 18}]}>Other Concern:</Text>
-          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.otherConcern}</Text>
+    } catch (error) {
+      console.error('Error fetching payment proof:', error);
+      Alert.alert('Error', 'Failed to load payment proof.');
+    }
+  };
+
+const PaymentProofModal = () => (
+  <Modal
+    visible={paymentProofVisible}
+    transparent={true}
+    animationType="fade"
+    onRequestClose={() => setPaymentProofVisible(false)}
+  >
+    <View style={{
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 20
+    }}>
+      <View style={{
+        backgroundColor: 'white',
+        borderRadius: 10,
+        padding: 15,
+        width: '100%',
+        maxWidth: 600,
+        maxHeight: '80%'
+      }}>
+        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
+          <Text style={{fontSize: 18, fontWeight: 'bold'}}>Payment Proof</Text>
+          <TouchableOpacity onPress={() => setPaymentProofVisible(false)}>
+            <Ionicons name="close" size={24} color="black" />
+          </TouchableOpacity>
         </View>
-      )}
-            
-      {/* Display Specific Details if available */}
-      {ticketStudentData.specificDetails && (
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={[styles.boldText, {fontSize: 18}]}>Specific Details:</Text>
-          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.specificDetails}</Text>
-        </View>
-      )}
+        
+        <ScrollView>
+          {paymentProofUrl ? (
+            <Image
+              source={{uri: paymentProofUrl}}
+              style={{width: '100%', height: 400, resizeMode: 'contain'}}
+            />
+          ) : (
+            <Text style={{color: 'gray', fontStyle: 'italic', textAlign: 'center'}}>No payment proof image available</Text>
+          )}
+        </ScrollView>
+      </View>
     </View>
-  );
+  </Modal>
+);
+
+// Modify the StudentInfoSection component to conditionally show the payment proof button
+const StudentInfoSection = () => (
+  <View style={{
+    flex: isSmallScreen ? undefined : 1, 
+    padding: 10, 
+    borderWidth: 1, 
+    borderColor: '#eee', 
+    borderRadius: 5
+  }}>
+    <Text style={[styles.boldText, {fontSize: 20, marginBottom: 15, textAlign: 'center'}]}>Student Information</Text>
+    
+    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
+      <Text style={[styles.boldText, {fontSize: 18}]}>Student Name:</Text>
+      <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.name}</Text>
+    </View>
+          
+    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Text style={[styles.boldText, {fontSize: 18}]}>Concern:</Text>
+      <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.concern}</Text>
+    </View>
+    
+    {/* Display Other Concern if available */}
+    {ticketStudentData.otherConcern && (
+      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+        <Text style={[styles.boldText, {fontSize: 18}]}>Other Concern:</Text>
+        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.otherConcern}</Text>
+      </View>
+    )}
+          
+    {/* Display Specific Details if available */}
+    {ticketStudentData.specificDetails && (
+      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={[styles.boldText, {fontSize: 18}]}>Specific Details:</Text>
+        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.specificDetails}</Text>
+      </View>
+    )}
+    
+    {/* Only show Payment Proof Button when proofOfPaymentImage exists */}
+    {ticketStudentData.proofOfPaymentImage && (
+      <View style={{marginTop: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+        <TouchableOpacity 
+          onPress={viewPaymentProof}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor:  '#0a7ea4',
+            paddingVertical: 8,
+            paddingHorizontal: 15,
+            borderRadius: 5
+          }}
+        >
+          <Ionicons name="document-text" size={20} color="white" style={{marginRight: 8}} />
+          <Text style={{color: 'white', fontWeight: 'bold'}}>View Payment Proof</Text>
+        </TouchableOpacity>
+      </View>
+    )}
+  </View>
+);
+
+
 const updateQueueCountInFirebase = async () => {
   const currentUser = auth.currentUser;
   if (!currentUser) return;
@@ -355,6 +448,7 @@ useEffect(() => {
         onClose={() => setIsModalVisible(false)}
         style={{ maxWidth: 600, alignSelf: 'center' }}
       />
+        <PaymentProofModal />
       <ScrollView style={{width: '100%'}}>
         <View style={[styles.ticketBox, {width: '100%'}]}>
           <Text style={styles.queueText}>
@@ -411,6 +505,7 @@ useEffect(() => {
             <CustomButton title="NEXT" onPress={handleNext} color={colors.accentColor} />
           </View>
         </View>
+
       </ScrollView>
     </View>
   );

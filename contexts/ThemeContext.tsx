@@ -16,10 +16,10 @@ interface ThemeContextType {
 }
 
 const DEFAULT_COLORS: ThemeColors = {
-  backgroundColor: '#045657',
+  backgroundColor: '#780C28',
   buttonColor: '#008000',
   textColor: '#ffffff',
-  accentColor: '#07643d',
+  accentColor: '#6E8E59',
 };
 
 const ThemeContext = createContext<ThemeContextType>({

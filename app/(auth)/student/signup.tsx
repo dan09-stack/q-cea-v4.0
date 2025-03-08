@@ -24,6 +24,7 @@ const validateEmail = (email: string): boolean => {
 import { LinearGradient } from 'expo-linear-gradient';
 import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
 import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
+import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -161,9 +162,8 @@ export default function Signup(): JSX.Element {
   };
   
   return (
-    <ThemedGradientContainer
-         
-       >
+        <GradientBackgroundContainer style={styles.background}>
+    
       <ScrollView contentContainerStyle={styles.scrollContent}>   
         <View style={styles.container}>
           <ErrorModal />
@@ -348,7 +348,7 @@ export default function Signup(): JSX.Element {
             </View>
            </View>
           </ScrollView>
-        </ThemedGradientContainer>
+          </GradientBackgroundContainer>
   );
 }
 

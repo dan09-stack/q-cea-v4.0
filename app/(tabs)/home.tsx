@@ -19,6 +19,7 @@ import { getPhoneNumberForTicket, sendNotificationToStudent, sendNotificationToF
 import { Colors } from '@/constants/Colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome, FontAwesome5 } from '@expo/vector-icons';
+import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 
 export default function Home() {
   const { colors } = useTheme();
@@ -255,7 +256,9 @@ export default function Home() {
             .map(doc => ({
               id: doc.id,
               fullName: doc.data().fullName || '',
-              status: doc.data().status || 'OFFLINE'
+              status: doc.data().status || 'OFFLINE',
+              program: doc.data().program || 'General',
+              numOnQueue: doc.data().numOnQueue || 0
             }));
           state.setFacultyList(faculty);
         });
@@ -298,7 +301,8 @@ export default function Home() {
             concern: studentData.concern ,
             program: studentData.program,
             otherConcern: studentData.otherConcern,
-            specificDetails: studentData.specificDetails
+            specificDetails: studentData.specificDetails,
+            proofOfPaymentImage: studentData.proofOfPaymentImage || null
           });
         }
       }
@@ -399,9 +403,8 @@ export default function Home() {
             concern: studentData.concern || studentData.otherConcern,
             program: studentData.program,
             otherConcern: studentData.otherConcern,
-            specificDetails: studentData.specificDetails
-
-            
+            specificDetails: studentData.specificDetails,
+            proofOfPaymentImage: studentData.proofOfPaymentImage || ''
           });
 
           // Save displayed ticket number as integer
@@ -733,6 +736,7 @@ export default function Home() {
           concern: state.selectedConcern,
           otherConcern: state.otherConcern,
           specificDetails: state.specificDetails,
+          proofOfPaymentImage: state.proofOfPaymentImage, 
           requestDate: new Date(),    
           status: 'waiting'
         });
@@ -819,6 +823,7 @@ export default function Home() {
               concern: null,
               otherConcern: null,
               specificDetails: null,
+              proofOfPaymentImage: null,
             });
           }
           state.setIsRequested(false);
@@ -883,12 +888,13 @@ export default function Home() {
   const { width } = useWindowDimensions();
 const isLargeScreen = width >= 768;
       return (
-        <LinearGradient colors={gradientColors} style={styles.container}>
+        <GradientBackgroundContainer style={styles.container}>
+          
           <View style={styles.greetingContainer}>
   <View style={styles.greetingRow}>
     <Text style={[
       styles.greetingText, 
-      { color: textColor },
+      { color: '#EAFAEA' },
       isLargeScreen && { fontSize: 32, marginRight: 12 } // Larger text on larger screens
     ]}>
       Hello, {state.currentStudent.name || 'User'}!
@@ -918,6 +924,7 @@ const isLargeScreen = width >= 768;
             />
           ) : (
             <StudentView 
+
               isCheckingRequest={state.isCheckingRequest}
               isRequested={state.isRequested}
               peopleAhead={state.peopleAhead}
@@ -929,7 +936,7 @@ const isLargeScreen = width >= 768;
               currentDisplayedTicket={state.currentDisplayedTicket}
               selectedFaculty={state.selectedFaculty}
               selectedConcern={state.selectedConcern}
-              otherConcern={state.otherConcern}
+              otherConcern={state.otherConcern}   
               isLoading={state.isLoading}
               facultyList={state.facultyList}
               concernsList={state.concernsList}
@@ -945,8 +952,8 @@ const isLargeScreen = width >= 768;
               setSelectedConcern={state.setSelectedConcern}
               setOtherConcern={state.setOtherConcern}
               setSpecificDetails={state.setSpecificDetails}
-              proofOfPaymentImage={proofOfPaymentImage}
-               setProofOfPaymentImage={setProofOfPaymentImage}
+              proofOfPaymentImage={state.proofOfPaymentImage}
+               setProofOfPaymentImage={state.setProofOfPaymentImage}
             />
           )}
           <AlertModal 
@@ -965,6 +972,6 @@ const isLargeScreen = width >= 768;
               }
             }}
           />
-        </LinearGradient>
+          </GradientBackgroundContainer>
       );
     }

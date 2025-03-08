@@ -7,7 +7,7 @@ export const useQueueState = () => {
   const [isRatingModalVisible, setIsRatingModalVisible] = useState(false);
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
-  
+  const [proofOfPaymentImage, setProofOfPaymentImage] = useState<string | null>(null);
   // Alert state
   const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -71,7 +71,8 @@ export const useQueueState = () => {
     // Add these optional properties:
     otherConcern?: string;
     specificDetails?: string;
-  }>({ name: '', concern: '', program: '' , otherConcern: '', specificDetails: '' });
+      proofOfPaymentImage?: string | null; 
+  }>({ name: '', concern: '', program: '' , otherConcern: '', specificDetails: '', proofOfPaymentImage: null });
   const [userData, setUserData] = useState({ phoneNumber: '' });
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -81,6 +82,8 @@ export const useQueueState = () => {
   const [nextStudentDetails, setNextStudentDetails] = useState<{fullName: string, phoneNumber: string} | null>(null);
 
   return {
+    proofOfPaymentImage,
+    setProofOfPaymentImage,
     // Rating
     alertButtons,
     setAlertButtons,

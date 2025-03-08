@@ -148,13 +148,14 @@ details:{
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-    paddingBottom:32
+  paddingBottom:30
+
     },
     formGroup: {
     padding: 20,
     borderRadius: 10,
     width: 360,
-    marginBottom: 20,
+    marginBottom: 50,
     backgroundColor: '#ffffff',
     },
     pickerButton: {
@@ -256,6 +257,10 @@ details:{
     },
     modalItemText: {
     fontSize: 16,
+    },
+    queueNumber: {
+    fontSize: 14,
+    color: '#555',
     },
 });
     

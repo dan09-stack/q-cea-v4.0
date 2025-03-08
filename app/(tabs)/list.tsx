@@ -8,6 +8,7 @@ import { StudentView } from '@/components/StudentView';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getContrastTextColor, shadeColor } from '@/utils/themeUtils';
+import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 
 
 export default function List() {
@@ -84,7 +85,7 @@ export default function List() {
     shadeColor(colors.backgroundColor, -40)
   ] as readonly [string, string, string];
   return (
-    <LinearGradient colors={gradientColors} style={styles.container}>
+    <GradientBackgroundContainer style={styles.container}>
       {userType === 'FACULTY' ? (
         <FacultyView styles={styles} displayedTicket={displayedTicket} />
       ) : (
@@ -94,7 +95,7 @@ export default function List() {
           styles={styles} 
         />
       )}
-    </LinearGradient>
+      </GradientBackgroundContainer>
   );
 }
 
@@ -268,7 +269,6 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingBottom:32,
     backgroundColor: '#1f4e21',
-
   },
   listContainer: {
     backgroundColor: 'white',

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable, TextInput, Image, Alert } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable, TextInput, Image, Alert, ScrollView } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -9,6 +9,7 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/
 import { getAuth } from 'firebase/auth';
 
 interface StudentViewProps {
+  numOnQueue?: number; 
   isCheckingRequest: boolean;
   isRequested: boolean;
   peopleAhead: number;
@@ -24,7 +25,7 @@ interface StudentViewProps {
   specificDetails: string;
   proofOfPaymentImage: string | null; // Now stores Firebase URL instead of local URI
   isLoading: boolean;
-  facultyList: Array<{id: string, fullName: string, status: string}>;
+  facultyList: Array<{id: string, fullName: string, status: string, program?: string, numOnQueue?: number}>;
   concernsList: string[];
   facultyModalVisible: boolean;
   concernModalVisible: boolean;
@@ -74,6 +75,10 @@ export const StudentView = ({
   const { colors } = useTheme();
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>("All Programs");
+  const [searchQuery, setSearchQuery] = useState("");
+  // Extract unique programs from faculty list
+  const availablePrograms = ["All Programs", ...new Set(facultyList.map(faculty => faculty.program))];
   
   // Function to pick an image from the gallery and upload to Firebase
   const pickImage = async () => {
@@ -105,38 +110,29 @@ export const StudentView = ({
       const storage = getStorage();
       const auth = getAuth();
       
-      // Create a unique filename with user ID and timestamp
       const userId = auth.currentUser?.uid || 'anonymous';
       const timestamp = new Date().getTime();
       const filename = `payment_proofs/${userId}_${timestamp}.jpg`;
       
-      // Create a reference to the storage location
       const storageRef = ref(storage, filename);
       
-      // Fetch the image as a blob
       const response = await fetch(uri);
       const blob = await response.blob();
       
-      // Create upload task
       const uploadTask = uploadBytesResumable(storageRef, blob);
       
-      // Monitor upload progress
       uploadTask.on('state_changed', 
         (snapshot) => {
-          // Update progress
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           setUploadProgress(progress);
         },
         (error) => {
-          // Handle errors
           Alert.alert('Upload Failed', 'Failed to upload image. Please try again.');
           setIsUploading(false);
         },
         async () => {
-          // Upload completed successfully
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
           
-          // Save the Firebase Storage URL to state
           setProofOfPaymentImage(downloadURL);
           setIsUploading(false);
           Alert.alert('Success', 'Proof of payment uploaded successfully!');
@@ -148,7 +144,6 @@ export const StudentView = ({
     }
   };
   
-  // Function to handle request validation
   const validateAndRequest = () => {
     if (selectedConcern === 'Enrollment' && !proofOfPaymentImage) {
       Alert.alert('Missing Information', 'Please upload proof of payment for enrollment concerns');
@@ -158,258 +153,391 @@ export const StudentView = ({
     handleRequest();
   };
   
+  // Filter faculty list based on selected program
+  const filteredFacultyList = selectedProgramFilter === "All Programs" 
+    ? facultyList 
+    : facultyList.filter(faculty => faculty.program === selectedProgramFilter);
+  
   return (
-    <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
-      {isCheckingRequest ? (
-        <ActivityIndicator size="large" color="#004000" />
-      ) : (
-        isRequested ? (
-          <View style={[styles.ticketContainer, {width: '100%'}]}>
-            <Text style={[styles.subHeaderText, {fontWeight: 'bold'}]}>
-              People in front of you: {peopleAhead}
-            </Text>
-            <View style={styles.ticketDetails}>
-              <Text style={[styles.ticketLabel, { color: 'black' , fontWeight: 'bold' , fontSize: 22}]}>YOUR TICKET NUMBER</Text>
-              <Text style={[styles.ticketNumber, { fontSize: 25 , marginBottom: 20}]}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
-              <View style={styles.ticketInfoContainer}>
-                <View>
-                  <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NEXT SERVING</Text>
-                  <Text style={[styles.ticketInfo, {fontSize: 20}]}>
-                    {nextDisplayedTicket ? 
-                      `${nextDisplayedProgram ? `${nextDisplayedProgram}-` : ''}${String(nextDisplayedTicket).padStart(4, '0')}` 
-                      : 'No Next Ticket'}
-                  </Text>
-                </View>
-                <View>
-                  <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NOW SERVING</Text>
-                  <Text style={[styles.ticketInfo, {fontSize: 20}]}>
-                    {currentDisplayedTicket && currentDisplayedProgram ? 
-                      `${currentDisplayedProgram}-${String(currentDisplayedTicket).padStart(4, '0')}` 
-                      : '-'}
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.waitText,{ marginTop: 30 , marginBottom: -10 , fontSize: 23}]}>
-                {userTicketNumber === currentDisplayedTicket
-                  ? "YOUR TURN"
-                  : userTicketNumber < currentDisplayedTicket
-                  ? ""
-                  : "PLEASE WAIT"
-                }
-              </Text>
-            </View>
-            <View style={styles.buttonContainer}>
-              <CustomButton 
-                title={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "DONE" : "CANCEL"} 
-                onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleDone : handleCancel} 
-                color={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "#004000" : "#c8c4c4"} 
-              />
-            </View>
-          </View>
+      <View style={[styles.container, {width: '100%' , maxWidth: 1000}]}>
+        {isCheckingRequest ? (
+          <ActivityIndicator size="large" color="#004000" />
         ) : (
-          <View style={[styles.formGroup, {width: '100%'}]}>
-            <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Faculty</Text>
-            <TouchableOpacity 
-              style={styles.pickerButton}
-              onPress={() => setFacultyModalVisible(true)}
-            >
-              <Text style={styles.pickerButtonText}>
-                {selectedFaculty || "Select Faculty"}
-              </Text>
-            </TouchableOpacity> 
-            <Text style= {{fontSize: 16, fontWeight: 'bold'}}>Concern</Text>
-            <TouchableOpacity 
-              style={styles.pickerButton}
-              onPress={() => setConcernModalVisible(true)}
-            >
-              <Text style={styles.pickerButtonText}>
-                {selectedConcern || "Select your concern"}
-              </Text>
-            </TouchableOpacity>
+          isRequested ? (
             
-            {/* Special input field for "Other" concern */}
-            {selectedConcern === "Other" && (
-              <View>
-                <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Please specify your concern</Text>
-                <TextInput
-                  style={{
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 5,
-                    padding: 10,
-                    marginTop: 5,
-                    backgroundColor: '#fff'
-                  }}
-                  placeholder="Enter your specific concern..."
-                  value={otherConcern}
-                  onChangeText={setOtherConcern}
+          
+            <View style={[styles.ticketContainer, {width: '100%'}]}>
+              <Text style={[styles.subHeaderText, {fontWeight: 'bold'}]}>
+                People in front of you: {peopleAhead}
+              </Text>
+              <View style={styles.ticketDetails}>
+                <Text style={[styles.ticketLabel, { color: 'black' , fontWeight: 'bold' , fontSize: 22}]}>YOUR TICKET NUMBER</Text>
+                <Text style={[styles.ticketNumber, { fontSize: 25 , marginBottom: 20}]}>{`${userProgram}-${String(userTicketNumber).padStart(4, '0')}`}</Text>
+                <View style={styles.ticketInfoContainer}>
+                  <View>
+                    <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NEXT SERVING</Text>
+                    <Text style={[styles.ticketInfo, {fontSize: 20}]}>
+                      {nextDisplayedTicket ? 
+                        `${nextDisplayedProgram ? `${nextDisplayedProgram}-` : ''}${String(nextDisplayedTicket).padStart(4, '0')}` 
+                        : 'No Next Ticket'}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.ticketLabel, { color: '#000000' , fontWeight: 'bold', fontSize: 16 }]}>NOW SERVING</Text>
+                    <Text style={[styles.ticketInfo, {fontSize: 20}]}>
+                      {currentDisplayedTicket && currentDisplayedProgram ? 
+                        `${currentDisplayedProgram}-${String(currentDisplayedTicket).padStart(4, '0')}` 
+                        : '-'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.waitText,{ marginTop: 30 , marginBottom: -10 , fontSize: 23}]}>
+                  {userTicketNumber === currentDisplayedTicket
+                    ? "YOUR TURN"
+                    : userTicketNumber < currentDisplayedTicket
+                    ? ""
+                    : "PLEASE WAIT"
+                  }
+                </Text>
+              </View>
+              <View style={styles.buttonContainer}>
+                <CustomButton 
+                  title={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "DONE" : "CANCEL"} 
+                  onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleDone : handleCancel} 
+                  color={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "#004000" : "#c8c4c4"} 
                 />
               </View>
-            )}
-            
-            {/* Upload Proof of Payment for Enrollment concern with Firebase storage */}
-            {selectedConcern === "Enrollment" && (
-              <View style={{marginTop: 10}}>
-                <Text style={{fontSize: 16, fontWeight: 'bold', marginBottom: 5}}>
-                  Upload Proof of Payment *
+            </View>
+    
+          ) : (
+            <ScrollView style={{width: '100%'}}>
+            <View style={[styles.formGroup, {width: '100%'}]}>
+              
+              <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Faculty</Text>
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => setFacultyModalVisible(true)}
+              >
+                <Text style={styles.pickerButtonText}>
+                  {selectedFaculty || "Select Faculty"}
                 </Text>
-                <TouchableOpacity 
-                  style={{
-                    backgroundColor: '#f0f0f0',
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 5,
-                    padding: 15,
-                    alignItems: 'center',
-                    marginBottom: 10
-                  }}
-                  onPress={pickImage}
-                  disabled={isUploading}
-                >
-                  <Text style={{color: '#004000'}}>
-                    {proofOfPaymentImage ? 'Change Image' : 'Select Image'}
+              </TouchableOpacity> 
+              <Text style= {{fontSize: 16, fontWeight: 'bold'}}>Concern</Text>
+              <TouchableOpacity 
+                style={styles.pickerButton}
+                onPress={() => setConcernModalVisible(true)}
+              >
+                <Text style={styles.pickerButtonText}>
+                  {selectedConcern || "Select your concern"}
+                </Text>
+              </TouchableOpacity>
+              
+              {/* Special input field for "Other" concern */}
+              {selectedConcern === "Other" && (
+                <View>
+                  <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Please specify your concern</Text>
+                  <TextInput
+                    style={{
+                      borderWidth: 1,
+                      borderColor: '#ccc',
+                      borderRadius: 5,
+                      padding: 10,
+                      marginTop: 5,
+                      backgroundColor: '#fff'
+                    }}
+                    placeholder="Enter your specific concern..."
+                    value={otherConcern}
+                    onChangeText={setOtherConcern}
+                  />
+                </View>
+              )}
+              
+              {/* Upload Proof of Payment for Enrollment concern with Firebase storage */}
+              {selectedConcern === "Enrollment" && (
+                <View style={{marginTop: 10}}>
+                  <Text style={{fontSize: 16, fontWeight: 'bold', marginBottom: 5}}>
+                    Upload Proof of Payment *
                   </Text>
-                </TouchableOpacity>
-                
-                {isUploading && (
-                  <View style={{marginBottom: 10}}>
-                    <Text>Uploading: {uploadProgress.toFixed(0)}%</Text>
-                    <View 
-                      style={{
-                        height: 10, 
-                        backgroundColor: '#e0e0e0',
-                        borderRadius: 5,
-                        marginTop: 5
-                      }}
-                    >
+                  <TouchableOpacity 
+                    style={{
+                      backgroundColor: '#f0f0f0',
+                      borderWidth: 1,
+                      borderColor: '#ccc',
+                      borderRadius: 5,
+                      padding: 15,
+                      alignItems: 'center',
+                      marginBottom: 10
+                    }}
+                    onPress={pickImage}
+                    disabled={isUploading}
+                  >
+                    <Text style={{color: '#004000'}}>
+                      {proofOfPaymentImage ? 'Change Image' : 'Select Image'}
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  {isUploading && (
+                    <View style={{marginBottom: 10}}>
+                      <Text>Uploading: {uploadProgress.toFixed(0)}%</Text>
                       <View 
                         style={{
-                          height: '100%',
-                          width: `${uploadProgress}%`,
-                          backgroundColor: '#004000',
-                          borderRadius: 5
+                          height: 10, 
+                          backgroundColor: '#e0e0e0',
+                          borderRadius: 5,
+                          marginTop: 5
                         }}
+                      >
+                        <View 
+                          style={{
+                            height: '100%',
+                            width: `${uploadProgress}%`,
+                            backgroundColor: '#004000',
+                            borderRadius: 5
+                          }}
+                        />
+                      </View>
+                    </View>
+                  )}
+                  
+                  {proofOfPaymentImage && !isUploading && (
+                    <View style={{marginBottom: 10, alignItems: 'center'}}>
+                      <Image 
+                        source={{ uri: proofOfPaymentImage }} 
+                        style={{width: '100%', height: 200, borderRadius: 5}} 
+                        resizeMode="contain"
+                      />
+                      <TouchableOpacity 
+                        style={{marginTop: 5}}
+                        onPress={() => setProofOfPaymentImage(null)}
+                      >
+                        <Text style={{color: 'red'}}>Remove Image</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  
+                  <Text style={{color: 'red', marginBottom: 10, fontStyle: 'italic'}}>
+                    * Required for enrollment concerns
+                  </Text>
+                </View>
+              )}
+              
+              {/* General details field for all concerns */}
+              <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Specific Details</Text>
+              <TextInput
+                style={{
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  padding: 10,
+                  marginTop: 5,
+                  height: 100,
+                  textAlignVertical: 'top',
+                  backgroundColor: '#fff'
+                }}
+                placeholder="Please enter the specific details of your concern..."
+                multiline={true}
+                numberOfLines={4}
+                value={specificDetails}
+                onChangeText={setSpecificDetails}
+              />
+              
+              <View style= {{marginTop: 15}}></View>
+              <View style={styles.buttonContainer}>
+                {isLoading ? (
+                  <ActivityIndicator size="large" color="#004000" />
+                ) : (
+                  <CustomButton 
+                    title="REQUEST" 
+                    onPress={validateAndRequest} 
+                    color={colors.accentColor} 
+                  />
+                )}
+              </View>
+
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={facultyModalVisible}
+                onRequestClose={() => setFacultyModalVisible(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Select Faculty</Text>
+                    
+                    {/* Add search input */}
+                    <View style={{
+                      flexDirection: 'row',
+                      borderWidth: 1,
+                      borderColor: '#ddd',
+                      borderRadius: 5,
+                      marginBottom: 10,
+                      padding: 8,
+                      backgroundColor: '#f9f9f9'
+                    }}>
+                      <Text style={{marginRight: 8, alignSelf: 'center'}}>🔍</Text>
+                      <TextInput
+                        placeholder="Search faculty..."
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={{flex: 1}}
+                        clearButtonMode="while-editing"
+                        autoCapitalize="none"
+                      />
+                      {searchQuery !== "" && (
+                        <TouchableOpacity onPress={() => setSearchQuery("")}>
+                          <Text style={{padding: 4, color: '#666'}}>✕</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    
+                    {/* Program filter dropdown */}
+                    <View style={{marginBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 10}}>
+                      <Text style={{fontSize: 14, fontWeight: 'bold', marginBottom: 5}}>Filter by Program:</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                        {availablePrograms.map((program) => (
+                          <TouchableOpacity
+                            key={program}
+                            style={{
+                              backgroundColor: selectedProgramFilter === program ? '#004000' : '#f0f0f0',
+                              paddingHorizontal: 12,
+                              paddingVertical: 8,
+                              borderRadius: 20,
+                              marginRight: 8
+                            }}
+                            onPress={() => setSelectedProgramFilter(program || "Unspecified")}
+                          >
+                            <Text style={{
+                              color: selectedProgramFilter === program ? 'white' : 'black',
+                              fontWeight: selectedProgramFilter === program ? 'bold' : 'normal'
+                            }}>
+                              {program}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    </View>
+                    
+                    {/* Filtered and searched faculty list */}
+                    <ScrollView style={{maxHeight: 400}}>
+                      {filteredFacultyList
+                        .filter(faculty => 
+                          faculty.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (faculty.program && faculty.program.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .sort((a, b) => a.fullName.localeCompare(b.fullName))
+                        .map((faculty) => (
+                          <Pressable
+                            key={faculty.id}
+                            style={[
+                              styles.modalItem,
+                              { backgroundColor: faculty.status === 'ONLINE' ? 'rgba(76, 175, 80, 0.1)' : 'transparent' }
+                            ]}
+                            onPress={() => {
+                              setSelectedFaculty(faculty.fullName);
+                              setFacultyModalVisible(false);
+                            }}
+                          >
+                            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+                              <View style={{flex: 1}}>
+                                <Text style={[
+                                  styles.modalItemText,
+                                  { color: faculty.status === 'ONLINE' ? '#4CAF50' : '#757575' }
+                                ]}>
+                                  {faculty.fullName}
+                                </Text>
+                                <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                                  <Text style={{fontSize: 12, color: '#666'}}>
+                                    {faculty.program || "Unspecified"}
+                                  </Text>
+                                  
+                                  {/* Display waiting count if available */}
+                                  {faculty.numOnQueue !== undefined && (
+                                    <Text style={{
+                                      fontSize: 12, 
+                                      fontWeight: 'bold',
+                                      color: (faculty.numOnQueue && faculty.numOnQueue > 5) ? '#FF6B6B' : '#666'
+                                    }}>
+                                      {faculty.numOnQueue === 0 
+                                        ? 'No waiting' 
+                                        : `${faculty.numOnQueue}  waiting`}
+                                    </Text>
+                                  )}
+                                </View>
+                              </View>
+                              
+                              {faculty.status === 'ONLINE' && (
+                                <View style={{
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: 5,
+                                  backgroundColor: '#4CAF50',
+                                  marginLeft: 8
+                                }} />
+                              )}
+                            </View>
+                          </Pressable>
+                      ))}
+                      
+                      {filteredFacultyList.filter(faculty => 
+                        faculty.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (faculty.program && faculty.program.toLowerCase().includes(searchQuery.toLowerCase()))
+                      ).length === 0 && (
+                        <Text style={{textAlign: 'center', marginVertical: 20, color: '#666'}}>
+                          {searchQuery 
+                            ? `No faculty matching "${searchQuery}"` 
+                            : "No faculty found for the selected program."}
+                        </Text>
+                      )}
+                    </ScrollView>
+                    
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 15}}>
+                      <Button 
+                        title="Reset Filters" 
+                        onPress={() => {
+                          setSelectedProgramFilter("All Programs");
+                          setSearchQuery("");
+                        }} 
+                        color="#757575" 
+                      />
+                      <Button 
+                        title="Close" 
+                        onPress={() => setFacultyModalVisible(false)} 
+                        color="#004000" 
                       />
                     </View>
                   </View>
-                )}
-                
-                {proofOfPaymentImage && !isUploading && (
-                  <View style={{marginBottom: 10, alignItems: 'center'}}>
-                    <Image 
-                      source={{ uri: proofOfPaymentImage }} 
-                      style={{width: '100%', height: 200, borderRadius: 5}} 
-                      resizeMode="contain"
-                    />
-                    <TouchableOpacity 
-                      style={{marginTop: 5}}
-                      onPress={() => setProofOfPaymentImage(null)}
-                    >
-                      <Text style={{color: 'red'}}>Remove Image</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                
-                <Text style={{color: 'red', marginBottom: 10, fontStyle: 'italic'}}>
-                  * Required for enrollment concerns
-                </Text>
-              </View>
-            )}
-            
-            {/* General details field for all concerns */}
-            <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Specific Details</Text>
-            <TextInput
-              style={{
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 5,
-                padding: 10,
-                marginTop: 5,
-                height: 100,
-                textAlignVertical: 'top',
-                backgroundColor: '#fff'
-              }}
-              placeholder="Please enter the specific details of your concern..."
-              multiline={true}
-              numberOfLines={4}
-              value={specificDetails}
-              onChangeText={setSpecificDetails}
-            />
-            
-            <View style= {{marginTop: 15}}></View>
-            <View style={styles.buttonContainer}>
-              {isLoading ? (
-                <ActivityIndicator size="large" color="#004000" />
-              ) : (
-                <CustomButton 
-                  title="REQUEST" 
-                  onPress={validateAndRequest} 
-                  color={colors.accentColor} 
-                />
-              )}
-            </View>
+                </View>
+              </Modal>
 
-            <Modal
-              animationType="fade"
-              transparent={true}
-              visible={facultyModalVisible}
-              onRequestClose={() => setFacultyModalVisible(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Select Faculty</Text>
-                  {facultyList
-                    .sort((a, b) => a.fullName.localeCompare(b.fullName))
-                    .map((faculty) => (
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={concernModalVisible}
+                onRequestClose={() => setConcernModalVisible(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Select Concern</Text>
+                    {concernsList.map((concern) => (
                       <Pressable
-                        key={faculty.id}
+                        key={concern}
                         style={styles.modalItem}
                         onPress={() => {
-                          setSelectedFaculty(faculty.fullName);
-                          setFacultyModalVisible(false);
+                          setSelectedConcern(concern);
+                          setConcernModalVisible(false);
                         }}
                       >
-                        <Text style={[
-                          styles.modalItemText,
-                          { color: faculty.status === 'ONLINE' ? '#4CAF50' : '#757575' }
-                        ]}>
-                          {faculty.fullName}
-                        </Text>
+                        <Text style={styles.modalItemText}>{concern}</Text>
                       </Pressable>
                     ))}
-              <Button title="Close" onPress={() => setFacultyModalVisible(false)} color="#004000" />
+                    <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
+                  </View>
                 </View>
-              </View>
-            </Modal>
-
-            <Modal
-              animationType="fade"
-              transparent={true}
-              visible={concernModalVisible}
-              onRequestClose={() => setConcernModalVisible(false)}
-            >
-              <View style={styles.modalContainer}>
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Select Concern</Text>
-                  {concernsList.map((concern) => (
-                    <Pressable
-                      key={concern}
-                      style={styles.modalItem}
-                      onPress={() => {
-                        setSelectedConcern(concern);
-                        setConcernModalVisible(false);
-                      }}
-                    >
-                      <Text style={styles.modalItemText}>{concern}</Text>
-                    </Pressable>
-                  ))}
-                  <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
-                </View>
-              </View>
-            </Modal>
-          </View>
-        )
-      )}
-    </View>
+              </Modal>
+            </View>
+            </ScrollView>
+          )
+        )}
+      </View>
   );
 };
