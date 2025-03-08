@@ -1,8 +1,12 @@
-import React from 'react';
-import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable, TextInput, Image, Alert } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { useTheme } from '@/contexts/ThemeContext';
+import * as ImagePicker from 'expo-image-picker';
+// Add Firebase imports
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { getAuth } from 'firebase/auth';
 
 interface StudentViewProps {
   isCheckingRequest: boolean;
@@ -17,7 +21,8 @@ interface StudentViewProps {
   selectedFaculty: string;
   selectedConcern: string;
   otherConcern: string;
-  specificDetails: string; // New property for "Other" concern input
+  specificDetails: string;
+  proofOfPaymentImage: string | null; // Now stores Firebase URL instead of local URI
   isLoading: boolean;
   facultyList: Array<{id: string, fullName: string, status: string}>;
   concernsList: string[];
@@ -31,7 +36,8 @@ interface StudentViewProps {
   setSelectedFaculty: (faculty: string) => void;
   setSelectedConcern: (concern: string) => void;
   setOtherConcern: (concern: string) => void;
-  setSpecificDetails: (details: string) => void; // New setter for "Other" concern input
+  setSpecificDetails: (details: string) => void;
+  setProofOfPaymentImage: (imageUri: string | null) => void;
 }
 
 export const StudentView = ({
@@ -48,6 +54,7 @@ export const StudentView = ({
   selectedConcern,
   otherConcern,
   specificDetails,
+  proofOfPaymentImage,
   isLoading,
   facultyList,
   concernsList,
@@ -61,9 +68,95 @@ export const StudentView = ({
   setSelectedFaculty,
   setSelectedConcern,
   setOtherConcern,
-  setSpecificDetails
+  setSpecificDetails,
+  setProofOfPaymentImage
 }: StudentViewProps) => {
   const { colors } = useTheme();
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  // Function to pick an image from the gallery and upload to Firebase
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Needed', 'Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+    
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+    
+    if (!result.canceled) {
+      uploadImageToFirebase(result.assets[0].uri);
+    }
+  };
+  
+  // Function to upload image to Firebase Storage
+  const uploadImageToFirebase = async (uri:string) => {
+    try {
+      setIsUploading(true);
+      setUploadProgress(0);
+      
+      const storage = getStorage();
+      const auth = getAuth();
+      
+      // Create a unique filename with user ID and timestamp
+      const userId = auth.currentUser?.uid || 'anonymous';
+      const timestamp = new Date().getTime();
+      const filename = `payment_proofs/${userId}_${timestamp}.jpg`;
+      
+      // Create a reference to the storage location
+      const storageRef = ref(storage, filename);
+      
+      // Fetch the image as a blob
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      
+      // Create upload task
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+      
+      // Monitor upload progress
+      uploadTask.on('state_changed', 
+        (snapshot) => {
+          // Update progress
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(progress);
+        },
+        (error) => {
+          // Handle errors
+          Alert.alert('Upload Failed', 'Failed to upload image. Please try again.');
+          setIsUploading(false);
+        },
+        async () => {
+          // Upload completed successfully
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          
+          // Save the Firebase Storage URL to state
+          setProofOfPaymentImage(downloadURL);
+          setIsUploading(false);
+          Alert.alert('Success', 'Proof of payment uploaded successfully!');
+        }
+      );
+    } catch (error) {
+      Alert.alert('Error', 'An error occurred while uploading your image.');
+      setIsUploading(false);
+    }
+  };
+  
+  // Function to handle request validation
+  const validateAndRequest = () => {
+    if (selectedConcern === 'Enrollment' && !proofOfPaymentImage) {
+      Alert.alert('Missing Information', 'Please upload proof of payment for enrollment concerns');
+      return;
+    }
+    
+    handleRequest();
+  };
   
   return (
     <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
@@ -154,6 +247,75 @@ export const StudentView = ({
               </View>
             )}
             
+            {/* Upload Proof of Payment for Enrollment concern with Firebase storage */}
+            {selectedConcern === "Enrollment" && (
+              <View style={{marginTop: 10}}>
+                <Text style={{fontSize: 16, fontWeight: 'bold', marginBottom: 5}}>
+                  Upload Proof of Payment *
+                </Text>
+                <TouchableOpacity 
+                  style={{
+                    backgroundColor: '#f0f0f0',
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    borderRadius: 5,
+                    padding: 15,
+                    alignItems: 'center',
+                    marginBottom: 10
+                  }}
+                  onPress={pickImage}
+                  disabled={isUploading}
+                >
+                  <Text style={{color: '#004000'}}>
+                    {proofOfPaymentImage ? 'Change Image' : 'Select Image'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {isUploading && (
+                  <View style={{marginBottom: 10}}>
+                    <Text>Uploading: {uploadProgress.toFixed(0)}%</Text>
+                    <View 
+                      style={{
+                        height: 10, 
+                        backgroundColor: '#e0e0e0',
+                        borderRadius: 5,
+                        marginTop: 5
+                      }}
+                    >
+                      <View 
+                        style={{
+                          height: '100%',
+                          width: `${uploadProgress}%`,
+                          backgroundColor: '#004000',
+                          borderRadius: 5
+                        }}
+                      />
+                    </View>
+                  </View>
+                )}
+                
+                {proofOfPaymentImage && !isUploading && (
+                  <View style={{marginBottom: 10, alignItems: 'center'}}>
+                    <Image 
+                      source={{ uri: proofOfPaymentImage }} 
+                      style={{width: '100%', height: 200, borderRadius: 5}} 
+                      resizeMode="contain"
+                    />
+                    <TouchableOpacity 
+                      style={{marginTop: 5}}
+                      onPress={() => setProofOfPaymentImage(null)}
+                    >
+                      <Text style={{color: 'red'}}>Remove Image</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                
+                <Text style={{color: 'red', marginBottom: 10, fontStyle: 'italic'}}>
+                  * Required for enrollment concerns
+                </Text>
+              </View>
+            )}
+            
             {/* General details field for all concerns */}
             <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Specific Details</Text>
             <TextInput
@@ -179,7 +341,11 @@ export const StudentView = ({
               {isLoading ? (
                 <ActivityIndicator size="large" color="#004000" />
               ) : (
-                <CustomButton title="REQUEST" onPress={handleRequest} color={colors.accentColor} />
+                <CustomButton 
+                  title="REQUEST" 
+                  onPress={validateAndRequest} 
+                  color={colors.accentColor} 
+                />
               )}
             </View>
 
@@ -211,7 +377,7 @@ export const StudentView = ({
                         </Text>
                       </Pressable>
                     ))}
-                  <Button title="Close" onPress={() => setFacultyModalVisible(false)} color="#004000" />
+              <Button title="Close" onPress={() => setFacultyModalVisible(false)} color="#004000" />
                 </View>
               </View>
             </Modal>

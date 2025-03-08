@@ -1,5 +1,5 @@
 import { Animated, Easing, ImageBackground, Platform, Text, useWindowDimensions, View } from 'react-native';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc, writeBatch } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
@@ -25,7 +25,8 @@ export default function Home() {
   const state = useQueueState();
   const backgroundColor = "#008000";
   const textColor = getContrastTextColor(colors.backgroundColor);
-  
+  const [proofOfPaymentImage, setProofOfPaymentImage] = useState<string | null>(null);
+
   // Create gradient colors
   const gradientColors = [
     colors.backgroundColor,
@@ -944,6 +945,8 @@ const isLargeScreen = width >= 768;
               setSelectedConcern={state.setSelectedConcern}
               setOtherConcern={state.setOtherConcern}
               setSpecificDetails={state.setSpecificDetails}
+              proofOfPaymentImage={proofOfPaymentImage}
+               setProofOfPaymentImage={setProofOfPaymentImage}
             />
           )}
           <AlertModal 
