@@ -1,4 +1,4 @@
-import { Animated, Easing, ImageBackground, Platform, Text, useWindowDimensions, View } from 'react-native';
+import { Animated, Easing, ImageBackground, Platform, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc, writeBatch } from 'firebase/firestore';
@@ -972,6 +972,7 @@ const isLargeScreen = width >= 768;
               }
             }}
           />
+         
           </GradientBackgroundContainer>
       );
     }

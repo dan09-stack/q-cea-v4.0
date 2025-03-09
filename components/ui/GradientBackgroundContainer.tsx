@@ -13,7 +13,7 @@ interface GradientBackgroundContainerProps {
 export const GradientBackgroundContainer: React.FC<GradientBackgroundContainerProps> = ({
   children,
   style,
-  backgroundImage = require('@/assets/images/red.jpg'),
+    backgroundImage = require('@/assets/images/red4.jpg'),
   imageOpacity = 0.6,
   imageStyle,
 }) => {

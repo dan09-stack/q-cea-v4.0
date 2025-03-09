@@ -1,6 +1,41 @@
 import { StyleSheet } from 'react-native';
 
 export const homeStyles = StyleSheet.create({
+
+chatButtonContainer: {
+  position: 'absolute',
+  bottom: 60,
+  right: 20,
+  zIndex: 999,
+  elevation: 5,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.25,
+  shadowRadius: 3.84,
+},
+chatButtonContainerLarge: {
+  bottom: 30,
+  right: 30,
+},
+chatButton: {
+  borderRadius: 30,
+  width: 130,
+  height: 50,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+chatButtonContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+},
+chatButtonText: {
+  color: '#FFFFFF',
+  fontWeight: 'bold',
+  marginLeft: 8,
+  fontSize: 16,
+},
+
   iconContainer: {
     marginLeft: 10,
     marginTop: 5,
