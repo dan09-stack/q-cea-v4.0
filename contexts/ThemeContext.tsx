@@ -6,6 +6,7 @@ interface ThemeColors {
   buttonColor: string;
   textColor?: string;
   accentColor?: string;
+
 }
 
 interface ThemeContextType {

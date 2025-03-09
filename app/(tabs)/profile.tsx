@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Button, TextInput, Modal, ScrollView, TouchableOpacity, ImageBackground, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TextInput, Modal, ScrollView, TouchableOpacity, Image, Alert, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
-import { auth, db, storage } from '@/firebaseConfig';
+import { auth, db } from '@/firebaseConfig';
 import { signOut } from '@/services/auth';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CustomButton } from '@/components/ui/CustomButton';
@@ -15,6 +14,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { ThemeSettings } from '@/components/theme/ThemeSettings';
 import { shadeColor } from '@/utils/themeUtils';
 import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
+import { Picker } from '@react-native-picker/picker';
+import TimePickerModal from '../components/TImePickerModal';
 
 interface UserData {
   fullName: string;
@@ -27,6 +28,122 @@ interface UserData {
   userType?: string;
 }
 
+interface ScheduleModalProps {
+  modalVisible: boolean;
+  setModalVisible: (visible: boolean) => void;
+  scheduleData: {
+    monday: { start: string; end: string };
+    tuesday: { start: string; end: string };
+    wednesday: { start: string; end: string };
+    thursday: { start: string; end: string };
+    friday: { start: string; end: string };
+    saturday: { start: string; end: string };
+    sunday: { start: string; end: string };
+  };
+  setScheduleData: (data: {
+    monday: { start: string; end: string };
+    tuesday: { start: string; end: string };
+    wednesday: { start: string; end: string };
+    thursday: { start: string; end: string };
+    friday: { start: string; end: string };
+    saturday: { start: string; end: string };
+    sunday: { start: string; end: string };
+  }) => void;
+  handleSaveSchedule: () => void;
+}
+
+const ScheduleModal: React.FC<ScheduleModalProps> = ({
+  modalVisible,
+  setModalVisible,
+  scheduleData,
+  setScheduleData,
+  handleSaveSchedule,
+}) => {
+  const { colors } = useTheme();
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
+
+  const updateTimeForSelectedDay = (
+    startHour: number,
+    startMinute: number,
+    startPeriod: string,
+    endHour: number,
+    endMinute: number,
+    endPeriod: string
+  ) => {
+    if (selectedDay) {
+      const startTime = `${startHour}:${String(startMinute).padStart(2, '0')} ${startPeriod}`;
+      const endTime = `${endHour}:${String(endMinute).padStart(2, '0')} ${endPeriod}`;
+
+      setScheduleData({
+        ...scheduleData,
+        [selectedDay]: { start: startTime, end: endTime },
+      });
+    }
+  };
+
+  return (
+    <Modal
+      visible={modalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setModalVisible(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalView, { backgroundColor: colors.backgroundColor }]}>
+          <Text style={[styles.modalTitle, { color: colors.textColor }]}>Set Availability</Text>
+          <ScrollView style={styles.modalScroll}>
+            {Object.keys(scheduleData).map((day) => (
+              <TouchableOpacity
+                key={day}
+                style={[
+                  styles.dayContainer,
+                  {
+                    alignItems: "center",  // Centers text horizontally
+                    justifyContent: "center", // Centers text vertically
+                    borderRadius: 15, // Adjust for rounded corners
+                    paddingVertical: 10, // Adjust padding
+                    paddingHorizontal: 20, // Adjust horizontal padding
+                  },
+                ]}
+                onPress={() => setSelectedDay(day)}
+              >
+                <Text style={[styles.dayLabel, { color: "black", textAlign: "center" }]}>
+                  {day.charAt(0).toUpperCase() + day.slice(1)}
+                </Text>
+                <Text style={[styles.selectedTime, { color:"black", textAlign: "center" }]}>
+                  {scheduleData[day as keyof typeof scheduleData].start} - {scheduleData[day as keyof typeof scheduleData].end}
+                </Text>
+</TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <View style={styles.buttonContainer}>
+            <CustomButton
+              title="Save"
+              onPress={handleSaveSchedule}
+              color={colors.accentColor}
+            />
+            <CustomButton
+              title="Close"
+              onPress={() => setModalVisible(false)}
+              color="#045657"
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* Time Picker Modal */}
+      {selectedDay && (
+        <TimePickerModal
+          selectedDay={selectedDay}
+          scheduleData={scheduleData}
+          updateTimeForSelectedDay={updateTimeForSelectedDay}
+          closeModal={() => setSelectedDay(null)}
+        />
+      )}
+    </Modal>
+  );
+};
 export default function Profile(): JSX.Element {
   const { colors } = useTheme();
   const [userType, setUserType] = useState('');
@@ -51,26 +168,33 @@ export default function Profile(): JSX.Element {
     program: '',
     phoneNumber: ''
   });
+  const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
+  const [scheduleData, setScheduleData] = useState({
+    monday: { start: "", end: "" },
+    tuesday: { start: "", end: "" },
+    wednesday: { start: "", end: "" },
+    thursday: { start: "", end: "" },
+    friday: { start: "", end: "" },
+    saturday: { start: "", end: "" },
+    sunday: { start: "", end: "" },
+  });
   const handleSettingsPress = () => {
     setSettingsModalVisible(true);
   };
+
   const toggleStatus = async (value: boolean) => {
     setIsActive(value);
     try {
       const user = auth.currentUser;
       if (user) {
-        // Update status in Firestore with ONLINE/OFFLINE string value
         await db.collection('student').doc(user.uid).update({
           status: value ? 'ONLINE' : 'OFFLINE'
         });
-        
-        // Update local state
         setUserData(prev => ({...prev, status: value ? 'ONLINE' : 'OFFLINE'}));
       }
     } catch (error) {
       console.error('Error updating status:', error);
       Alert.alert('Error', 'Failed to update status. Please try again.');
-      // Revert toggle if update fails
       setIsActive(!value);
     }
   };
@@ -88,6 +212,7 @@ export default function Profile(): JSX.Element {
       await uploadImage(uri);
     }
   };
+
   const uploadImage = async (uri: string) => {
     try {
       const response = await fetch(uri);
@@ -114,7 +239,6 @@ export default function Profile(): JSX.Element {
     }
   };
   
-  
   const router = useRouter();
   const getGravatarUrl = (email: string) => {
     const md5 = require('md5');
@@ -139,7 +263,6 @@ export default function Profile(): JSX.Element {
               const data = userDoc.data() as UserData;
               setUserData(data);
               setEditableData(data);
-
               setIsActive(data.status === 'ONLINE');
               setUserType(data.userType || '');
             }
@@ -157,12 +280,10 @@ export default function Profile(): JSX.Element {
     fetchUserData();
   }, []);
   
-  
   const handleUpdateProfile = async (): Promise<boolean> => {
     try {
       const user = auth.currentUser;
       if (user) {
-        // Update user profile in Firestore
         await db.collection('student').doc(user.uid).update({
           fullName: editableData.fullName,
           email: editableData.email,
@@ -171,34 +292,46 @@ export default function Profile(): JSX.Element {
           phoneNumber: editableData.phoneNumber,
         });
   
-        // Update email in Firebase Auth if changed
         if (editableData.email !== userData.email) {
           await user.updateEmail(editableData.email);
         }
   
-        // Update password if provided
         if (newPassword) {
           await user.updatePassword(newPassword);
         }
   
-        // Update local state
         setUserData(editableData);
         setModalVisible(false);
         setNewPassword('');
         
-        return true; // Return success
+        return true;
       }
-      return false; // Return failure if no user
+      return false;
     } catch (error: unknown) {
       if (error instanceof Error) {
-        // alert('Error updating profile: ' + error.message);
+        alert('Error updating profile: ' + error.message);
       } else {
         alert('An unexpected error occurred while updating profile');
       }
-      return false; // Return failure on error
+      return false;
     }
   };
-  
+
+  const handleSaveSchedule = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await db.collection('student').doc(user.uid).update({
+          schedule: scheduleData,
+        });
+        Alert.alert('Success', 'Schedule updated successfully.');
+        setScheduleModalVisible(false);
+      }
+    } catch (error) {
+      console.error('Error updating schedule:', error);
+      Alert.alert('Error', 'Failed to update schedule. Please try again.');
+    }
+  };
 
   if (!isVerified) {
     return (
@@ -289,60 +422,66 @@ export default function Profile(): JSX.Element {
                   setNewPassword={setNewPassword}
                   handleUpdateProfile={handleUpdateProfile}
                 />
-                    {/* Settings Modal */}
-                    <Modal
-                      visible={settingsModalVisible}
-                      transparent={true}
-                      animationType="fade"
-                      onRequestClose={() => setSettingsModalVisible(false)}
-                    >
-                      <View style={styles.modalOverlay}>
-                        <View style={styles.settingsModalView}>
-                          <Text style={styles.modalTitle}>Settings</Text>
-                          
-                          <ScrollView 
-                            style={styles.modalScroll} 
-                            contentContainerStyle={{alignItems: 'center', width: '100%'}}
-                            showsVerticalScrollIndicator={true}
-                          >
-                            {userType !== 'STUDENT' && (
-                              <>
-                                <View style={styles.settingItem}>
-                                  <Text style={styles.settingLabel}>
-                                    Status (Active/Inactive)
-                                  </Text>
-                                  <Switch
-                                    trackColor={{ false: "#767577", true: "#81b0ff" }}
-                                    thumbColor={isActive ? "#008000" : "#f4f3f4"}
-                                    ios_backgroundColor="#3e3e3e"
-                                    onValueChange={toggleStatus}
-                                    value={isActive}
-                                  />
-                                </View>
-                                
-                                <Text style={styles.statusText}>
-                                  You are currently <Text style={{fontWeight: 'bold', color: isActive ? '#008000' : '#FF0000'}}>
-                                    {isActive ? 'Active' : 'Inactive'}
-                                  </Text>
-                                </Text>
-                              </>
-                            )}
-                            <ThemeSettings containerStyle={{ marginTop: 10 }} />
-                            <View style={{ width: '90%', alignSelf: 'center', marginBottom:10 }}>
-                              <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
-                            </View>
-
-                            <View style={{ width: '90%', alignSelf: 'center', marginTop: 10, marginBottom: 10 }}>
-                              <CustomButton
-                                title="Close"
-                                onPress={() => setSettingsModalVisible(false)}
-                                color="#045657"
+                <ScheduleModal
+                  modalVisible={scheduleModalVisible}
+                  setModalVisible={setScheduleModalVisible}
+                  scheduleData={scheduleData}
+                  setScheduleData={setScheduleData}
+                  handleSaveSchedule={handleSaveSchedule}
+                />
+                <Modal
+                  visible={settingsModalVisible}
+                  transparent={true}
+                  animationType="fade"
+                  onRequestClose={() => setSettingsModalVisible(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.settingsModalView}>
+                      <Text style={styles.modalTitle}>Settings</Text>
+                      <ScrollView 
+                        style={styles.modalScroll} 
+                        contentContainerStyle={{alignItems: 'center', width: '100%'}}
+                        showsVerticalScrollIndicator={true}
+                      >
+                        {userType !== 'STUDENT' && (
+                          <>
+                            <View style={styles.settingItem}>
+                              <Text style={styles.settingLabel}>
+                                Status (Active/Inactive)
+                              </Text>
+                              <Switch
+                                trackColor={{ false: "#767577", true: "#81b0ff" }}
+                                thumbColor={isActive ? "#008000" : "#f4f3f4"}
+                                ios_backgroundColor="#3e3e3e"
+                                onValueChange={toggleStatus}
+                                value={isActive}
                               />
                             </View>
-                          </ScrollView>
+                            <Text style={styles.statusText}>
+                              You are currently <Text style={{fontWeight: 'bold', color: isActive ? '#008000' : '#FF0000'}}>
+                                {isActive ? 'Active' : 'Inactive'}
+                              </Text>
+                            </Text>
+                          </>
+                        )}
+                        <ThemeSettings containerStyle={{ marginTop: 10 }} />
+                        <View style={{ width: '90%', alignSelf: 'center', marginBottom:10 }}>
+                          <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
                         </View>
-                      </View>
-                    </Modal>
+                        <View style={{ width: '90%', alignSelf: 'center', marginBottom:10 }}>
+                          <CustomButton title="Set Schedule" onPress={() => { setScheduleModalVisible(true); setSettingsModalVisible(false); }} />
+                        </View>
+                        <View style={{ width: '90%', alignSelf: 'center', marginTop: 10, marginBottom: 10 }}>
+                          <CustomButton
+                            title="Close"
+                            onPress={() => setSettingsModalVisible(false)}
+                            color="#045657"
+                          />
+                        </View>
+                      </ScrollView>
+                    </View>
+                  </View>
+                </Modal>
               </View>
             )}
           </View>
@@ -352,6 +491,7 @@ export default function Profile(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
+
   background: {
     flex: 1,
     backgroundColor: '#034041', 
@@ -478,9 +618,11 @@ const styles = StyleSheet.create({
      boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
     elevation: 5,
     maxHeight: '80%', // This ensures the modal doesn't take up the full screen
+    width: 300
 },
   modalScroll: {
     width: '100%',
+    paddingRight: 30,
   },
   modalTitle: {
     fontSize: 20,
@@ -500,5 +642,60 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     marginTop: 20,
     marginBottom: 10,
+  },
+  scheduleInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
+  scheduleLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  dayContainer: {
+    marginBottom: 20,
+    backgroundColor: "white"
+  },
+  dayLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+
+
+  },
+  timePickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timePickerGroup: {
+    alignItems: 'center',
+  },
+  timeLabel: {
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  timePicker: {
+    width: 50,
+    height: 40,
+  },
+  periodPicker: {
+    width: 50,
+    height: 40,
+  },
+  separator: {
+    fontSize: 20,
+    marginHorizontal: 5,
+  },
+  setTimeButton: {
+    marginTop: 10,
+  },
+  selectedTime: {
+    marginTop: 10,
+    fontSize: 14,
   },
 });

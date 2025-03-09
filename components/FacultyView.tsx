@@ -214,7 +214,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
           <View style={styles.header}>
             <Text style={[styles.headerText, { flex: 1 }]}>TICKET & CONCERN</Text>
             <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT</Text>
-            <Text style={[styles.headerText, { flex: 1.5 }]}>TIME</Text>
+            <Text style={[styles.headerText, { flex: 1.5 }]}>DATE & TIME</Text>
           </View>
           <View style={{ height: 2, backgroundColor: 'black' }} />
           
