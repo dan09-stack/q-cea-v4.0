@@ -38,7 +38,7 @@ interface ScheduleModalProps {
     thursday: { start: string; end: string };
     friday: { start: string; end: string };
     saturday: { start: string; end: string };
-    sunday: { start: string; end: string };
+
   };
   setScheduleData: (data: {
     monday: { start: string; end: string };
@@ -47,7 +47,7 @@ interface ScheduleModalProps {
     thursday: { start: string; end: string };
     friday: { start: string; end: string };
     saturday: { start: string; end: string };
-    sunday: { start: string; end: string };
+
   }) => void;
   handleSaveSchedule: () => void;
 }
@@ -81,6 +81,20 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await db.collection('student').doc(user.uid).get();
+        if (userDoc.exists && userDoc.data()?.schedule) {
+          setScheduleData(userDoc.data()?.schedule);
+        }
+      }
+    };
+  
+    fetchSchedule();
+  }, [modalVisible]);
+  
   return (
     <Modal
       visible={modalVisible}
@@ -92,46 +106,74 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
         <View style={[styles.modalView, { backgroundColor: colors.backgroundColor }]}>
           <Text style={[styles.modalTitle, { color: colors.textColor }]}>Set Availability</Text>
           <ScrollView style={styles.modalScroll}>
-            {Object.keys(scheduleData).map((day) => (
-              <TouchableOpacity
-                key={day}
-                style={[
-                  styles.dayContainer,
-                  {
-                    alignItems: "center",  // Centers text horizontally
-                    justifyContent: "center", // Centers text vertically
-                    borderRadius: 15, // Adjust for rounded corners
-                    paddingVertical: 10, // Adjust padding
-                    paddingHorizontal: 20, // Adjust horizontal padding
-                  },
-                ]}
-                onPress={() => setSelectedDay(day)}
-              >
-                <Text style={[styles.dayLabel, { color: "black", textAlign: "center" }]}>
-                  {day.charAt(0).toUpperCase() + day.slice(1)}
-                </Text>
-                <Text style={[styles.selectedTime, { color:"black", textAlign: "center" }]}>
-                  {scheduleData[day as keyof typeof scheduleData].start} - {scheduleData[day as keyof typeof scheduleData].end}
-                </Text>
-</TouchableOpacity>
-            ))}
+            {Object.keys(scheduleData)
+              .sort((dayA, dayB) => {
+                const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+                return daysOrder.indexOf(dayA) - daysOrder.indexOf(dayB);
+              })
+              .map((day) => (
+                <TouchableOpacity
+                  key={day}
+                  style={[
+                    styles.dayContainer,
+                    {
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: 15,
+                      paddingVertical: 10,
+                    },
+                  ]}
+                  onPress={() => setSelectedDay(day)}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      paddingHorizontal: 15,
+                    }}
+                  >
+                    <Text style={[styles.dayLabel, { color: "black", flex: 1, textAlign: "center" }]}>
+                      {day.charAt(0).toUpperCase() + day.slice(1)}
+                    </Text>
+  
+                    <TouchableOpacity
+                      onPress={() => {
+                        setScheduleData({
+                          ...scheduleData,
+                          [day]: { start: "", end: "" },
+                        });
+                      }}
+                      style={{
+                        padding: 8,
+                        backgroundColor: 'red',
+                        borderRadius: 15,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Reset</Text>
+                    </TouchableOpacity>
+                  </View>
+  
+                  <Text style={[styles.selectedTime, { color: "black", textAlign: "center", marginTop: 5 }]}>
+                    {scheduleData[day as keyof typeof scheduleData].start &&
+                    scheduleData[day as keyof typeof scheduleData].end
+                      ? `${scheduleData[day as keyof typeof scheduleData].start} - ${scheduleData[day as keyof typeof scheduleData].end}`
+                      : 'Unavailable'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
           </ScrollView>
-
+  
           <View style={styles.buttonContainer}>
-            <CustomButton
-              title="Save"
-              onPress={handleSaveSchedule}
-              color={colors.accentColor}
-            />
-            <CustomButton
-              title="Close"
-              onPress={() => setModalVisible(false)}
-              color="#045657"
-            />
+            <CustomButton title="Save" onPress={handleSaveSchedule} color={colors.accentColor} />
+            <CustomButton title="Close" onPress={() => setModalVisible(false)} color="#045657" />
           </View>
         </View>
       </View>
-
+  
       {/* Time Picker Modal */}
       {selectedDay && (
         <TimePickerModal
@@ -143,6 +185,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
       )}
     </Modal>
   );
+  
 };
 export default function Profile(): JSX.Element {
   const { colors } = useTheme();
@@ -176,7 +219,7 @@ export default function Profile(): JSX.Element {
     thursday: { start: "", end: "" },
     friday: { start: "", end: "" },
     saturday: { start: "", end: "" },
-    sunday: { start: "", end: "" },
+
   });
   const handleSettingsPress = () => {
     setSettingsModalVisible(true);
@@ -617,7 +660,7 @@ const styles = StyleSheet.create({
     padding: 20,
      boxShadow: '0px 2px 3.84px rgba(0, 0, 0, 0.25)',
     elevation: 5,
-    maxHeight: '80%', // This ensures the modal doesn't take up the full screen
+    maxHeight: '60%',
     width: 300
 },
   modalScroll: {
@@ -664,8 +707,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
-
-
+    marginTop: 10,
   },
   timePickerContainer: {
     flexDirection: 'row',
@@ -696,6 +738,8 @@ const styles = StyleSheet.create({
   },
   selectedTime: {
     marginTop: 10,
+    marginBottom: 10,
     fontSize: 14,
+
   },
 });
