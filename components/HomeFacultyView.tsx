@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions, TouchableOpacity, Image, Modal } from 'react-native';
+import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions, TouchableOpacity, Image, Modal, FlatList } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
@@ -34,6 +34,23 @@ interface Comment {
   faculty: string;
 }
 
+interface Faculty {
+  id: string;
+  fullName: string;
+  status: string;
+  program?: string;
+}
+
+interface FacultyItem {
+  id: string;
+  fullName: string;
+  status: string;
+  program?: string;
+  numOnQueue: number;
+  userType: string;
+}
+
+
 export const FacultyView = ({ 
   allTickets, 
   currentTicketIndex, 
@@ -56,6 +73,12 @@ export const FacultyView = ({
   const { width } = useWindowDimensions();
   const isSmallScreen = width <= 700;
   
+  // New state for transfer student functionality
+  const [transferModalVisible, setTransferModalVisible] = useState(false);
+  const [facultyList, setFacultyList] = useState<FacultyItem[]>([]);
+  const [isTransferring, setIsTransferring] = useState(false);
+  const [studentToTransferId, setStudentToTransferId] = useState('');
+ 
   const handleNext = () => {
     setNextClickTime(new Date());
     originalHandleNext();
@@ -65,9 +88,58 @@ export const FacultyView = ({
     ? `${ticketStudentData.program}-${allTickets[currentTicketIndex]}` 
     : '';
 
+    useEffect(() => {
+      if (!transferModalVisible) return;
+      
+      setIsLoading(true);
+      
+      const facultyCollectionRef = collection(db, 'student');
+      
+      const unsubscribe = onSnapshot(facultyCollectionRef, (snapshot) => {
+        const facultyItems: FacultyItem[] = snapshot.docs
+          .map(doc => {
+            const data = doc.data();
+            let queueCount = data.numOnQueue || 0;
+            
+            if (queueCount < 0) {
+              queueCount = 0;
+            }
+            
+            return {
+              id: doc.id,
+              fullName: data.fullName || '',
+              status: data.status || 'OFFLINE',
+              program: data.program || '',
+              userType: data.userType || 'FACULTY',
+              numOnQueue: queueCount
+            };
+          })
+          // Filter to include only faculty with valid fullName
+          .filter(user => 
+            user.userType === 'FACULTY' && 
+            user.fullName && 
+            user.fullName.trim() !== ''
+          )
+          .sort((a, b) => {
+            if (a.status !== b.status) {
+              return a.status === 'ONLINE' ? -1 : 1;
+            }
+            if (a.numOnQueue !== b.numOnQueue) {
+              return a.numOnQueue - b.numOnQueue;
+            }
+            return a.fullName.localeCompare(b.fullName);
+          });
+          
+        setFacultyList(facultyItems);
+        setIsLoading(false);
+      });
+      
+      return () => unsubscribe();
+    }, [transferModalVisible]);
+    
+    
   // Add real-time listener for tickets
   useEffect(() => {
-    checkForNewTickets();
     // Only set up the listener if we need to
     const shouldListenForTickets = 
       allTickets.length > 0 && 
@@ -166,46 +238,143 @@ export const FacultyView = ({
     fetchFacultyInfo();
   }, []);
 
-  // Rest of component remains the same
-  
-  // Added function to handle checking for new tickets
-  const checkForNewTickets = () => {
-    if (updateTickets) {
-      const fetchNewTickets = async () => {
-        try {
-          const q = query(collection(db, 'queue'), orderBy('timestamp', 'asc'));
-          const querySnapshot = await getDocs(q);
-          const newTickets: string[] = [];
-          
-          querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            if (data.ticketNumber) {
-              newTickets.push(data.ticketNumber);
-            }
-          });
-          
-          if (newTickets.length !== allTickets.length) {
-            updateTickets(newTickets);
-            return true;
-          }
-          return false;
-        } catch (error) {
-          console.error("Error checking for new tickets:", error);
-          return false;
-        }
-      };
-      
-      fetchNewTickets();
-    }
-  };
   useEffect(() => {
     if (allTickets.length > 0 && !allTickets[currentTicketIndex]) {
-
       handleBack();
     }
   }, [allTickets, currentTicketIndex]);
-  const handleAddComment = async () => {
+  
+  // Fetch faculty list for transfer functionality
+  const fetchFacultyList = async () => {
+    try {
+      setIsLoading(true);
+      const q = query(
+        collection(db, 'student'),
+        where('userType', '==', 'FACULTY')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const facultyItems: FacultyItem[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        facultyItems.push({
+          id: doc.id,
+          fullName: data.fullName || '',
+          status: data.status || 'OFFLINE',
+          program: data.program || '',
+          numOnQueue: data.numOnQueue || 0,
+          userType: data.userType || 'FACULTY'
+        });
+      });
+      
+      setFacultyList(facultyItems);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching faculty list:", error);
+      setIsLoading(false);
+      Alert.alert('Error', 'Failed to load faculty list. Please try again.');
+    }
+  };
+  
+  const handleTransferClick = async () => {
+    if (!ticketStudentData.name) {
+      Alert.alert('Error', 'No student information available');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      
+      // Find student by name
+      const q = query(
+        collection(db, 'student'),
+        where('fullName', '==', ticketStudentData.name)
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        Alert.alert('Error', 'Student not found in database');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Get the first matching student
+      querySnapshot.forEach((doc) => {
+        setStudentToTransferId(doc.id);
+      });
+      
+      // Show transfer modal - the faculty list will be loaded by the useEffect
+      setTransferModalVisible(true);
+      
+    } catch (error) {
+      console.error("Error preparing transfer:", error);
+      Alert.alert('Error', 'Failed to prepare transfer. Please try again.');
+      setIsLoading(false);
+    }
+  };
+  
+  
+  // Handle faculty selection and transfer
+  const handleTransferStudent = async (selectedFacultyId: string) => {
+    if (!studentToTransferId || !selectedFacultyId) {
+      Alert.alert('Error', 'Student or faculty information missing');
+      return;
+    }
+    
+    try {
+      setIsTransferring(true);
+      
+      // Get selected faculty info
+      const selectedFaculty = facultyList.find(f => f.id === selectedFacultyId);
+      
+      if (!selectedFaculty) {
+        throw new Error('Selected faculty not found');
+      }
+      
+      // Update student's faculty assignment
+      const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
+      const ticketSnap = await getDoc(ticketRef);
+      const currentNumber = ticketSnap.data()?.ticketNum;
+        const newNumber = currentNumber + 1;
 
+      const studentRef = doc(db, 'student', studentToTransferId);
+      await updateDoc(ticketRef, {
+        ticketNum: newNumber
+      });
+      await updateDoc(studentRef, {
+        assignedFaculty: selectedFacultyId,
+        faculty: selectedFaculty.fullName,
+        userTicketNumber: newNumber
+      });
+      
+      // Add a record of the transfer
+      await addDoc(collection(db, 'transferLogs'), {
+        studentId: studentToTransferId,
+        studentName: ticketStudentData.name,
+        fromFacultyId: auth.currentUser?.uid || '',
+        fromFacultyName: facultyName,
+        toFacultyId: selectedFacultyId,
+        toFacultyName: selectedFaculty.fullName,
+        timestamp: serverTimestamp(),
+        ticketNumber: allTickets[currentTicketIndex] || ''
+      });
+      
+      // Close modal and show success message
+      setTransferModalVisible(false);
+      setModalMessage(`Student transferred to ${selectedFaculty.fullName} successfully`);
+      setIsModalVisible(true);
+      
+    } catch (error) {
+      console.error("Error transferring student:", error);
+      Alert.alert('Error', 'Failed to transfer student. Please try again.');
+    } finally {
+      setIsTransferring(false);
+    }
+  };
+  
+  const handleAddComment = async () => {
     if (!comment.trim()) {
       Alert.alert('Error', 'Please enter a comment');
       return;
@@ -315,129 +484,243 @@ export const FacultyView = ({
     }
   };
 
-const PaymentProofModal = () => (
-  <Modal
-    visible={paymentProofVisible}
-    transparent={true}
-    animationType="fade"
-    onRequestClose={() => setPaymentProofVisible(false)}
-  >
-    <View style={{
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.7)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20
-    }}>
+  const PaymentProofModal = () => (
+    <Modal
+      visible={paymentProofVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setPaymentProofVisible(false)}
+    >
       <View style={{
-        backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 15,
-        width: '100%',
-        maxWidth: 600,
-        maxHeight: '80%'
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
       }}>
-        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
-          <Text style={{fontSize: 18, fontWeight: 'bold'}}>Payment Proof</Text>
-          <TouchableOpacity onPress={() => setPaymentProofVisible(false)}>
-            <Ionicons name="close" size={24} color="black" />
-          </TouchableOpacity>
+        <View style={{
+          backgroundColor: 'white',
+          borderRadius: 10,
+          padding: 15,
+          width: '100%',
+          maxWidth: 600,
+          maxHeight: '80%'
+        }}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
+            <Text style={{fontSize: 18, fontWeight: 'bold'}}>Payment Proof</Text>
+            <TouchableOpacity onPress={() => setPaymentProofVisible(false)}>
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView>
+            {paymentProofUrl ? (
+              <Image
+                source={{uri: paymentProofUrl}}
+                style={{width: '100%', height: 400, resizeMode: 'contain'}}
+              />
+            ) : (
+              <Text style={{color: 'gray', fontStyle: 'italic', textAlign: 'center'}}>No payment proof image available</Text>
+            )}
+          </ScrollView>
         </View>
-        
-        <ScrollView>
-          {paymentProofUrl ? (
-            <Image
-              source={{uri: paymentProofUrl}}
-              style={{width: '100%', height: 400, resizeMode: 'contain'}}
-            />
+      </View>
+    </Modal>
+  );
+  
+  // New Transfer Modal Component
+  const TransferModal = () => (
+    <Modal
+      visible={transferModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={() => setTransferModalVisible(false)}
+    >
+      <View style={{
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+      }}>
+        <View style={{
+          backgroundColor: 'white',
+          borderRadius: 10,
+          padding: 15,
+          width: '100%',
+          maxWidth: 600,
+          maxHeight: '80%'
+        }}>
+          <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15}}>
+            <Text style={{fontSize: 18, fontWeight: 'bold'}}>Transfer Student: {ticketStudentData.name}</Text>
+            <TouchableOpacity onPress={() => setTransferModalVisible(false)}>
+              <Ionicons name="close" size={24} color="black" />
+            </TouchableOpacity>
+          </View>
+          
+          {isLoading ? (
+            <Text style={{textAlign: 'center', padding: 20}}>Loading faculty list...</Text>
           ) : (
-            <Text style={{color: 'gray', fontStyle: 'italic', textAlign: 'center'}}>No payment proof image available</Text>
+            <ScrollView>
+              <Text style={{marginBottom: 10, fontWeight: 'bold'}}>Select faculty to transfer to:</Text>
+              
+              {facultyList.length === 0 ? (
+                <Text style={{textAlign: 'center', fontStyle: 'italic', color: 'gray'}}>
+                  No faculty members available
+                </Text>
+              ) : (
+                facultyList.map((faculty) => (
+                  <TouchableOpacity
+                    key={faculty.id}
+                    style={{
+                      padding: 15,
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#eee',
+                      backgroundColor: faculty.id === auth.currentUser?.uid ? '#f0f0f0' : 'white'
+                    }}
+                    disabled={faculty.id === auth.currentUser?.uid || isTransferring}
+                    onPress={() => handleTransferStudent(faculty.id)}
+                  >
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <View>
+                        <Text style={{
+                          fontWeight: 'bold',
+                          color: faculty.id === auth.currentUser?.uid ? 'gray' : 'black'
+                        }}>
+                          {faculty.fullName} {faculty.id === auth.currentUser?.uid ? '(Current Faculty)' : ''}
+                        </Text>
+                        {faculty.program && (
+                          <Text style={{color: faculty.id === auth.currentUser?.uid ? 'gray' : '#666'}}>
+                            Program: {faculty.program}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{
+                        backgroundColor: faculty.status === 'ONLINE' ? '#4CAF50' : '#9E9E9E',
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 12
+                      }}>
+                        <Text style={{color: 'white', fontSize: 12}}>{faculty.status}</Text>
+                      </View>
+                    </View>
+                    <Text style={{marginTop: 5, color: '#666'}}>
+                      Students in queue: {faculty.numOnQueue}
+                    </Text>
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
           )}
-        </ScrollView>
+          
+          {isTransferring && (
+            <View style={{padding: 15, alignItems: 'center'}}>
+              <Text>Transferring student...</Text>
+            </View>
+          )}
+        </View>
       </View>
-    </View>
-  </Modal>
-);
+    </Modal>
+  );
+  
 
-// Modify the StudentInfoSection component to conditionally show the payment proof button
-const StudentInfoSection = () => (
-  <View style={{
-    flex: isSmallScreen ? undefined : 1, 
-    padding: 10, 
-    borderWidth: 1, 
-    borderColor: '#eee', 
-    borderRadius: 5
-  }}>
-    <Text style={[styles.boldText, {fontSize: 20, marginBottom: 15, textAlign: 'center'}]}>Student Information</Text>
-    
-    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
-      <Text style={[styles.boldText, {fontSize: 18}]}>Student Name:</Text>
-      <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.name}</Text>
-    </View>
-          
-    <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <Text style={[styles.boldText, {fontSize: 18}]}>Concern:</Text>
-      <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.concern}</Text>
-    </View>
-    
-    {/* Display Other Concern if available */}
-    {ticketStudentData.otherConcern && (
-      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-        <Text style={[styles.boldText, {fontSize: 18}]}>Other Concern:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.otherConcern}</Text>
+  // Modify the StudentInfoSection component to conditionally show the payment proof button
+  const StudentInfoSection = () => (
+    <View style={{
+      flex: isSmallScreen ? undefined : 1, 
+      padding: 10, 
+      borderWidth: 1, 
+      borderColor: '#eee', 
+      borderRadius: 5
+    }}>
+      <Text style={[styles.boldText, {fontSize: 20, marginBottom: 15, textAlign: 'center'}]}>Student Information</Text>
+      
+      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
+        <Text style={[styles.boldText, {fontSize: 18}]}>Student Name:</Text>
+        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.name}</Text>
       </View>
-    )}
-          
-    {/* Display Specific Details if available */}
-    {ticketStudentData.specificDetails && (
+            
       <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={[styles.boldText, {fontSize: 18}]}>Specific Details:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' :ticketStudentData.specificDetails}</Text>
+        <Text style={[styles.boldText, {fontSize: 18}]}>Concern:</Text>
+        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.concern}</Text>
       </View>
-    )}
+      
+      {/* Display Other Concern if available */}
+      {ticketStudentData.otherConcern && (
+        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
+          <Text style={[styles.boldText, {fontSize: 18}]}>Other Concern:</Text>
+          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.otherConcern}</Text>
+        </View>
+      )}
+            
+      {/* Display Specific Details if available */}
+      {ticketStudentData.specificDetails && (
+        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={[styles.boldText, {fontSize: 18}]}>Specific Details:</Text>
+          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.specificDetails}</Text>
+        </View>
+      )}
+      
+      <View style={{marginTop: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 10}}>
+        {/* Payment Proof Button */}
+        {ticketStudentData.proofOfPaymentImage && (
+          <TouchableOpacity 
+            onPress={viewPaymentProof}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#0a7ea4',
+              paddingVertical: 8,
+              paddingHorizontal: 15,
+              borderRadius: 5
+            }}
+          >
+            <Ionicons name="document-text" size={20} color="white" style={{marginRight: 8}} />
+            <Text style={{color: 'white', fontWeight: 'bold'}}>View Payment Proof</Text>
+          </TouchableOpacity>
+        )}
+        
+        {/* Transfer Student Button */}
+        {allTickets.length > 0 && ticketStudentData.name && (
+          <TouchableOpacity 
+            onPress={handleTransferClick}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: '#4a5568',
+              paddingVertical: 8,
+              paddingHorizontal: 15,
+              borderRadius: 5
+            }}
+          >
+            <Ionicons name="swap-horizontal" size={20} color="white" style={{marginRight: 8}} />
+            <Text style={{color: 'white', fontWeight: 'bold'}}>Transfer Student</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  const updateQueueCountInFirebase = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
     
-    {/* Only show Payment Proof Button when proofOfPaymentImage exists */}
-    {ticketStudentData.proofOfPaymentImage && (
-      <View style={{marginTop: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
-        <TouchableOpacity 
-          onPress={viewPaymentProof}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor:  '#0a7ea4',
-            paddingVertical: 8,
-            paddingHorizontal: 15,
-            borderRadius: 5
-          }}
-        >
-          <Ionicons name="document-text" size={20} color="white" style={{marginRight: 8}} />
-          <Text style={{color: 'white', fontWeight: 'bold'}}>View Payment Proof</Text>
-        </TouchableOpacity>
-      </View>
-    )}
-  </View>
-);
-
-
-const updateQueueCountInFirebase = async () => {
-  const currentUser = auth.currentUser;
-  if (!currentUser) return;
+    const numOnQueue = (allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1);
+    
+    try {
+      const userRef = doc(db, 'student', currentUser.uid);
+      await updateDoc(userRef, {
+        numOnQueue: numOnQueue
+      });
+      console.log('Updated queue count in Firebase:', numOnQueue);
+    } catch (error) {
+      console.error('Error updating queue count in Firebase:', error);
+    }
+  };
   
-  const numOnQueue = (allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1);
-  
-  try {
-    const userRef = doc(db, 'student', currentUser.uid);
-    await updateDoc(userRef, {
-      numOnQueue: numOnQueue
-    });
-    console.log('Updated queue count in Firebase:', numOnQueue);
-  } catch (error) {
-    console.error('Error updating queue count in Firebase:', error);
-  }
-};
-useEffect(() => {
-  updateQueueCountInFirebase();
-}, [allTickets, currentTicketIndex]);
+  useEffect(() => {
+    updateQueueCountInFirebase();
+  }, [allTickets, currentTicketIndex]);
 
   return (
     <View style={[styles.container, {width: '100%', maxWidth: 900, }]}>
@@ -448,7 +731,8 @@ useEffect(() => {
         onClose={() => setIsModalVisible(false)}
         style={{ maxWidth: 600, alignSelf: 'center' }}
       />
-        <PaymentProofModal />
+      <PaymentProofModal />
+      <TransferModal />
       <ScrollView style={{width: '100%'}}>
         <View style={[styles.ticketBox, {width: '100%'}]}>
           <Text style={styles.queueText}>
@@ -457,7 +741,6 @@ useEffect(() => {
               {allTickets.length > 0 ? 
                 ` ${(allTickets.length - (currentTicketIndex + 1)) < 0 ? 0 : allTickets.length - (currentTicketIndex + 1)}` 
                 : ' No tickets in line'}
-                
             </Text>
           </Text>
           <Text style={[styles.ticketNumber, {color:'black', fontSize: 22}]}>STUDENT TICKET NUMBER</Text>
@@ -476,7 +759,6 @@ useEffect(() => {
               <Text style={[styles.ticketCode, { color: '#721c24', fontSize: 16 }]}>
                 Ticket Number has been cancelled by student. 
               </Text>
-             
             </View>
           )}
           
@@ -505,7 +787,6 @@ useEffect(() => {
             <CustomButton title="NEXT" onPress={handleNext} color={colors.accentColor} />
           </View>
         </View>
-
       </ScrollView>
     </View>
   );
