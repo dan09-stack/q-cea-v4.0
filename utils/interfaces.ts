@@ -1,10 +1,23 @@
+
+
 // Define all interfaces in a separate file
+
+
 export interface FacultyItem {
   id: string;
   name: string;
   status: 'ONLINE' | 'OFFLINE';
   numOnQueue: number;
   userType?: string;
+  schedule?: {
+    monday: { start: string; end: string };
+    tuesday: { start: string; end: string };
+    wednesday: { start: string; end: string };
+    thursday: { start: string; end: string };
+    friday: { start: string; end: string };
+    saturday: { start: string; end: string };
+    sunday: { start: string; end: string };
+  };
 }
 
 export interface StudentItem {

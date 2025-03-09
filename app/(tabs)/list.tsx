@@ -1,6 +1,6 @@
 import { View, ImageBackground, StyleSheet, TextInput } from 'react-native'
 import React, { useState, useEffect } from 'react'
-import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore'
+import { collection, doc, onSnapshot, updateDoc, getDocs } from 'firebase/firestore'
 import { auth, db } from '@/firebaseConfig';
 import { FacultyItem } from '@/utils/interfaces';
 import { FacultyView } from '@/components/FacultyView';
@@ -8,7 +8,6 @@ import { StudentView } from '@/components/StudentView';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getContrastTextColor, shadeColor } from '@/utils/themeUtils';
-
 
 export default function List() {
   const [facultyData, setFacultyData] = useState<FacultyItem[]>([]);
@@ -19,6 +18,16 @@ export default function List() {
 
   const handleSearch = () => {
     setActiveSearch(true);
+  };
+
+  const fetchFacultyData = async () => {
+    const facultyCollection = collection(db, 'student');
+    const facultySnapshot = await getDocs(facultyCollection);
+    const facultyData = facultySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FacultyItem[];
+    return facultyData;
   };
 
   const filteredFacultyData = !activeSearch 
@@ -45,7 +54,8 @@ export default function List() {
             name: doc.data().fullName || '',
             status: doc.data().status || 'OFFLINE',
             userType: doc.data().userType || '',
-            numOnQueue: queueCount
+            numOnQueue: queueCount,
+            schedule: doc.data().schedule || {},
           };
         })
         .filter(user => user.userType === 'FACULTY')
