@@ -119,7 +119,7 @@ export default function Login() {
       <View style={styles.container}>
         <View style={styles.blurBackground} />
         <Image 
-          source={require('../../../assets/q-cea logo.png')} 
+          source={require('../../../assets/ceaRedLogo1.png')} 
           style={[styles.logo, { borderColor: colors.accentColor }]} 
         />
         <Text style={styles.heading}>Login</Text>

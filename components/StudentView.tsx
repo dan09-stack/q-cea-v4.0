@@ -164,7 +164,7 @@ const styleslocal = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
-    width: "30%", 
+    width: 300, 
     minHeight: 200, 
     maxHeight: "80%",
     justifyContent: "center",

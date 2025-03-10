@@ -270,7 +270,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
                 )}
                 
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Time:</Text>
+                  <Text style={styles.detailLabel}>Date:</Text>
                   <Text style={styles.detailText}>{formatDate(selectedComment.timestamp, "MM/dd/yyyy HH:mm")}</Text>
                 </View>
                 
@@ -286,12 +286,7 @@ export const FacultyView = ({ styles, displayedTicket }: FacultyViewProps) => {
               </ScrollView>
             )}
             
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
+ 
           </View>
         </View>
       </Modal>

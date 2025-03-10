@@ -20,7 +20,7 @@ const DEFAULT_COLORS: ThemeColors = {
   backgroundColor: '#780C28',
   buttonColor: '#008000',
   textColor: '#ffffff',
-  accentColor: '#6E8E59',
+  accentColor: '#07643d',
 };
 
 const ThemeContext = createContext<ThemeContextType>({

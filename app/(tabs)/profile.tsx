@@ -511,9 +511,13 @@ export default function Profile(): JSX.Element {
                         <View style={{ width: '90%', alignSelf: 'center', marginBottom:10 }}>
                           <CustomButton title="Edit Profile" onPress={() => {setModalVisible(true),setSettingsModalVisible(false)}} />
                         </View>
+                        {userType !== 'STUDENT' && (
+                          <>
                         <View style={{ width: '90%', alignSelf: 'center', marginBottom:10 }}>
                           <CustomButton title="Set Schedule" onPress={() => { setScheduleModalVisible(true); setSettingsModalVisible(false); }} />
                         </View>
+                        </>
+                        )}
                         <View style={{ width: '90%', alignSelf: 'center', marginTop: 10, marginBottom: 10 }}>
                           <CustomButton
                             title="Close"

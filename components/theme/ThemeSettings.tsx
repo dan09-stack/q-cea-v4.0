@@ -23,8 +23,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ containerStyle }) 
 
   const colorOptions = [
     { key: 'backgroundColor', name: 'Background Color' },
-    { key: 'buttonColor', name: 'Button Color' },
-    { key: 'textColor', name: 'Text Color' },
+    // { key: 'buttonColor', name: 'Button Color' },
+    // { key: 'textColor', name: 'Text Color' },
     { key: 'accentColor', name: 'Accent Color' },
   ];
 
