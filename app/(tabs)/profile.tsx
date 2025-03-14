@@ -480,7 +480,15 @@ export default function Profile(): JSX.Element {
                 >
                   <View style={styles.modalOverlay}>
                     <View style={styles.settingsModalView}>
-                      <Text style={styles.modalTitle}>Settings</Text>
+                      <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Settings</Text>
+                        <TouchableOpacity 
+                          style={styles.closeButton} 
+                          onPress={() => setSettingsModalVisible(false)}
+                        >
+                          <MaterialIcons name="close" size={24} color="#333" />
+                        </TouchableOpacity>
+                      </View>
                       <ScrollView 
                         style={styles.modalScroll} 
                         contentContainerStyle={{alignItems: 'center', width: '100%'}}
@@ -518,17 +526,12 @@ export default function Profile(): JSX.Element {
                         </View>
                         </>
                         )}
-                        <View style={{ width: '90%', alignSelf: 'center', marginTop: 10, marginBottom: 10 }}>
-                          <CustomButton
-                            title="Close"
-                            onPress={() => setSettingsModalVisible(false)}
-                            color="#045657"
-                          />
-                        </View>
+                        {/* Remove the Close button from here as we now have the X button */}
                       </ScrollView>
                     </View>
                   </View>
                 </Modal>
+
               </View>
             )}
           </View>
@@ -557,6 +560,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  modalHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    padding: 5,
+  },
   settingsModalView: {
     backgroundColor: 'white',
     borderRadius: 20,
@@ -571,7 +588,6 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
     width: '95%',
-    height: '95%',
     maxWidth: 500,
   },
   editIconContainer: {

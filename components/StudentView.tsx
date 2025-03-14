@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
 import { FacultyItem } from '@/utils/interfaces';
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface StudentViewProps {
   facultyData: FacultyItem[];
@@ -64,36 +65,63 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
       {/* Schedule Modal */}
       {selectedFaculty && (
         <Modal transparent={true} visible={!!selectedFaculty} onRequestClose={() => setSelectedFaculty(null)}>
-          <View style={styleslocal.modalOverlay}>
-            <View style={styleslocal.modalView}>
-              <Text style={styleslocal.modalTitle}>{selectedFaculty.name}'s Availability</Text>
-              <View style={styleslocal.scheduleContainer}>
-                {Object.entries(selectedFaculty.schedule || {})
-                  .sort(([dayA], [dayB]) => {
-                    const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                    return daysOrder.indexOf(dayA.toLowerCase()) - daysOrder.indexOf(dayB.toLowerCase());
-                  })
-                  .map(([day, time]) => (
-                    <View key={day} style={styleslocal.scheduleRow}>
-                      <Text style={styleslocal.scheduleDay}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
-                      <Text style={styleslocal.scheduleTime}>
-                  {time.start && time.end ? `${time.start} - ${time.end}` : 'Unavailable'}
-                </Text>
-                    </View>
-                  ))}
-              </View>
-              <TouchableOpacity style={styleslocal.closeButton} onPress={() => setSelectedFaculty(null)}>
-                <Text style={styleslocal.closeButtonText}>Close</Text>
+        <View style={styleslocal.modalOverlay}>
+          <View style={styleslocal.modalView}>
+            <View style={styleslocal.modalHeader}>
+              <Text style={styleslocal.modalTitle}>{selectedFaculty.name} 
+                's Availability</Text>
+              <TouchableOpacity
+                style={styleslocal.closeButton}
+                onPress={() => setSelectedFaculty(null)}
+              >
+                <MaterialIcons name="close" size={24} color="#333" />
               </TouchableOpacity>
             </View>
+            <View style={styleslocal.scheduleContainer}>
+            {Object.entries(selectedFaculty.schedule || {})
+              // Filter out days without schedule data
+              .filter(([_, time]) => time && (time.start || time.end))
+              .sort(([dayA], [dayB]) => {
+                const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                return daysOrder.indexOf(dayA.toLowerCase()) - daysOrder.indexOf(dayB.toLowerCase());
+              })
+              .map(([day, time]) => (
+                <View key={day} style={styleslocal.scheduleRow}>
+                  <Text style={styleslocal.scheduleDay}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
+                  <Text style={styleslocal.scheduleTime}>
+                    {`${time.start} - ${time.end}`}
+                  </Text>
+                </View>
+              ))}
+
+            {/* Display a message if no schedule is set */}
+            {Object.keys(selectedFaculty.schedule || {}).length === 0 || 
+            !Object.values(selectedFaculty.schedule || {}).some(time => time && (time.start || time.end)) ? (
+              <View style={styleslocal.noScheduleContainer}>
+                <Text style={styleslocal.noScheduleText}>No schedule set</Text>
+              </View>
+            ) : null}
+            </View>
           </View>
-        </Modal>
+        </View>
+      </Modal>
+      
       )}
     </View>
   );
 };
 
 const styleslocal = StyleSheet.create({
+  noScheduleContainer: {
+    width: '100%',
+    padding: 20,
+    alignItems: 'center',
+  },
+  noScheduleText: {
+    fontSize: 16,
+    color: '#888',
+    fontStyle: 'italic',
+  },
   listContainer: {
     flex: 1,
     padding: 16,
@@ -148,7 +176,7 @@ const styleslocal = StyleSheet.create({
     color: '#888',
   },
   modalOverlay: {
-    flex: 1, // Add this
+    flex: 1,
     position: "absolute",
     top: 0, 
     left: 0, 
@@ -165,10 +193,16 @@ const styleslocal = StyleSheet.create({
     borderRadius: 10,
     padding: 20,
     width: 300, 
-    minHeight: 200, 
     maxHeight: "80%",
     justifyContent: "center",
     alignItems: "center",
+  },modalHeader: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 18,
@@ -193,11 +227,10 @@ const styleslocal = StyleSheet.create({
     fontSize: 16,
   },
   closeButton: {
-    backgroundColor: '#045657',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    width: '100%',
+    position: 'absolute',
+    right: 5,
+    top: 0,
+    zIndex: 1,
   },
   closeButtonText: {
     color: 'white',

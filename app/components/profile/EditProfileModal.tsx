@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, Modal, ScrollView, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Picker } from '@react-native-picker/picker';
+import { useThemeGradient } from '@/hooks/useThemeGradient';
 // Update the interface to indicate handleUpdateProfile returns a Promise<boolean>
 interface EditProfileModalProps {
   modalVisible: boolean;
@@ -49,7 +50,7 @@ export function EditProfileModal({
   const [successMessage, setSuccessMessage] = useState('');
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  
+  const { colors } = useThemeGradient();
   const showError = (message: string) => {
     setErrorMessage(message);
     setErrorModal(true);
@@ -139,7 +140,12 @@ export function EditProfileModal({
         <View style={styles.modalView}>
           <ScrollView style={styles.modalScroll}>
             <Text style={styles.modalTitle}>Edit Profile</Text>
-            
+            <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setModalVisible(false)}
+              >
+                <MaterialIcons name="close" size={24} color="#333" />
+              </TouchableOpacity>
             <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Name</Text>
             <TextInput
               style={styles.input}
@@ -215,8 +221,8 @@ export function EditProfileModal({
             </View>
             
             <View style={styles.buttonContainer}>
-              <CustomButton title="Save Changes" onPress={validateAndUpdate} />
-              <CustomButton title="Cancel" onPress={() => setModalVisible(false)} color="white" />
+              <CustomButton title="Save Changes" onPress={validateAndUpdate} color={colors.accentColor} />
+              {/* <CustomButton title="Cancel" onPress={() => setModalVisible(false)} color="white" /> */}
             </View>
           </ScrollView>
         </View>
@@ -295,6 +301,13 @@ const styles = StyleSheet.create({
   },
   modalScroll: {
     width: '100%',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 5,
+    top: 0,
+    padding: 5,
+    zIndex: 1,
   },
   modalTitle: {
     fontSize: 20,

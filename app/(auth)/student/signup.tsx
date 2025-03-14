@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: '#034041', 
-    
+    height: "120%",
   },
   container: {
     width: '90%',
@@ -510,6 +510,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderColor: 'white',
     borderWidth: 1,
+    height: "100%",
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 

@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 // Add Firebase imports
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
+import { MaterialIcons } from '@expo/vector-icons';
 
 interface StudentViewProps {
   numOnQueue?: number; 
@@ -363,7 +364,12 @@ export const StudentView = ({
                 <View style={styles.modalContainer}>
                   <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Select Faculty</Text>
-                    
+                    <TouchableOpacity 
+                      style={styles.closeButton} 
+                      onPress={() => setFacultyModalVisible(false)}
+                    >
+                      <MaterialIcons name="close" size={24} color="#333" />
+                    </TouchableOpacity>
                     {/* Add search input */}
                     <View style={{
                       flexDirection: 'row',
@@ -418,7 +424,7 @@ export const StudentView = ({
                     </View>
                     
                     {/* Filtered and searched faculty list */}
-                    <ScrollView style={{maxHeight: 400}}>
+                    <ScrollView style={{height:400}}>
                       {filteredFacultyList
                         .filter(faculty => 
                           faculty.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -490,7 +496,7 @@ export const StudentView = ({
                       )}
                     </ScrollView>
                     
-                    <View style={{flexDirection: 'row', justifyContent: 'space-between', marginTop: 15}}>
+                    <View style={{flexDirection: 'row', marginTop: 15, justifyContent: 'flex-end'}}>
                       <Button 
                         title="Reset Filters" 
                         onPress={() => {
@@ -498,11 +504,6 @@ export const StudentView = ({
                           setSearchQuery("");
                         }} 
                         color="#757575" 
-                      />
-                      <Button 
-                        title="Close" 
-                        onPress={() => setFacultyModalVisible(false)} 
-                        color="#004000" 
                       />
                     </View>
                   </View>
@@ -518,6 +519,12 @@ export const StudentView = ({
                 <View style={styles.modalContainer}>
                   <View style={styles.modalContent}>
                     <Text style={styles.modalTitle}>Select Concern</Text>
+                    <TouchableOpacity 
+                      style={styles.closeButton} 
+                      onPress={() => setConcernModalVisible(false)}
+                    >
+                      <MaterialIcons name="close" size={24} color="#333" />
+                    </TouchableOpacity>
                     {concernsList.map((concern) => (
                       <Pressable
                         key={concern}
@@ -530,7 +537,7 @@ export const StudentView = ({
                         <Text style={styles.modalItemText}>{concern}</Text>
                       </Pressable>
                     ))}
-                    <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
+                    {/* <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" /> */}
                   </View>
                 </View>
               </Modal>

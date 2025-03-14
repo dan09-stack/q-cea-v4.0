@@ -297,5 +297,11 @@ details:{
     fontSize: 14,
     color: '#555',
     },
+    closeButton: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      padding: 20,
+    },
 });
     
