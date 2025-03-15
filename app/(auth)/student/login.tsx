@@ -404,20 +404,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center',
   },
-<<<<<<< HEAD
-  linkText: { 
-    color: '#2c6b2f' 
-  },
-  modalContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    backgroundColor: 'rgba(0, 0, 0, 0.5)' 
-=======
   linkText: {
     color: 'white',
     fontWeight: 'bold',
->>>>>>> f75d45d2cd666ad589fbaeb465cf0fee00e154c8
   },
   modalContent: { 
     backgroundColor: '#fff', 
@@ -425,17 +414,10 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     width: 300 
   },
-<<<<<<< HEAD
-  modalTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold', 
-    marginBottom: 10 
-=======
   modalItem: { 
     padding: 15, 
     borderBottomWidth: 1, 
     borderBottomColor: '#eee' 
->>>>>>> f75d45d2cd666ad589fbaeb465cf0fee00e154c8
   },
   modalItemText: { 
     fontSize: 16, 

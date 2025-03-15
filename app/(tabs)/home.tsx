@@ -257,7 +257,7 @@ useEffect(() => {
       if (userDoc.exists()) {
         const userData = userDoc.data();
         if (!userData.isVerified) {
-          router.push('/verifyByAdmin');
+          router.push('/verifyByAdmin' as any);
           return;
         }
 
@@ -955,4 +955,3 @@ const StudentView = () => (
     </ImageBackground>
   );
 }
-
