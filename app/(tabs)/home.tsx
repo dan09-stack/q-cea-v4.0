@@ -7,8 +7,14 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { setDoc } from 'firebase/firestore';
 import NetInfo from '@react-native-community/netinfo';
 import { MaterialIcons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 export default function Home() {
+  
+  const [isAlertModalVisible, setIsAlertModalVisible] = useState(false);
+const [alertMessage, setAlertMessage] = useState('');
+const [alertTitle, setAlertTitle] = useState('');
+  const [concernsList, setConcernsList] = useState<string[]>([]);
 
 const [nextDisplayedTicket, setNextDisplayedTicket] = useState('');
 const [nextDisplayedProgram, setNextDisplayedProgram] = useState('');
@@ -58,10 +64,69 @@ const [isInitialLoad, setIsInitialLoad] = useState(true);
 // error handling
 const [errorModalVisible, setErrorModalVisible] = useState(false);
 const [errorMessage, setErrorMessage] = useState('');
+const [nextStudentDetails, setNextStudentDetails] = useState<{fullName: string, phoneNumber: string} | null>(null);
 
-const handleSendSMS = async () => {
+
+useEffect(() => {
+  const loadNextStudent = async () => {
+    const details = await getNextStudentDetails();
+    if (details) {
+      setNextStudentDetails(details);
+    } else {
+      setNextStudentDetails(null);
+    }
+  };
+  loadNextStudent();
+}, [currentTicketIndex, allTickets]);
+
+const AlertModal = () => (
+  <Modal
+    animationType="fade"
+    transparent={true}
+    visible={isAlertModalVisible}
+    onRequestClose={() => setIsAlertModalVisible(false)}
+  >
+    <View style={styles.modalContainer}>
+      <View style={styles.modalContent}>
+        <Text style={styles.modalTitle}>{alertTitle}</Text>
+        <Text style={styles.modalItemText}>{alertMessage}</Text>
+        <Button 
+          title="OK" 
+          onPress={() => {
+            setIsAlertModalVisible(false);
+            if (alertTitle === 'Faculty Unavailable') {
+              setSelectedFaculty('');
+              setSelectedConcern('');
+              setOtherConcern('');
+            }
+          }} 
+          color="#004000" 
+        />
+      </View>
+    </View>
+  </Modal>
+);
+const getPhoneNumberForTicket = async (ticketNumber: string) => {
   try {
-    const formattedPhone = userData.phoneNumber
+    const studentQuery = query(
+      collection(db, 'student'),
+      where('userTicketNumber', '==', parseInt(ticketNumber))
+    );
+    
+    const querySnapshot = await getDocs(studentQuery);
+    if (!querySnapshot.empty) {
+      const studentData = querySnapshot.docs[0].data();
+      return studentData.phoneNumber;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching phone number:', error);
+    return null;
+  }
+};
+const handleSendSMS = async (phoneNumber: string) => {
+  try {
+    const formattedPhone = phoneNumber
       .replace(/\D/g, '')
       .replace(/^0+/, '+63');
     
@@ -74,27 +139,29 @@ const handleSendSMS = async () => {
       },
       body: JSON.stringify({
         recipient: formattedPhone,
-        sender_id: 'PhilSMS',  // Changed to QCEA without hyphen
+        sender_id: 'PhilSMS',
         type: 'plain',
-        message: 'Hello from Q-CEA!'
+        message: 'Get READY! Your turn is up next. Please stand by at the waiting area. Thank you!',
       })
     });
 
     const data = await response.json();
     console.log('SMS Response:', data);
-
-    if (response.ok) {
-      alert('SMS sent successfully!');
-    } else {
-      alert(`Failed to send SMS: ${data.message}`);
-    }
   } catch (error) {
     console.error('SMS Error:', error);
-    alert('Error sending SMS');
   }
 };
 
 
+useEffect(() => {
+  const fetchConcerns = async () => {
+    const concernDoc = await getDoc(doc(db, 'admin', 'concern'));
+    if (concernDoc.exists()) {
+      setConcernsList(concernDoc.data().concern || []);
+    }
+  };
+  fetchConcerns();
+}, []);
 // to track next ticket
 useEffect(() => {
   if (!currentStudent.faculty) return; // Add this guard
@@ -189,6 +256,11 @@ useEffect(() => {
       const userDoc = await getDoc(doc(db, 'student', user.uid));
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        if (!userData.isVerified) {
+          router.push('/verifyByAdmin');
+          return;
+        }
+
         setUserType(userData.userType);
         setUserData({ phoneNumber: userData.phoneNumber || '' });
         setCurrentStudent(prevState => ({
@@ -293,6 +365,8 @@ useEffect(() => {
   
   
 }, [currentTicketIndex, allTickets]);
+
+
 useEffect(() => {
   const loadSavedIndex = async () => {
     const currentUser = auth.currentUser;
@@ -388,6 +462,56 @@ useEffect(() => {
     fetchStudentData();
   }
 }, [currentTicketIndex, allTickets]);
+const getNextStudentDetails = async () => {
+  try {
+    const nextTicketNumber = allTickets[currentTicketIndex + 1];
+    if (!nextTicketNumber) return null;
+
+    const studentQuery = query(
+      collection(db, 'student'),
+      where('userTicketNumber', '==', parseInt(nextTicketNumber))
+    );
+
+    const querySnapshot = await getDocs(studentQuery);
+    if (!querySnapshot.empty) {
+      const studentData = querySnapshot.docs[0].data();
+      
+      // if (Platform.OS === 'web') {
+      //   // Web notification
+      //   if (Notification.permission === 'granted') {
+      //     new Notification('Your Turn is Coming Up!', {
+      //       body: `Get ready ${studentData.fullName}! You're next in line.`,
+      //       icon: '/icon.png'
+      //     });
+      //   }
+      // } else {
+      //   // Mobile notification via Expo
+      //   if (studentData.expoPushToken) {
+      //     await fetch('https://exp.host/--/api/v2/push/send', {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({
+      //         to: studentData.expoPushToken,
+      //         title: 'Your Turn is Coming Up!',
+      //         body: `Get ready ${studentData.fullName}! You're next in line.`,
+      //         data: { type: 'queue_notification' },
+      //       }),
+      //     });
+      //   }
+      // }
+
+      return {
+        fullName: studentData.fullName,
+        phoneNumber: studentData.phoneNumber
+      };
+    }
+  } catch (error) {
+    console.log('Error fetching next student details:', error);
+  }
+};
+
 
 
 // Queue control handlers
@@ -396,9 +520,22 @@ const handleNext = async () => {
     showAlert('No ticket on queue');
     return;
   }
-
   const newIndex = currentTicketIndex < allTickets.length - 1 ? currentTicketIndex + 1 : currentTicketIndex;
   
+  // Get the next ticket number (the one after newIndex)
+  const nextTicketNumber = allTickets[newIndex + 1];
+  if (nextTicketNumber) {
+    const studentQuery = query(
+      collection(db, 'student'),
+      where('userTicketNumber', '==', parseInt(nextTicketNumber))
+    );
+    
+    const querySnapshot = await getDocs(studentQuery);
+    if (!querySnapshot.empty) {
+      const studentData = querySnapshot.docs[0].data();
+       handleSendSMS(studentData.phoneNumber);
+    }
+  }
   if (newIndex === currentTicketIndex && currentTicketIndex === allTickets.length - 1) {
     showAlert('No ticket on queue');
     return;
@@ -409,7 +546,16 @@ const handleNext = async () => {
     showAlert('No ticket on queue');
     return ;
   }
+
+
+
   const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
+  const studentQuery = query(
+    collection(db, 'student'),
+    where('userTicketNumber', '==', numberOnly)
+  );
+  
+  const studentSnapshot = await getDocs(studentQuery);
   
   const currentUser = auth.currentUser;
   if (currentUser && userType === 'FACULTY' && ticketToSave) {
@@ -444,12 +590,28 @@ const handleBack = async () => {
 // Ticket management handlers
 const handleRequest = async () => {
   if (!selectedFaculty) {
-    Alert.alert('Error', 'Please select a faculty');
+    setAlertTitle('Error');
+    setAlertMessage('Please select a faculty');
+    setIsAlertModalVisible(true);
+    return;
+  }
+  
+  if (!selectedConcern && !otherConcern) {
+    showAlert( 'Please select a concern or provide details in Other field');
+    return;
+  }
+  const selectedFacultyData = facultyList.find(faculty => faculty.fullName === selectedFaculty);
+  if (selectedFacultyData?.status !== 'ONLINE') {
+    setAlertTitle('Faculty Unavailable');
+    setAlertMessage('The faculty is currently unavailable. Your request has been cancelled.');
+    setIsAlertModalVisible(true);
     return;
   }
 
   if (!selectedConcern && !otherConcern) {
-    Alert.alert('Error', 'Please select a concern or provide details in Other field');
+    setAlertTitle('Error');
+    setAlertMessage('Please select a concern or provide details in Other field');
+    setIsAlertModalVisible(true);
     return;
   }
 
@@ -579,6 +741,7 @@ const showAlert = (message: string) => {
   }
 };
 const FacultyView = () => (
+  
   <View style={[styles.container, {width: '100%', maxWidth: 500}]}>
           <View style={[styles.ticketBox,{width: '100%'}]}>
             <Text style={styles.queueText}>
@@ -608,11 +771,17 @@ const FacultyView = () => (
                 </Text>
               </View>
             )}
-
+          {/* {allTickets[currentTicketIndex + 1]} */}
             <Text style={[styles.boldText, {fontSize: 18}]}>Student Name</Text>
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No students in queue' : ticketStudentData.name}</Text>
             <Text style={[styles.boldText, {fontSize: 18 , marginTop: 20}]}>Concern</Text>
             <Text style={[styles.details, {fontSize: 20}]}>{allTickets.length === 0 ? 'No concerns to display' : ticketStudentData.concern}</Text>
+            {nextStudentDetails && (
+  <View>
+    <Text>Next Student: {nextStudentDetails.fullName}</Text>
+    <Text>Phone: {nextStudentDetails.phoneNumber}</Text>
+  </View>
+)}
 
             <View style={styles.buttonContainer}>
               <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0}   />
@@ -622,7 +791,7 @@ const FacultyView = () => (
         </View>
 );
 const StudentView = () => (
-  <View style={[styles.container, {width: '100%' , maxWidth: 500}]}>
+  <View style={[styles.container, {width: '100%' , maxWidth: 600}]}>
           {isCheckingRequest ? (
             <ActivityIndicator size="large" color="#004000" />
           ) : (
@@ -668,7 +837,7 @@ const StudentView = () => (
               </View>
             ) : (
               <View style={[styles.formGroup, {width: '100%'}]}>
-                 <Text style= {{fontSize: 16, }}>Faculty</Text>
+                 <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Faculty</Text>
                 <TouchableOpacity 
                   style={styles.pickerButton}
                   onPress={() => setFacultyModalVisible(true)}
@@ -676,7 +845,7 @@ const StudentView = () => (
                   <Text style={styles.pickerButtonText}>
                     {selectedFaculty || "Select Faculty"}
                   </Text>
-                </TouchableOpacity> <Text style= {{fontSize: 16}}>Concern</Text>
+                </TouchableOpacity> <Text style= {{fontSize: 16, fontWeight: 'bold'}}>Concern</Text>
 
                 <TouchableOpacity 
                   style={styles.pickerButton}
@@ -688,7 +857,7 @@ const StudentView = () => (
                 </TouchableOpacity>
                 <View style= {{marginTop: 5}}>
                 </View>
-                <TextInput
+                {/* <TextInput
                   style={{
                   height: 100, 
                   textAlignVertical: 'top', 
@@ -706,7 +875,7 @@ const StudentView = () => (
                   onChangeText={(text) => setOtherConcern(text)}
                   multiline={true}
 
-                />
+                /> */}
                 <View style={styles.buttonContainer}>
                   {isLoading ? (
                     <ActivityIndicator size="large" color="#004000" />
@@ -757,24 +926,18 @@ const StudentView = () => (
                   <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
                       <Text style={styles.modalTitle}>Select Concern</Text>
-                      <Pressable
-                        style={styles.modalItem}
-                        onPress={() => {
-                          setSelectedConcern('concernA');
-                          setConcernModalVisible(false);
-                        }}
-                      >
-                        <Text style={styles.modalItemText}>Concern A</Text>
-                      </Pressable>
-                      <Pressable
-                        style={styles.modalItem}
-                        onPress={() => {
-                          setSelectedConcern('concernB');
-                          setConcernModalVisible(false);
-                        }}
-                      >
-                        <Text style={styles.modalItemText}>Concern B</Text>
-                      </Pressable>
+                      {concernsList.map((concern) => (
+                        <Pressable
+                          key={concern}
+                          style={styles.modalItem}
+                          onPress={() => {
+                            setSelectedConcern(concern);
+                            setConcernModalVisible(false);
+                          }}
+                        >
+                          <Text style={styles.modalItemText}>{concern}</Text>
+                        </Pressable>
+                      ))}
                       <Button title="Close" onPress={() => setConcernModalVisible(false)} color="#004000" />
                     </View>
                   </View>
@@ -786,9 +949,9 @@ const StudentView = () => (
 );
   return (
   <ImageBackground source={require('../../assets/images/green.png')} style={styles.background}>
-                    <CustomButton title="SEND ME MESSAGE" onPress={handleSendSMS}  />
 
     {userType === 'FACULTY' ? <FacultyView /> : <StudentView />}
+    <AlertModal />
     </ImageBackground>
   );
 }

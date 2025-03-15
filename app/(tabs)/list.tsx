@@ -74,7 +74,7 @@ export default function List() {
   const StudentView = () => (
     <View style={styles.listContainer}>
         <Text style={styles.title}>LIST OF FACULTY</Text>
-        <View style={styles.searchContainer}>
+        {/* <View style={styles.searchContainer}>
             <TextInput
               style={styles.searchInput}
               placeholder="Search faculty..."
@@ -92,7 +92,7 @@ export default function List() {
           <TouchableOpacity onPress={handleSearch}>
             <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
           </TouchableOpacity>
-        </View>
+        </View> */}
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>NAME</Text>
           <Text style={[styles.headerText, { flex: 1 }]}>STATUS</Text>
@@ -147,7 +147,7 @@ export default function List() {
             program: doc.data().program ||''
           }))
           .filter(student => student.faculty === currentFacultyName)
-          .sort((b,a) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
+          .sort((a,b) => a.ticketNumber - b.ticketNumber); // Sort by ticket number
         
         setStudentData(students);
       });
@@ -166,7 +166,7 @@ export default function List() {
         <View style={styles.verticalSeparator} />
         <Text style={styles.concerns}>
           <Text>{item.concerns}</Text>
-          <Text>{item.otherConcern ? ` , ${item.otherConcern}` : ''}</Text>
+          <Text>{item.otherConcern ? `   ${item.otherConcern}` : ''}</Text>
         </Text>
       </View>
     );
@@ -176,9 +176,7 @@ export default function List() {
         <Text style={styles.title}>LIST OF STUDENT CONCERN</Text>
         <View style={styles.header}>
           <Text style={[styles.headerText, { flex: 1 }]}>TICKET</Text>
-          <View style={styles.verticalSeparator} />
           <Text style={[styles.headerText, { flex: 1.5 }]}>STUDENT NAME</Text>
-          <View style={styles.verticalSeparator} />
           <Text style={[styles.headerText, { flex: 1 }]}>CONCERN</Text>
         </View>
         <FlatList
@@ -218,6 +216,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     alignSelf: 'center',
+    width: 100,
   },
   studentCount: {
     flex: 1,
@@ -274,7 +273,7 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#DAF7A6',
-    fontSize: 18,
+    fontSize: 25,
     fontWeight: 'bold',
     marginBottom: 20,
     marginTop: 15,
@@ -289,7 +288,7 @@ const styles = StyleSheet.create({
   },
   headerText: {
     color: '#d9ab0e',
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
     textAlign: 'center',
     marginTop: 10,

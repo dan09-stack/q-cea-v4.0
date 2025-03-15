@@ -62,7 +62,14 @@ export default function Profile(): JSX.Element {
       const storage = getStorage();
       const imageRef = ref(storage, `profilePictures/${user.uid}.jpg`);
       
-      const uploadTask = await uploadBytes(imageRef, blob);
+      const metadata = {
+        contentType: 'image/jpeg',
+        customMetadata: {
+          'Access-Control-Allow-Origin': '*'
+        }
+      };
+      
+      const uploadTask = await uploadBytes(imageRef, blob, metadata);
       const downloadURL = await getDownloadURL(uploadTask.ref);
   
       await db.collection('student').doc(user.uid).update({
@@ -76,6 +83,7 @@ export default function Profile(): JSX.Element {
       alert('Image upload failed. Please try again.');
     }
   };
+  
   
   
   const router = useRouter();
@@ -188,16 +196,16 @@ export default function Profile(): JSX.Element {
                 ) : (
                   <MaterialIcons name="account-circle" size={120} color="white" />
                 )}
-                {/* <View style={styles.editIconContainer}>
+                <View style={styles.editIconContainer}>
                   <MaterialIcons name="edit" size={24} color="white" />
-                </View> */}
+                </View>
               </TouchableOpacity>
             </View>
             <Text style={styles.title}>{userData.fullName}</Text>
             <View style={styles.infoContainer}>
               <View style={styles.infoText}>
               <Image 
-               source={require('../../assets/gmail.png')} 
+               source={require('../../assets/email.png')} 
                style={styles.icon} 
               />
                 <Text style={styles.infoLabel}>Email:</Text>
@@ -266,7 +274,6 @@ const styles = StyleSheet.create({
   },
   profileImageContainer: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   profileImage: {
     width: 120,
@@ -280,7 +287,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     alignSelf: 'flex-end', 
-    padding: 40,
+    padding: 20,
     marginTop: 10,
   },
   container: {
@@ -301,8 +308,7 @@ const styles = StyleSheet.create({
   infoContainer: {
     backgroundColor: '#005000',
     width: '100%',
-    height: '50%',
-    marginBottom: 30,
+    marginBottom: 20,
     padding: 15,
     borderRadius: 10,
     maxWidth: 1000,
@@ -321,8 +327,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   icon: {
-    width: 20,   
-    height: 20, 
+    width: 30,   
+    height: 30, 
     marginRight: 8, 
   },
   infoValue: {

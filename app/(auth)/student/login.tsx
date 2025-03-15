@@ -19,7 +19,12 @@ export default function Login() {
   const [loginAttempts, setLoginAttempts] = useState(0); // Track failed attempts
   const [lockoutTime, setLockoutTime] = useState<number | null>(null); // Track lockout time
   const router = useRouter();
-
+  // const generateNewCaptcha = () => {
+  //   const newCaptcha = generateCaptcha(6); // 6 characters long
+  //   setCaptchaText(newCaptcha);
+  //   setUserCaptchaInput('');
+  //   setCaptchaError('');
+  // };
   useEffect(() => {
     loadSavedCredentials();
   }, []);
@@ -34,7 +39,7 @@ export default function Login() {
         setRememberPassword(true);
       }
     } catch (error) {
-      console.log('Error loading saved credentials');
+      console.log('Error loading saved credential');
     }
   };
 
@@ -125,8 +130,14 @@ setLoginAttempts(prevAttempts => {
   };
 
   return (
-    <ImageBackground source={require('../../../assets/green.jpg')} style={styles.background} imageStyle={{ resizeMode: 'cover' }}>
+    <ImageBackground
+      source={require('../../../assets/green.jpg')}
+      style={styles.background}
+      imageStyle={{ resizeMode: 'cover' }}        
+    >
+      
       <View style={styles.container}>
+        <View style={styles.blurBackground} />
         <Image source={require('../../../assets/circle.png')} style={styles.logo} />
         <Text style={styles.heading}>Login</Text>
         
@@ -144,34 +155,58 @@ setLoginAttempts(prevAttempts => {
               secureTextEntry={!showPassword}
               autoCapitalize="none"
             />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={24} color="#666" />
+            <TouchableOpacity 
+              style={styles.eyeIcon} 
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons 
+                name={showPassword ? "eye-outline" : "eye-off-outline"} 
+                size={24} 
+                color="gray"
+              />
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.checkboxContainer}>
-          <TouchableOpacity style={styles.checkboxWrapper} onPress={() => setRememberPassword(!rememberPassword)}>
-            <Checkbox value={rememberPassword} onValueChange={setRememberPassword} color={rememberPassword ? '#2c6b2f' : undefined} />
-            <Text style={styles.checkboxLabel}>Remember Password</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}>
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          </TouchableOpacity>
-        </View>
+  <View style={styles.checkboxWrapper}>
+    <Checkbox 
+      value={rememberPassword} 
+      onValueChange={setRememberPassword} 
+      color={rememberPassword ? '#2c6b2f' : undefined} 
+    />
+    <Text style={styles.checkboxLabel}>Remember Password</Text>
+  </View>
 
-        <CustomButton title={isLoading ? "Loading..." : "Login"} onPress={() => handleLogin(email, password)} />
+  <TouchableOpacity 
+    style={styles.forgotPasswordWrapper} 
+    onPress={() => router.push({ pathname: '/(auth)/student/forgotPassword', params: { loginEmail: email } })}
+  >
+    <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+  </TouchableOpacity>
+</View>
+
+
+        {/* Sign In Button */}
+        <TouchableOpacity
+                           style={[styles.button, isLoading && styles.buttonDisabled]}
+                           onPress={() => handleLogin(email, password)}
+                           disabled={isLoading}
+         >
+            <Text style={styles.buttonText}>
+                         {isLoading ? 'Logging In...' : 'Log In'}
+                        </Text>
+         </TouchableOpacity>
 
         <View style={styles.signupContainer}>
-          <Text>Don't have an account? </Text>
+        <Text style={{ color: 'white' }}>Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/student/signup')}>
             <Text style={styles.linkText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      <Modal animationType="slide" transparent={true} visible={errorModalVisible} onRequestClose={() => setErrorModalVisible(false)}>
+      <Modal animationType="fade" transparent={true} visible={errorModalVisible} onRequestClose={() => setErrorModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Error</Text>
@@ -185,6 +220,51 @@ setLoginAttempts(prevAttempts => {
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  captchaBox: {
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 5,
+    marginBottom: 15,
+  },
+  captchaText: {
+    fontSize: 24,
+    letterSpacing: 3,
+    fontFamily: 'monospace',
+  },
+  captchaInput: {
+    width: '100%',
+    height: 45,
+    borderColor: '#000',
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingLeft: 10,
+    borderRadius: 5,
+  },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  refreshButton: {
+    padding: 10,
+  },
   background: { 
     flex: 1, 
     justifyContent: 'center', 
@@ -192,28 +272,54 @@ const styles = StyleSheet.create({
     width: '100%', 
     height: '100%' 
   },
+  blurBackground: {
+    ...StyleSheet.absoluteFillObject, 
+    borderRadius: 12, 
+    backdropFilter: 'blur(10px)', 
+    zIndex: -1, 
+  },
+  button: {
+    width: '60%',
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonDisabled: {
+    backgroundColor: '#rgba(255, 255, 255, 0.4)',
+  },
   container: { 
     width: '90%', 
     maxWidth: 500, 
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', 
     padding: 20, 
     borderRadius: 12, 
     alignItems: 'center', 
-    marginTop: 50 
+    marginTop: 50 ,
+    borderColor: 'white',
+    borderWidth: 1,
   },
   logo: { 
     width: 170, 
     height: 170, 
     top: -85, 
     position: 'absolute', 
-    borderColor: '#2c6b2f', 
-    borderWidth: 1, 
+    borderColor: 'white', 
+    borderWidth: 0, 
     borderRadius: 100 
   },
   heading: { 
     fontSize: 28, 
     fontFamily: 'Roboto', 
-    color: '#000000', 
+    color: 'white', 
     marginTop: 75, 
     marginBottom: 10 
   },
@@ -223,34 +329,38 @@ const styles = StyleSheet.create({
   },
   label: { 
     fontSize: 16, 
-    color: '#000000', 
-    marginBottom: 1, 
+    color: 'white', 
+    marginBottom: 3, 
     fontWeight: '500' 
   },
   input: { 
     width: '100%', 
     height: 45, 
-    borderColor: '#000', 
-    borderWidth: 1, 
-    marginBottom: 5, 
+    borderColor: 'white', 
+    borderWidth: 2, 
+    marginBottom: 15, 
     paddingLeft: 10, 
-    borderRadius: 5 
+    borderRadius: 5 ,
+    color: 'white'
   },
   passwordContainer: { 
     width: '100%', 
     flexDirection: 'row', 
     alignItems: 'center', 
-    marginBottom: 15, 
+    marginBottom: 20,
+    marginTop: 1, 
     position: 'relative' 
+    
   },
   passwordInput: { 
     width: '100%', 
     height: 45, 
-    borderColor: '#000', 
-    borderWidth: 1, 
+    borderColor: 'white', 
+    borderWidth: 2, 
     paddingLeft: 10, 
     borderRadius: 5, 
-    paddingRight: 50 
+    paddingRight: 50 ,
+    color: 'white'
   },
   eyeIcon: { 
     position: 'absolute', 
@@ -262,28 +372,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     justifyContent: 'space-between', 
     alignItems: 'center', 
-    width: '100%', 
-    marginBottom: 15 
+    marginBottom: 15,
+    width: '100%',
+   
   },
   checkboxWrapper: { 
     flexDirection: 'row', 
-    alignItems: 'center' 
+    alignItems: 'center',
+    flexShrink: 1,
+
   },
   checkboxLabel: { 
     marginLeft: 8, 
-    fontSize: 15, 
-    color: '#000' 
+    fontSize: 14, 
+    color: 'white' 
+  },
+  forgotPasswordWrapper: { 
+    flexDirection: 'row', 
+    alignItems: 'center',
+    marginLeft: 8, 
+
   },
   forgotPasswordText: { 
     marginBottom: 1, 
-    color: 'gray', 
-    fontSize: 14 
+    color: 'white', 
+    fontSize: 14,
+    
   },
   signupContainer: { 
     marginTop: 10, 
     flexDirection: 'row', 
-    alignItems: 'center' 
+    alignItems: 'center',
   },
+<<<<<<< HEAD
   linkText: { 
     color: '#2c6b2f' 
   },
@@ -292,6 +413,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center', 
     alignItems: 'center', 
     backgroundColor: 'rgba(0, 0, 0, 0.5)' 
+=======
+  linkText: {
+    color: 'white',
+    fontWeight: 'bold',
+>>>>>>> f75d45d2cd666ad589fbaeb465cf0fee00e154c8
   },
   modalContent: { 
     backgroundColor: '#fff', 
@@ -299,10 +425,17 @@ const styles = StyleSheet.create({
     borderRadius: 8, 
     width: 300 
   },
+<<<<<<< HEAD
   modalTitle: { 
     fontSize: 18, 
     fontWeight: 'bold', 
     marginBottom: 10 
+=======
+  modalItem: { 
+    padding: 15, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#eee' 
+>>>>>>> f75d45d2cd666ad589fbaeb465cf0fee00e154c8
   },
   modalItemText: { 
     fontSize: 16, 
