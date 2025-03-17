@@ -513,6 +513,7 @@ export default function Profile(): JSX.Element {
                                 {isActive ? 'Active' : 'Inactive'}
                               </Text>
                             </Text>
+                            
                           </>
                         )}
                         <ThemeSettings containerStyle={{ marginTop: 10 }} />

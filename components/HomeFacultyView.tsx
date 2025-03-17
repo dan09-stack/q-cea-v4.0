@@ -8,6 +8,7 @@ import { CommentSection } from './HomeCommentSection';
 import { AlertModal } from '@/components/queue/AlertModal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
+import { StudentInfoSection } from './StudentInfoSection';
 
 interface FacultyViewProps {
   allTickets: string[];
@@ -401,7 +402,7 @@ export const FacultyView = ({
         otherConcern: ticketStudentData.otherConcern || null,
         timestamp: serverTimestamp(),
         duration: duration, // Duration in seconds
-        durationFormatted: formatDuration(duration), // Human-readable duration
+        durationFormatted: formatDuration(duration), 
         faculty: facultyName,
         createdAt: saveTime.toISOString()
       };
@@ -625,81 +626,7 @@ export const FacultyView = ({
   
 
   // Modify the StudentInfoSection component to conditionally show the payment proof button
-  const StudentInfoSection = () => (
-    <View style={{
-      flex: isSmallScreen ? undefined : 1, 
-      padding: 10, 
-      borderWidth: 1, 
-      borderColor: '#eee', 
-      borderRadius: 5
-    }}>
-      <Text style={[styles.boldText, {fontSize: 20, marginBottom: 15, textAlign: 'center'}]}>Student Information</Text>
-      
-      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', }}>
-        <Text style={[styles.boldText, {fontSize: 18}]}>Student Name:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.name}</Text>
-      </View>
-            
-      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={[styles.boldText, {fontSize: 18}]}>Concern:</Text>
-        <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.concern}</Text>
-      </View>
-      
-      {/* Display Other Concern if available */}
-      {ticketStudentData.otherConcern && (
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'}}>
-          <Text style={[styles.boldText, {fontSize: 18}]}>Other Concern:</Text>
-          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.otherConcern}</Text>
-        </View>
-      )}
-            
-      {/* Display Specific Details if available */}
-      {ticketStudentData.specificDetails && (
-        <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Text style={[styles.boldText, {fontSize: 18}]}>Specific Details:</Text>
-          <Text style={[styles.details, {fontSize: 18}]}>{allTickets.length === 0 ? '' : ticketStudentData.specificDetails}</Text>
-        </View>
-      )}
-      
-      <View style={{marginTop: 15, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 10}}>
-        {/* Payment Proof Button */}
-        {ticketStudentData.proofOfPaymentImage && (
-          <TouchableOpacity 
-            onPress={viewPaymentProof}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#0a7ea4',
-              paddingVertical: 8,
-              paddingHorizontal: 15,
-              borderRadius: 5
-            }}
-          >
-            <Ionicons name="document-text" size={20} color="white" style={{marginRight: 8}} />
-            <Text style={{color: 'white', fontWeight: 'bold'}}>View Payment Proof</Text>
-          </TouchableOpacity>
-        )}
-        
-        {/* Transfer Student Button */}
-        {allTickets.length > 0 && ticketStudentData.name && (
-          <TouchableOpacity 
-            onPress={handleTransferClick}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: '#4a5568',
-              paddingVertical: 8,
-              paddingHorizontal: 15,
-              borderRadius: 5
-            }}
-          >
-            <Ionicons name="swap-horizontal" size={20} color="white" style={{marginRight: 8}} />
-            <Text style={{color: 'white', fontWeight: 'bold'}}>Transfer Student</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-    </View>
-  );
+
 
   const updateQueueCountInFirebase = async () => {
     const currentUser = auth.currentUser;
@@ -768,7 +695,14 @@ export const FacultyView = ({
             width: '100%', 
             marginTop: 10
           }}>
-            <StudentInfoSection />
+            <StudentInfoSection  
+            handleNext={handleNext} 
+              isSmallScreen={isSmallScreen}
+              ticketStudentData={ticketStudentData}
+              allTickets={allTickets}
+              viewPaymentProof={viewPaymentProof}
+              handleTransferClick={handleTransferClick}
+            />
             <CommentSection 
               isSmallScreen={isSmallScreen}
               comment={comment}
