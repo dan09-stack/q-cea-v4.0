@@ -79,6 +79,9 @@ export const StudentView = ({
   const [selectedProgramFilter, setSelectedProgramFilter] = useState<string>("All Programs");
   const [searchQuery, setSearchQuery] = useState("");
   // Extract unique programs from faculty list
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  
   const availablePrograms = ["All Programs", ...new Set(facultyList.map(faculty => faculty.program))];
   
   // Function to pick an image from the gallery and upload to Firebase
@@ -151,8 +154,17 @@ export const StudentView = ({
       return;
     }
     
-    handleRequest();
+    // Show confirmation modal instead of immediately calling handleRequest
+    setConfirmModalVisible(true);
   };
+  
+  const handleConfirmRequest = () => {
+    setConfirmModalVisible(false);
+    handleRequest();
+    // Show success modal after request is processed
+    setSuccessModalVisible(true);
+  };
+  
   
   // Filter faculty list based on selected program
   const filteredFacultyList = selectedProgramFilter === "All Programs" 
@@ -204,9 +216,10 @@ export const StudentView = ({
               <View style={styles.buttonContainer}>
                 <CustomButton 
                   title={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "DONE" : "CANCEL"} 
-                  onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleDone : handleCancel} 
-                  color={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "#004000" : "#c8c4c4"} 
-                />
+                  onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleCancel : handleCancel} 
+                  color={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? colors.accentColor : "#c8c4c4"} 
+
+/>
               </View>
             </View>
     
@@ -354,6 +367,59 @@ export const StudentView = ({
                   />
                 )}
               </View>
+              {/* Confirmation Modal */}
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={confirmModalVisible}
+                onRequestClose={() => setConfirmModalVisible(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={[styles.modalContent, { width: '80%', maxWidth: 400 }]}>
+                    <Text style={styles.modalTitle}>Confirm Request</Text>
+                    <Text style={{
+                      color: 'red',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      marginBottom: 15,
+                      fontSize: 14
+                    }}>
+                      ⚠️ You must be in the waiting area on or before your turn
+                    </Text>
+                    <Text style={{ textAlign: 'center', marginVertical: 15 }}>
+                      Are you sure you want to submit this request?
+                    </Text>
+                    
+                    
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%' }}>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: '#f0f0f0',
+                          paddingVertical: 10,
+                          paddingHorizontal: 20,
+                          borderRadius: 5,
+                          minWidth: 100,
+                        }}
+                        onPress={() => setConfirmModalVisible(false)}
+                      >
+                        <Text style={{ textAlign: 'center' }}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: colors.accentColor,
+                          paddingVertical: 10,
+                          paddingHorizontal: 20,
+                          borderRadius: 5,
+                          minWidth: 100,
+                        }}
+                        onPress={handleConfirmRequest}
+                      >
+                        <Text style={{ textAlign: 'center', color: 'white', fontWeight: 'bold' }}>Submit</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              </Modal>
 
               <Modal
                 animationType="fade"

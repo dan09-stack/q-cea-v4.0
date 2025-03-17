@@ -277,7 +277,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-    paddingBottom:32,
     backgroundColor: '#1f4e21',
   },
   listContainer: {

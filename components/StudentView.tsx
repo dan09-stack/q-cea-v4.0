@@ -68,8 +68,8 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
         <View style={styleslocal.modalOverlay}>
           <View style={styleslocal.modalView}>
             <View style={styleslocal.modalHeader}>
-              <Text style={styleslocal.modalTitle}>{selectedFaculty.name} 
-                's Availability</Text>
+              <Text style={styleslocal.modalTitle}>{selectedFaculty.name} {'\n'}
+                Availability</Text>
               <TouchableOpacity
                 style={styleslocal.closeButton}
                 onPress={() => setSelectedFaculty(null)}

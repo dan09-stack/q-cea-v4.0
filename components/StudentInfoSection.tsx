@@ -33,15 +33,13 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const timeoutRef = useRef<boolean>(false);
 
-  // Start countdown when a new student ticket is loaded (only if timer is enabled)
-  useEffect(() => {
+   // First useEffect - handles starting the timer
+   useEffect(() => {
     if (allTickets.length > 0 && ticketStudentData.name && timerEnabled) {
-
-      setCountdown(120); 
+      setCountdown(60); 
       setTimerActive(true);
-      timeoutRef.current = false; // Reset timeout flag
+      timeoutRef.current = false;
     } else {
-      // No tickets, student data, or timer disabled - stop timer
       setTimerActive(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -50,24 +48,21 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
     }
   }, [ticketStudentData.name, allTickets, timerEnabled]);
 
-  // Handle the countdown timer
+  // Second useEffect - handles the countdown
   useEffect(() => {
     if (timerActive && timerEnabled) {
       timerRef.current = setInterval(() => {
         setCountdown(prev => {
           if (prev <= 1) {
-            // Time's up
             clearInterval(timerRef.current!);
-            handleNext();
             setTimerActive(false);
-            timeoutRef.current = true; // Set flag instead of directly calling handleNext
+            timeoutRef.current = true;
             return 0;
           }
           return prev - 1;
         });
       }, 1000);
     } else if (!timerEnabled && timerRef.current) {
-      // If timer is disabled while running, clear the interval
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
@@ -79,39 +74,13 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
     };
   }, [timerActive, timerEnabled]);
 
-  // Handle timeout in a separate effect to avoid render-phase updates
+  // Third useEffect - handles when countdown reaches zero
   useEffect(() => {
-    if (timeoutRef.current) {
-      timeoutRef.current = false; // Reset flag
-      
-      // Show alert after render is complete
-      setTimeout(() => {
-        Alert.alert(
-          "Student Not Present",
-          `${ticketStudentData.name} hasn't arrived after 3 minutes.`,
-          [
-            {
-              text: "Wait Longer",
-              onPress: () => {
-                setCountdown(180); // Reset to 3 minutes
-                setTimerActive(true);
-              },
-              style: "cancel"
-            },
-            { 
-              text: "Transfer Student", 
-              onPress: handleTransferClick 
-            },
-            {
-              text: "Next Student",
-              onPress: handleNext
-            }
-          ]
-        );
-      }, 0);
+    if (countdown === 0 && timeoutRef.current) {
+      handleNext();
+      timeoutRef.current = false;
     }
-  }, [countdown, ticketStudentData.name, handleTransferClick, handleNext]);
-
+  }, [countdown, handleNext]);
   // Format seconds to MM:SS
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -123,11 +92,9 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
   const toggleTimer = (value: boolean) => {
     setTimerEnabled(value);
     if (value && allTickets.length > 0 && ticketStudentData.name) {
-      // If enabling timer and there's a student, start countdown
-      setCountdown(180);
+      setCountdown(60);
       setTimerActive(true);
     } else if (!value) {
-      // If disabling timer, stop it
       setTimerActive(false);
       if (timerRef.current) {
         clearInterval(timerRef.current);

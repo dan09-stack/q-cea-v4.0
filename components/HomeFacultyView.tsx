@@ -79,7 +79,8 @@ export const FacultyView = ({
   const [facultyList, setFacultyList] = useState<FacultyItem[]>([]);
   const [isTransferring, setIsTransferring] = useState(false);
   const [studentToTransferId, setStudentToTransferId] = useState('');
- 
+  const [ticketLoadTime, setTicketLoadTime] = useState<Date | null>(null);
+
   const handleNext = () => {
     setNextClickTime(new Date());
     originalHandleNext();
@@ -138,7 +139,13 @@ export const FacultyView = ({
       return () => unsubscribe();
     }, [transferModalVisible]);
     
-    
+    useEffect(() => {
+      if (ticketStudentData.name && !ticketLoadTime) {
+        setTicketLoadTime(new Date());
+      } else if (!ticketStudentData.name) {
+        setTicketLoadTime(null);
+      }
+    }, [ticketStudentData.name]);
   // Add real-time listener for tickets
   useEffect(() => {
     // Only set up the listener if we need to
@@ -376,13 +383,16 @@ export const FacultyView = ({
   };
   
   const handleAddComment = async () => {
-    if (!comment.trim()) {
-      Alert.alert('Error', 'Please enter a comment');
-      return;
-    }
+    // if (!comment.trim()) {
+    //   Alert.alert('Error', 'Please enter a comment');
+    //   return;
+    // }
   
     if (!currentTicketNumber) {
       Alert.alert('Error', 'No active ticket to comment on');
+      return;
+    }
+    if (ticketStudentData.name == null) {
       return;
     }
   
@@ -390,9 +400,7 @@ export const FacultyView = ({
     try {
       // Calculate duration since next was clicked
       const saveTime = new Date();
-      const duration = nextClickTime ? (saveTime.getTime() - nextClickTime.getTime()) / 1000 : 0; // Duration in seconds
-      
-      // Create a comment data object with duration information
+      const duration = ticketLoadTime ? (saveTime.getTime() - ticketLoadTime.getTime()) / 1000 : 0;
       const commentData = {
         ticketNumber: currentTicketNumber,
         studentName: ticketStudentData.name,
@@ -421,11 +429,11 @@ export const FacultyView = ({
       
       setComments([newComment, ...comments]);
       
-      setModalMessage('Comment saved successfully');
-      setIsModalVisible(true);
+      // setModalMessage('Comment saved successfully');
+      // setIsModalVisible(true);
       setComment(''); // Clear the comment field
 
-      setNextClickTime(null);
+      setTicketLoadTime(new Date());
     } catch (error) {
       console.error('Error saving comment:', error);
       Alert.alert('Error', 'Failed to save comment. Please try again.');
@@ -718,8 +726,11 @@ export const FacultyView = ({
           
           <View style={styles.buttonContainer}>
             <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0} />
-            <CustomButton title="NEXT" onPress={handleNext} color={colors.accentColor} />
-          </View>
+            <CustomButton title="NEXT" onPress={() => {
+              handleAddComment();
+  handleNext();
+}} color={colors.accentColor} />
+  </View>
         </View>
       </ScrollView>
     </View>

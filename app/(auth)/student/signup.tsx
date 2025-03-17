@@ -4,6 +4,12 @@ import { useRouter } from 'expo-router';
 import { handleSignup } from '../../../services/auth';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { Ionicons } from '@expo/vector-icons';
+import Checkbox from 'expo-checkbox';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
+import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
+import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
+
 const validateIdNumber = (idNumber: string): boolean => {
   // Check if ID number matches the format 03-XXXX-XXXXXX
   const idNumberRegex = /^03-\d{4}-\d{6}$/;
@@ -20,11 +26,7 @@ const validateEmail = (email: string): boolean => {
   // Basic email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
-};import Checkbox from 'expo-checkbox';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
-import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
-import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
+};
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -79,46 +81,47 @@ export default function Signup(): JSX.Element {
   };
   
   const onSignup = async () => {
-    // if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
-    //   setErrorMessage('Please fill in all fields');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
-    // if (!validateIdNumber(idNumber)) {
-    //   setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
+    if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
+      setErrorMessage('Please fill in all fields');
+      setErrorModalVisible(true);
+      return;
+    }
+    if (!fullName.includes(',')) {
+      setErrorMessage('Full Name should be in format: Last Name, First Name MI');
+      setErrorModalVisible(true);
+      return;
+    }
+    if (!validateIdNumber(idNumber)) {
+      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
+      setErrorModalVisible(true);
+      return;
+    }
     
-    // // Validate phone number
-    // if (!validatePhoneNumber(phoneNumber)) {
-    //   setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
+    // Validate phone number
+    if (!validatePhoneNumber(phoneNumber)) {
+      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
+      setErrorModalVisible(true);
+      return;
+    }
     
-    // // Validate email format
-    // if (!validateEmail(email)) {
-    //   setErrorMessage('Please enter a valid email address');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
-    // if (password.length < 6) {
-    //   setErrorMessage('Password must be at least 6 characters long');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
-    // if (!fullName.includes(',')) {
-    //   setErrorMessage('Full Name should be in format: Last Name, First Name MI');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
+    // Validate email format
+    if (!validateEmail(email)) {
+      setErrorMessage('Please enter a valid email address');
+      setErrorModalVisible(true);
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long');
+      setErrorModalVisible(true);
+      return;
+    }
     
-    // if (!email.includes('@')) {
-    //   setErrorMessage('Please enter a valid email address');
-    //   setErrorModalVisible(true);
-    //   return;
-    // }
+    
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email address');
+      setErrorModalVisible(true);
+      return;
+    }
   
     setIsLoading(true);
   
@@ -135,39 +138,51 @@ export default function Signup(): JSX.Element {
       });
     } catch (error: any) {
       // Enhanced error handling with specific messages
-      // if (error.code === 'auth/email-already-in-use') {
-      //   setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      // } else if (error.code === 'auth/invalid-email') {
-      //   setErrorMessage('The email address is not valid.');
-      // }
-      // if (error.code === 'auth/email-already-in-use') {
-      //   setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      // } else if (error.code === 'auth/invalid-email') {
-      //   setErrorMessage('The email address is not valid.');
-      // } else if (error.code === 'auth/weak-password') {
-      //   setErrorMessage('The password is too weak. Please choose a stronger password.');
-      // } else if (error.code === 'auth/network-request-failed') {
-      //   setErrorMessage('Network error. Please check your internet connection and try again.');
-      // } else if (error.message) {
-      //   // If the error has a message property, use it
-      //   setErrorMessage(error.message);
-      // } else {
-      //   // Fallback error message
-      //   setErrorMessage('Something went wrong. Please try again later.');
-      // }
-      // setErrorModalVisible(true);
+      if (error.code === 'auth/email-already-in-use') {
+        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage('The email address is not valid.');
+      }
+      if (error.code === 'auth/email-already-in-use') {
+        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      } else if (error.code === 'auth/invalid-email') {
+        setErrorMessage('The email address is not valid.');
+      } else if (error.code === 'auth/weak-password') {
+        setErrorMessage('The password is too weak. Please choose a stronger password.');
+      } else if (error.code === 'auth/network-request-failed') {
+        setErrorMessage('Network error. Please check your internet connection and try again.');
+      } else if (error.message) {
+        // If the error has a message property, use it
+        setErrorMessage(error.message);
+      } else {
+        // Fallback error message
+        setErrorMessage('Something went wrong. Please try again later.');
+      }
+      setErrorModalVisible(true);
     } finally {
       setIsLoading(false);
     }
   };
   
   return (
-        <GradientBackgroundContainer style={styles.background}>
-    
-      <ScrollView contentContainerStyle={styles.scrollContent}>   
-        <View style={styles.container}>
-          <ErrorModal />
+    <GradientBackgroundContainer style={styles.background}>
+      <View style={styles.centerContainer}>
+
+        <ScrollView style={{
+          width: '90%',
+          maxWidth: 600,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          padding: 20,
+          borderRadius: 12,
+          borderColor: 'white',
+          borderWidth: 1,
+        }}
+        contentContainerStyle={{
+          alignItems: 'center'
+        }}>
           <View style={styles.blurBackground} />
+          
+          <ErrorModal />
           <Text style={styles.heading}>Signup</Text>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Full Name</Text>
@@ -200,36 +215,7 @@ export default function Signup(): JSX.Element {
               keyboardType="phone-pad"
             />
           </View>
-          {/* <View style={styles.inputContainer}>
-            <Text style={styles.inputLabel}>I am a</Text>
-            <View style={styles.userTypeContainer}>
-              <TouchableOpacity 
-                style={[
-                  styles.userTypeButton, 
-                  userType === 'STUDENT' && styles.userTypeButtonActive
-                ]}
-                onPress={() => setUserType('STUDENT')}
-              >
-                <Text style={[
-                  styles.userTypeText,
-                  userType === 'STUDENT' && styles.userTypeTextActive
-                ]}>Student</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[
-                  styles.userTypeButton, 
-                  userType === 'FACULTY' && styles.userTypeButtonActive
-                ]}
-                onPress={() => setUserType('FACULTY')}
-              >
-                <Text style={[
-                  styles.userTypeText,
-                  userType === 'FACULTY' && styles.userTypeTextActive
-                ]}>Faculty</Text>
-              </TouchableOpacity>
-            </View>
-          </View> */}
-
+         
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Program</Text>
             <TouchableOpacity 
@@ -278,7 +264,6 @@ export default function Signup(): JSX.Element {
             </View>
           </View>
 
-
           <Modal
             animationType="fade"
             transparent={true}
@@ -310,10 +295,10 @@ export default function Signup(): JSX.Element {
           <View style={styles.consentContainer}>
             <Checkbox value={isChecked} onValueChange={setIsChecked} color={isChecked ? "#4CAF50" : undefined} />
             <Text style={styles.consentText}> I agree to the{' '}
-  <TouchableOpacity onPress={() => setPrivacyModalVisible(true)}>
-    <Text style={styles.linkText}>Data Privacy Policy</Text>
-  </TouchableOpacity>
-</Text>
+              <TouchableOpacity onPress={() => setPrivacyModalVisible(true)}>
+                <Text style={styles.linkText}>Data Privacy Policy</Text>
+              </TouchableOpacity>
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -321,38 +306,44 @@ export default function Signup(): JSX.Element {
             onPress={onSignup}
             disabled={isLoading || !isChecked}
           >
-             <Text style={styles.buttonText}>
+            <Text style={styles.buttonText}>
               {isLoading ? 'CREATING...' : 'CREATE'}
-             </Text>
-             </TouchableOpacity>
+            </Text>
+          </TouchableOpacity>
              
-             <Modal
+          <Modal
             animationType="slide"
             transparent={true}
             visible={privacyModalVisible}
             onRequestClose={() => setPrivacyModalVisible(false)}
           >
-          <ScrollView contentContainerStyle={styles.scrollView}>
-          <View style={styles.modalContainer}>
-          
-  <DataPrivacyPolicy visible={privacyModalVisible} onClose={() => setPrivacyModalVisible(false)} />
-  </View>
-  </ScrollView>
-</Modal>
+            <ScrollView contentContainerStyle={styles.scrollView}>
+              <View style={styles.modalContainer}>
+                <DataPrivacyPolicy visible={privacyModalVisible} onClose={() => setPrivacyModalVisible(false)} />
+              </View>
+            </ScrollView>
+          </Modal>
 
           <View style={styles.loginContainer}>
             <Text style={{ color: 'white' }}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/student/login')}>
               <Text style={[styles.loginText, {color: 'white'}]}>Login</Text>
             </TouchableOpacity>
-            </View>
-           </View>
-          </ScrollView>
-          </GradientBackgroundContainer>
+          </View>
+        </ScrollView>
+      </View>
+    </GradientBackgroundContainer>
   );
 }
 
 const styles = StyleSheet.create({
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 50
+  },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -499,7 +490,6 @@ const styles = StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: '#034041', 
-    height: "120%",
   },
   container: {
     width: '90%',
@@ -510,7 +500,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderColor: 'white',
     borderWidth: 1,
-    height: "100%",
   },
   blurBackground: {
     ...StyleSheet.absoluteFillObject, 
@@ -521,12 +510,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 28,
     color: 'white',
-    marginBottom: 30,
+    marginBottom: 10,
     fontWeight: 'bold'
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 15,
+    marginBottom: 10,
   },
   inputLabel: {
     fontSize: 16,

@@ -183,7 +183,6 @@ details:{
     justifyContent: 'center',
     alignItems: 'center',
     padding: 8,
-  paddingBottom:30
 
     },
     formGroup: {

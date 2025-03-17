@@ -492,6 +492,7 @@ export default function Home() {
           studentData.fullName
         );
       }
+      
     }
     
     if (newIndex === state.currentTicketIndex && state.currentTicketIndex === state.allTickets.length - 1) {
@@ -895,19 +896,19 @@ const isLargeScreen = width >= 768;
     <Text style={[
       styles.greetingText, 
       { color: '#EAFAEA' },
-      isLargeScreen && { fontSize: 32, marginRight: 12 } // Larger text on larger screens
+      isLargeScreen && { fontSize: 32, marginRight: 12 } 
     ]}>
-      Hello, {state.currentStudent.name || 'User'}!
+      Hello {state.currentStudent.name || 'User'}!
     </Text>
     
     <Animated.View style={[
       styles.iconContainer, 
       { transform: [{ rotate: waveRotation }] },
-      isLargeScreen && { transform: [{ rotate: waveRotation }, { scale: 1.5 }] } // Larger icon on larger screens
+      isLargeScreen && { transform: [{ rotate: waveRotation }, { scale: 1.5 }] } 
     ]}>
       <FontAwesome5 
         name="hand-paper" 
-        size={isLargeScreen ? 36 : 24} // Larger icon size on larger screens
+        size={isLargeScreen ? 36 : 24}
         color={'#FFC107'} 
       />
     </Animated.View>
