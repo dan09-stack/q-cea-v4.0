@@ -256,7 +256,7 @@ export default function Home() {
             .map(doc => ({
               id: doc.id,
               fullName: doc.data().fullName || '',
-              status: doc.data().status || 'OFFLINE',
+              status: doc.data().status || 'UNAVAILABLE',
               program: doc.data().program || 'General',
               numOnQueue: doc.data().numOnQueue || 0
             }));
@@ -528,7 +528,7 @@ export default function Home() {
               const waitingStudentsQuery = query(
                 studentsCollectionRef,
                 where('faculty', '==', facultyName),
-                where('userType', '==', 'STUDENT'),
+                where('userType', 'in', ['STUDENT', 'VISITOR']),
                 where('status', '==', 'waiting'),
               );
               
@@ -673,7 +673,7 @@ export default function Home() {
     }
     
     const selectedFacultyData = state.facultyList.find(faculty => faculty.fullName === state.selectedFaculty);
-    if (selectedFacultyData?.status !== 'ONLINE') {
+    if (selectedFacultyData?.status !== 'AVAILABLE') {
       state.setAlertTitle('Faculty Unavailable');
       state.setAlertMessage('The faculty is currently unavailable. Your request has been cancelled.');
       state.setAlertButtons([{

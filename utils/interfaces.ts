@@ -6,7 +6,7 @@
 export interface FacultyItem {
   id: string;
   name: string;
-  status: 'ONLINE' | 'OFFLINE';
+  status: 'AVAILABLE' | 'UNAVAILABLE';
   numOnQueue: number;
   userType?: string;
   schedule?: {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, TouchableOpacity, Modal, Button, Pressable, TextInput, Image, Alert, ScrollView } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
@@ -8,6 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { MaterialIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface StudentViewProps {
   numOnQueue?: number; 
@@ -83,7 +84,14 @@ export const StudentView = ({
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   
   const availablePrograms = ["All Programs", ...new Set(facultyList.map(faculty => faculty.program))];
-  
+    // Anti-spam states
+    const [lastRequestTime, setLastRequestTime] = useState<number | null>(null);
+    const [cooldownRemaining, setCooldownRemaining] = useState(0);
+    const [cooldownModalVisible, setCooldownModalVisible] = useState(false);
+    const COOLDOWN_PERIOD = 5 * 60 * 1000;
+    const [dailyRequestCount, setDailyRequestCount] = useState(0);
+    const [dailyLimitReached, setDailyLimitReached] = useState(false);
+    const DAILY_REQUEST_LIMIT = 5;
   // Function to pick an image from the gallery and upload to Firebase
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -104,8 +112,72 @@ export const StudentView = ({
       uploadImageToFirebase(result.assets[0].uri);
     }
   };
-  
+  useEffect(() => {
+    const loadDailyRequestCount = async () => {
+      try {
+        // Get the current date in YYYY-MM-DD format for the key
+        const today = new Date().toISOString().split('T')[0];
+        const countKey = `requestCount_${today}_${getAuth().currentUser?.uid}`;
+        
+        const storedCount = await AsyncStorage.getItem(countKey);
+        if (storedCount) {
+          const count = parseInt(storedCount);
+          setDailyRequestCount(count);
+          setDailyLimitReached(count >= DAILY_REQUEST_LIMIT);
+        } else {
+          // Reset count for a new day
+          setDailyRequestCount(0);
+          setDailyLimitReached(false);
+        }
+      } catch (error) {
+        console.error('Error loading daily request count:', error);
+      }
+    };
+    
+    loadDailyRequestCount();
+  }, []);
+  useEffect(() => {
+    const loadLastRequestTime = async () => {
+      try {
+        const storedTime = await AsyncStorage.getItem('lastRequestTime');
+        if (storedTime) {
+          const parsedTime = parseInt(storedTime);
+          setLastRequestTime(parsedTime);
+          
+          // Calculate remaining cooldown time
+          const now = Date.now();
+          const elapsed = now - parsedTime;
+          if (elapsed < COOLDOWN_PERIOD) {
+            setCooldownRemaining(Math.ceil((COOLDOWN_PERIOD - elapsed) / 1000));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading last request time:', error);
+      }
+    };
+    
+    loadLastRequestTime();
+  }, []);
   // Function to upload image to Firebase Storage
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
+    if (cooldownRemaining > 0) {
+      timer = setInterval(() => {
+        setCooldownRemaining(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [cooldownRemaining]);
   const uploadImageToFirebase = async (uri:string) => {
     try {
       setIsUploading(true);
@@ -149,21 +221,80 @@ export const StudentView = ({
   };
   
   const validateAndRequest = () => {
+    if (!selectedFaculty) {
+      Alert.alert('Missing Information', 'Please select a faculty member');
+      return;
+    }
+    
+    if (!selectedConcern) {
+      Alert.alert('Missing Information', 'Please select your concern');
+      return;
+    }
+    // Check if user is in cooldown period
+    const now = Date.now();
+    
     if (selectedConcern === 'Enrollment' && !proofOfPaymentImage) {
       Alert.alert('Missing Information', 'Please upload proof of payment for enrollment concerns');
       return;
     }
     
-    // Show confirmation modal instead of immediately calling handleRequest
+    if (lastRequestTime && now - lastRequestTime < COOLDOWN_PERIOD) {
+      const remainingTime = Math.ceil((COOLDOWN_PERIOD - (now - lastRequestTime)) / 1000);
+      setCooldownRemaining(remainingTime);
+      setCooldownModalVisible(true);
+      return;
+    }
+    if (dailyLimitReached) {
+      Alert.alert(
+        'Daily Limit Reached',
+        `You've reached the maximum of ${DAILY_REQUEST_LIMIT} requests for today. Please try again tomorrow.`,
+        [{ text: 'OK', style: 'default' }]
+      );
+      return;
+    }
+    // Show confirmation modal
     setConfirmModalVisible(true);
   };
   
-  const handleConfirmRequest = () => {
+  const handleConfirmRequest = async () => {
     setConfirmModalVisible(false);
+    
+    // Set and store the current time as last request time
+    const now = Date.now();
+    setLastRequestTime(now);
+    
+    try {
+      await AsyncStorage.setItem('lastRequestTime', now.toString());
+      
+      // Update daily request count
+      const today = new Date().toISOString().split('T')[0];
+      const countKey = `requestCount_${today}_${getAuth().currentUser?.uid}`;
+      const newCount = dailyRequestCount + 1;
+      
+      await AsyncStorage.setItem(countKey, newCount.toString());
+      setDailyRequestCount(newCount);
+      
+      if (newCount >= DAILY_REQUEST_LIMIT) {
+        setDailyLimitReached(true);
+      }
+    } catch (error) {
+      console.error('Error saving request data:', error);
+    }
+    
+    // Process the request
     handleRequest();
+    
     // Show success modal after request is processed
     setSuccessModalVisible(true);
   };
+  
+  // Format seconds to mm:ss
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  
   
   
   // Filter faculty list based on selected program
@@ -226,7 +357,39 @@ export const StudentView = ({
           ) : (
             <ScrollView style={{width: '100%'}}>
             <View style={[styles.formGroup, {width: '100%'}]}>
-              
+              <View style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 10,
+                paddingBottom: 10,
+                borderBottomWidth: 1,
+                borderBottomColor: '#e0e0e0'
+              }}>
+                <Text style={{fontSize: 14, fontWeight: 'bold'}}>Today's Requests</Text>
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: dailyRequestCount >= DAILY_REQUEST_LIMIT ? '#ffebee' : '#e8f5e9',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 20
+                }}>
+                  <MaterialIcons 
+                    name={dailyRequestCount >= DAILY_REQUEST_LIMIT ? "error-outline" : "check-circle-outline"} 
+                    size={16} 
+                    color={dailyRequestCount >= DAILY_REQUEST_LIMIT ? '#f44336' : '#4caf50'} 
+                    style={{marginRight: 5}} 
+                  />
+                  <Text style={{
+                    fontWeight: 'bold',
+                    color: dailyRequestCount >= DAILY_REQUEST_LIMIT ? '#f44336' : '#4caf50'
+                  }}>
+                    {DAILY_REQUEST_LIMIT - dailyRequestCount} of {DAILY_REQUEST_LIMIT} remaining
+                  </Text>
+                </View>
+              </View>
+
               <Text style= {{fontSize: 16, fontWeight: 'bold' }}>Faculty</Text>
               <TouchableOpacity 
                 style={styles.pickerButton}
@@ -367,7 +530,73 @@ export const StudentView = ({
                   />
                 )}
               </View>
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={dailyLimitReached && !isRequested}
+                onRequestClose={() => {}}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={[styles.modalContent, { width: '80%', maxWidth: 400 }]}>
+                    <Text style={[styles.modalTitle, {color: '#FF6B6B'}]}>Daily Request Limit Reached</Text>
+                    <MaterialIcons name="block" size={50} color="#FF6B6B" style={{alignSelf: 'center', marginVertical: 15}} />
+                    <Text style={{ textAlign: 'center', marginBottom: 10 }}>
+                      You've reached the maximum of {DAILY_REQUEST_LIMIT} requests for today.
+                    </Text>
+                    <Text style={{ textAlign: 'center', marginBottom: 20, fontSize: 12, color: '#666' }}>
+                      The limit will reset at midnight. This helps ensure fair access for all students.
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: colors.accentColor,
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                        borderRadius: 5,
+                        alignSelf: 'center',
+                      }}
+                      onPress={() => {}}
+                    >
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>I Understand</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+              <Modal
+                animationType="fade"
+                transparent={true}
+                visible={cooldownModalVisible}
+                onRequestClose={() => setCooldownModalVisible(false)}
+              >
+                <View style={styles.modalContainer}>
+                  <View style={[styles.modalContent, { width: '80%', maxWidth: 400 }]}>
+                    <Text style={[styles.modalTitle, {color: '#FF6B6B'}]}>Request Limit Reached</Text>
+                    <MaterialIcons name="timer" size={50} color="#FF6B6B" style={{alignSelf: 'center', marginVertical: 15}} />
+                    <Text style={{ textAlign: 'center', marginBottom: 10 }}>
+                      You've recently submitted a request. Please wait before making another request.
+                    </Text>
+                    <Text style={{ textAlign: 'center', fontSize: 20, fontWeight: 'bold', color: '#FF6B6B', marginVertical: 10 }}>
+                      {formatTime(cooldownRemaining)}
+                    </Text>
+                    <Text style={{ textAlign: 'center', marginBottom: 20, fontSize: 12, color: '#666' }}>
+                      This helps ensure fair access for all students.
+                    </Text>
+                    <TouchableOpacity
+                      style={{
+                        backgroundColor: colors.accentColor,
+                        paddingVertical: 10,
+                        paddingHorizontal: 20,
+                        borderRadius: 5,
+                        alignSelf: 'center',
+                      }}
+                      onPress={() => setCooldownModalVisible(false)}
+                    >
+                      <Text style={{ color: 'white', fontWeight: 'bold' }}>I Understand</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
               {/* Confirmation Modal */}
+
               <Modal
                 animationType="fade"
                 transparent={true}
@@ -384,7 +613,7 @@ export const StudentView = ({
                       marginBottom: 15,
                       fontSize: 14
                     }}>
-                      ⚠️ You must be in the waiting area on or before your turn
+                      ⚠️ You must be in the waiting area on or before your turn. And if you cancel this ticket, you need to wait 5minutes before you can request again.
                     </Text>
                     <Text style={{ textAlign: 'center', marginVertical: 15 }}>
                       Are you sure you want to submit this request?
@@ -502,7 +731,7 @@ export const StudentView = ({
                             key={faculty.id}
                             style={[
                               styles.modalItem,
-                              { backgroundColor: faculty.status === 'ONLINE' ? 'rgba(76, 175, 80, 0.1)' : 'transparent' }
+                              { backgroundColor: faculty.status === 'AVAILABLE' ? 'rgba(76, 175, 80, 0.1)' : 'transparent' }
                             ]}
                             onPress={() => {
                               setSelectedFaculty(faculty.fullName);
@@ -513,7 +742,7 @@ export const StudentView = ({
                               <View style={{flex: 1}}>
                                 <Text style={[
                                   styles.modalItemText,
-                                  { color: faculty.status === 'ONLINE' ? '#4CAF50' : '#757575' }
+                                  { color: faculty.status === 'AVAILABLE' ? '#4CAF50' : '#757575' }
                                 ]}>
                                   {faculty.fullName}
                                 </Text>
@@ -537,7 +766,7 @@ export const StudentView = ({
                                 </View>
                               </View>
                               
-                              {faculty.status === 'ONLINE' && (
+                              {faculty.status === 'AVAILABLE' && (
                                 <View style={{
                                   width: 10,
                                   height: 10,

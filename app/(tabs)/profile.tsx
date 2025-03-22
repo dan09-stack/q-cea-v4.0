@@ -231,9 +231,9 @@ export default function Profile(): JSX.Element {
       const user = auth.currentUser;
       if (user) {
         await db.collection('student').doc(user.uid).update({
-          status: value ? 'ONLINE' : 'OFFLINE'
+          status: value ? 'AVAILABLE' : 'UNAVAILABLE'
         });
-        setUserData(prev => ({...prev, status: value ? 'ONLINE' : 'OFFLINE'}));
+        setUserData(prev => ({...prev, status: value ? 'AVAILABLE' : 'UNAVAILABLE'}));
       }
     } catch (error) {
       console.error('Error updating status:', error);
@@ -306,7 +306,7 @@ export default function Profile(): JSX.Element {
               const data = userDoc.data() as UserData;
               setUserData(data);
               setEditableData(data);
-              setIsActive(data.status === 'ONLINE');
+              setIsActive(data.status === 'AVAILABLE');
               setUserType(data.userType || '');
             }
           }
@@ -510,7 +510,7 @@ export default function Profile(): JSX.Element {
                             </View>
                             <Text style={styles.statusText}>
                               You are currently <Text style={{fontWeight: 'bold', color: isActive ? '#008000' : '#FF0000'}}>
-                                {isActive ? 'Active' : 'Inactive'}
+                                {isActive ? 'AVAILABLE' : 'UNAVAILABLE'}
                               </Text>
                             </Text>
                             

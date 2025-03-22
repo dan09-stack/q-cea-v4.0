@@ -110,7 +110,7 @@ export const FacultyView = ({
             return {
               id: doc.id,
               fullName: data.fullName || '',
-              status: data.status || 'OFFLINE',
+              status: data.status || 'UNAVAILABLE',
               program: data.program || '',
               userType: data.userType || 'FACULTY',
               numOnQueue: queueCount
@@ -124,7 +124,7 @@ export const FacultyView = ({
           )
           .sort((a, b) => {
             if (a.status !== b.status) {
-              return a.status === 'ONLINE' ? -1 : 1;
+              return a.status === 'AVAILABLE' ? -1 : 1;
             }
             if (a.numOnQueue !== b.numOnQueue) {
               return a.numOnQueue - b.numOnQueue;
@@ -269,7 +269,7 @@ export const FacultyView = ({
         facultyItems.push({
           id: doc.id,
           fullName: data.fullName || '',
-          status: data.status || 'OFFLINE',
+          status: data.status || 'UNAVAILABLE',
           program: data.program || '',
           numOnQueue: data.numOnQueue || 0,
           userType: data.userType || 'FACULTY'
@@ -605,7 +605,7 @@ export const FacultyView = ({
                         )}
                       </View>
                       <View style={{
-                        backgroundColor: faculty.status === 'ONLINE' ? '#4CAF50' : '#9E9E9E',
+                        backgroundColor: faculty.status === 'AVAILABLE' ? '#4CAF50' : '#9E9E9E',
                         paddingHorizontal: 8,
                         paddingVertical: 4,
                         borderRadius: 12
@@ -668,7 +668,7 @@ export const FacultyView = ({
       />
       <PaymentProofModal />
       <TransferModal />
-      <ScrollView style={{width: '100%'}}>
+      <ScrollView style={{width: '100%', marginBottom: 40}}>
         <View style={[styles.ticketBox, {width: '100%'}]}>
           <Text style={styles.queueText}>
             <Text style={styles.boldText}>Students in line:</Text> 

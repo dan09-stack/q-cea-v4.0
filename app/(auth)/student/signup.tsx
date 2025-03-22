@@ -155,7 +155,7 @@ export default function Signup(): JSX.Element {
         // If the error has a message property, use it
         setErrorMessage(error.message);
       } else {
-        // Fallback error message
+        // Fallback error message 
         setErrorMessage('Something went wrong. Please try again later.');
       }
       setErrorModalVisible(true);

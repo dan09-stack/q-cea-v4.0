@@ -24,7 +24,7 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
       <Text
         style={[
           styles.status,
-          { flex: 1, color: item.status === 'ONLINE' ? 'rgb(21, 82, 14)' : 'rgb(91, 37, 17)' },
+          { flex: 1, color: item.status === 'AVAILABLE' ? 'rgb(21, 82, 14)' : 'rgb(91, 37, 17)' },
         ]}
       >
         {item.status}
