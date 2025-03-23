@@ -6,15 +6,27 @@ import { CustomButton } from '@/components/ui/CustomButton';
 import { Ionicons } from '@expo/vector-icons';
 import Checkbox from 'expo-checkbox';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ThemedGradientContainer } from '@/components/ui/ThemedGradientContainer';
 import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
 import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
-
-const validateIdNumber = (idNumber: string): boolean => {
-  // Check if ID number matches the format 03-XXXX-XXXXXX
-  const idNumberRegex = /^03-\d{4}-\d{6}$/;
-  return idNumberRegex.test(idNumber);
+import { db } from '@/firebaseConfig';
+import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
+const validateIdNumber = (idNumber: string): { isValid: boolean; format: 'student' | 'faculty' | null } => {
+  // Check if ID number matches the student format 03-XXXX-XXXXXX
+  const studentIdRegex = /^03-\d{4}-\d{5,6}$/;
+  if (studentIdRegex.test(idNumber)) {
+    return { isValid: true, format: 'student' };
+  }
+  
+  // Check if ID number matches the faculty format UP-xx-xxx-F
+  const facultyIdRegex = /^UP-\d{2}-\d{3}-F$/i;
+  if (facultyIdRegex.test(idNumber)) {
+    return { isValid: true, format: 'faculty' };
+  }
+  
+  // If neither format matches
+  return { isValid: false, format: null };
 };
+
 
 const validatePhoneNumber = (phoneNumber: string): boolean => {
   // Check if phone number is in the format 09XXXXXXXXX or +63XXXXXXXXX
@@ -91,11 +103,20 @@ export default function Signup(): JSX.Element {
       setErrorModalVisible(true);
       return;
     }
-    if (!validateIdNumber(idNumber)) {
-      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX');
+    const idValidation = validateIdNumber(idNumber);
+    if (!idValidation.isValid) {
+      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX for students or UP-xx-xxx-F for faculty');
       setErrorModalVisible(true);
       return;
     }
+
+    // If it's a faculty ID but this is a student signup form
+    if (idValidation.format === 'faculty') {
+      setErrorMessage('The ID format UP-xx-xxx-F is for faculty members. Please go to admin to register or enter a valid student ID (03-XXXX-XXXXXX).');
+      setErrorModalVisible(true);
+      return;
+    }
+
     
     // Validate phone number
     if (!validatePhoneNumber(phoneNumber)) {
@@ -123,6 +144,46 @@ export default function Signup(): JSX.Element {
       return;
     }
   
+   try {
+    const usersRef = collection(db, 'student');
+    
+    
+    
+    // Check ID number existence
+    const idQuery = query(usersRef, where('idNumber', '==', idNumber));
+    const idSnapshot = await getDocs(idQuery);
+    
+    if (!idSnapshot.empty) {
+      setErrorMessage('This ID number is already registered. Please use a different ID number or contact support.');
+      setErrorModalVisible(true);
+      return;
+    }
+    
+    // Check phone number existence
+    const phoneQuery = query(usersRef, where('phoneNumber', '==', phoneNumber));
+    const phoneSnapshot = await getDocs(phoneQuery);
+    
+    if (!phoneSnapshot.empty) {
+      setErrorMessage('This phone number is already registered. Please use a different phone number.');
+      setErrorModalVisible(true);
+      return;
+    }
+    // Check email existence
+    const emailQuery = query(usersRef, where('email', '==', email));
+    const emailSnapshot = await getDocs(emailQuery);
+    
+    if (!emailSnapshot.empty) {
+      setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+      setErrorModalVisible(true);
+      return;
+    }
+  } catch (error) {
+    console.error("Error checking user data existence:", error);
+    setErrorMessage('Error checking user information. Please try again later.');
+    setErrorModalVisible(true);
+    return;
+  }
+
     setIsLoading(true);
   
     try {

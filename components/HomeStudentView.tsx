@@ -88,10 +88,10 @@ export const StudentView = ({
     const [lastRequestTime, setLastRequestTime] = useState<number | null>(null);
     const [cooldownRemaining, setCooldownRemaining] = useState(0);
     const [cooldownModalVisible, setCooldownModalVisible] = useState(false);
-    const COOLDOWN_PERIOD = 5 * 60 * 1000;
+    const COOLDOWN_PERIOD = 1 * 60 * 1000;
     const [dailyRequestCount, setDailyRequestCount] = useState(0);
     const [dailyLimitReached, setDailyLimitReached] = useState(false);
-    const DAILY_REQUEST_LIMIT = 5;
+    const DAILY_REQUEST_LIMIT = 10;
   // Function to pick an image from the gallery and upload to Firebase
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();

@@ -62,7 +62,7 @@ export default function List() {
         .filter(user => user.userType === 'FACULTY')
         .sort((a, b) => {
           if (a.status !== b.status) {
-            return a.status === 'ONLINE' ? -1 : 1;
+            return a.status === 'AVAILABLE' ? -1 : 1;
           }
           return a.name.localeCompare(b.name);
         });

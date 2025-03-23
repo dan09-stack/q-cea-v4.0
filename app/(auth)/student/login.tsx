@@ -21,7 +21,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [loginAttempts, setLoginAttempts] = useState(0); // Track failed attempts
+  const [loginAttempts, setLoginAttempts] = useState(0); 
   const [lockoutTime, setLockoutTime] = useState<number | null>(null); // Track lockout time
   const [countdown, setCountdown] = useState<number>(0); // Countdown timer in seconds
   const [isLocked, setIsLocked] = useState(false); // State to track if inputs are locked
@@ -183,8 +183,7 @@ export default function Login() {
       setLoginAttempts(newAttempts);
       
       if (newAttempts >= 3) {
-        // Base lockout duration is 30 seconds, multiplied by the current multiplier
-        const baseDuration = 30000; // 30 seconds
+        const baseDuration = 10000; // 30 seconds
         const lockDuration = baseDuration * lockoutMultiplier;
         const newLockoutTime = Date.now() + lockDuration;
         
