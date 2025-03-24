@@ -138,7 +138,7 @@ export default function RatingPage() {
         });
 
         await updateDoc(userRef, {
-          status: 'completed',
+          status: 'test',
           userTicketNumber: null,
           faculty: null,
           concern: null,

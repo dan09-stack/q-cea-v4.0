@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, ScrollView, Dimensions, useWindowDimensions, TouchableOpacity, Image, Modal, FlatList } from 'react-native';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, onSnapshot, updateDoc, increment } from 'firebase/firestore';
 import { db, auth } from '@/firebaseConfig';
 import { CommentSection } from './HomeCommentSection';
 import { AlertModal } from '@/components/queue/AlertModal';
@@ -87,10 +87,58 @@ export const FacultyView = ({
     originalHandleNext();
     handleAddComment();
   };
-  const handleNextNotArrived = () => {
-    setNextClickTime(new Date());
-    originalHandleNext();
-  };
+  // Add to imports at the top
+
+// Inside the FacultyView component, add this function:
+const handleNextNotArrived = async () => {
+  setNextClickTime(new Date());
+  
+  // Update the student's no-show counter in Firebase
+  if (ticketStudentData.name) {
+    try {
+      // Find the student by name
+      const studentQuery = query(
+        collection(db, 'student'),
+        where('fullName', '==', ticketStudentData.name)
+      );
+      
+      const querySnapshot = await getDocs(studentQuery);
+      
+      if (!querySnapshot.empty) {
+        // Get the first matching student
+        const studentDoc = querySnapshot.docs[0];
+        const studentRef = doc(db, 'student', studentDoc.id);
+        
+        // Increment the noShowCount field
+        await updateDoc(studentRef, {
+          noShowCount: increment(1),
+          lastNoShowTime: serverTimestamp()
+        });
+        
+        // Check if this is their third no-show
+        const studentData = studentDoc.data();
+        const currentNoShows = (studentData.noShowCount || 0) + 1;
+        
+        if (currentNoShows >= 3) {
+          // Apply penalty - set a penalty flag and timestamp
+          await updateDoc(studentRef, {
+            penaltyActive: true,
+            penaltyEndTime: new Date(Date.now() + 2 * 60 * 1000), // 2 minutes from now
+            noShowCount: 0 // Reset counter after applying penalty
+          });
+          
+          console.log(`Penalty applied to ${ticketStudentData.name} for 2 minutes`);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating no-show count:", error);
+    }
+  }
+  
+  originalHandleNext();
+  handleAddCommentNotArrived();
+};
+
   const currentTicketNumber = allTickets[currentTicketIndex] 
     ? `${ticketStudentData.program}-${allTickets[currentTicketIndex]}` 
     : '';

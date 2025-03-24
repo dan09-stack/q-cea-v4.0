@@ -699,7 +699,7 @@ export default function Home() {
               const waitingStudentsQuery = query(
                 studentsCollectionRef,
                 where('faculty', '==', facultyName),
-                where('userType', 'in', ['STUDENT', 'VISITOR']),
+                where('userType', '==', 'STUDENT'),
                 where('status', '==', 'waiting'),
               );
               
@@ -822,41 +822,7 @@ export default function Home() {
   };
 
   const handleRequest = async () => {
-    if (!state.selectedFaculty) {
-      state.setAlertTitle('Error');
-      state.setAlertMessage('Please select a faculty');
-      state.setAlertButtons([{
-        text: 'OK',
-        onPress: () => state.setIsAlertModalVisible(false),
-      }]);
-      state.setIsAlertModalVisible(true);
-      return;
-    }
-    
-    if (!state.selectedConcern && !state.otherConcern) {
-      state.setAlertTitle('Select Concern');
-      state.setAlertMessage('Please select a concern');
-      state.setAlertButtons([{
-        text: 'OK',
-        onPress: () => state.setIsAlertModalVisible(false),
-      }]);
-      state.setIsAlertModalVisible(true);
-      return;
-    }
-    
-    const selectedFacultyData = state.facultyList.find(faculty => faculty.fullName === state.selectedFaculty);
-    if (selectedFacultyData?.status !== 'AVAILABLE') {
-      state.setAlertTitle('Faculty Unavailable');
-      state.setAlertMessage('The faculty is currently unavailable. Your request has been cancelled.');
-      state.setAlertButtons([{
-        text: 'OK',
-        onPress: () => state.setIsAlertModalVisible(false),
-      }]);
-      state.setIsAlertModalVisible(true);
-      return;
-    }
-
-    state.setIsLoading(true);
+    // First check if user has 3 or more no-shows
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -864,72 +830,158 @@ export default function Home() {
         return;
       }
       
-      const facultyQuery = query(
-        collection(db, 'student'),
-        where('fullName', '==', state.selectedFaculty),
-        where('userType', '==', 'FACULTY')
-      );
+      // Get the current user's document
+      const userRef = doc(db, 'student', currentUser.uid);
+      const userDoc = await getDoc(userRef);
       
-      const facultySnapshot = await getDocs(facultyQuery);
-      if (!facultySnapshot.empty) {
-        const facultyDoc = facultySnapshot.docs[0];
-        const facultyData = facultyDoc.data();
-        
-        // If queue is empty, send notification to faculty
-        if (facultyData.numOnQueue === 0) {
-          sendNotificationToFaculty(facultyData.phoneNumber);
-          sendEmailNotification(
-            'template_jbfj8p6',
-            facultyData.email,
-            facultyData.fullName
-          );
-        }
-        
-        await updateDoc(doc(db, 'student', facultyDoc.id), {
-          numOnQueue: increment(1)
-        });
+      if (!userDoc.exists()) {
+        Alert.alert('Error', 'User profile not found');
+        return;
       }
-
-      const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
-      const ticketSnap = await getDoc(ticketRef);
       
-      if (ticketSnap.exists()) {
-        const currentNumber = ticketSnap.data().ticketNum;
-        const newNumber = currentNumber + 1;
+      const userData = userDoc.data();
+      
+      // Check if user has 3 or more no-shows
+      if (userData.noShowCount >= 3) {
+        // Check if there's an active penalty
+        const lastNoShowTime = userData.lastNoShowTime?.toDate ? 
+          userData.lastNoShowTime.toDate() : 
+          new Date(userData.lastNoShowTime || 0);
         
-        await updateDoc(ticketRef, {
-          ticketNum: newNumber
-        });
-
-        // Update user document
-        const userRef = doc(db, 'student', currentUser.uid);
-        await updateDoc(userRef, {
-          userTicketNumber: newNumber,
-          faculty: state.selectedFaculty,
-          concern: state.selectedConcern,
-          otherConcern: state.otherConcern,
-          specificDetails: state.specificDetails,
-          proofOfPaymentImage: state.proofOfPaymentImage, 
-          requestDate: new Date(),    
-          status: 'waiting'
-        });
+        // Calculate if 2 minutes have passed since the last no-show
+        const penaltyEndTime = new Date(lastNoShowTime.getTime() + 2 * 60 * 1000); // 2 minutes
+        const currentTime = new Date();
         
-       
-            // Force refresh the display by triggering state updates
-            state.setTicketNumber(newNumber);
-            state.setIsRequested(true);
-            state.setCurrentStudent(prev => ({
-              ...prev, 
-              faculty: state.selectedFaculty || null  // Ensure null fallback
-            }));
-          }
-        } catch (error) {
-          console.log('Error updating ticket number:', error);
-          Alert.alert('Error', 'Failed to create ticket request');
-        } finally {
-          state.setIsLoading(false);
+        if (currentTime < penaltyEndTime) {
+          // Penalty is still active
+          const timeLeftMs = penaltyEndTime.getTime() - currentTime.getTime();
+          const timeLeftSec = Math.ceil(timeLeftMs / 1000);
+          const minutes = Math.floor(timeLeftSec / 60);
+          const seconds = timeLeftSec % 60;
+          
+          state.setAlertTitle('Penalty Active');
+          state.setAlertMessage(`You cannot request a ticket for ${minutes}m ${seconds}s because you missed your turn 3 times.`);
+          state.setAlertButtons([{
+            text: 'OK',
+            onPress: () => state.setIsAlertModalVisible(false),
+          }]);
+          state.setIsAlertModalVisible(true);
+          return;
+        } else {
+          // Penalty period is over, reset the counter
+          await updateDoc(userRef, {
+            noShowCount: 0
+          });
         }
-      };
+      }
+      
+      // Continue with the original request logic
+      if (!state.selectedFaculty) {
+        state.setAlertTitle('Error');
+        state.setAlertMessage('Please select a faculty');
+        state.setAlertButtons([{
+          text: 'OK',
+          onPress: () => state.setIsAlertModalVisible(false),
+        }]);
+        state.setIsAlertModalVisible(true);
+        return;
+      }
+     
+      if (!state.selectedConcern && !state.otherConcern) {
+        state.setAlertTitle('Select Concern');
+        state.setAlertMessage('Please select a concern');
+        state.setAlertButtons([{
+          text: 'OK',
+          onPress: () => state.setIsAlertModalVisible(false),
+        }]);
+        state.setIsAlertModalVisible(true);
+        return;
+      }
+     
+      const selectedFacultyData = state.facultyList.find(faculty => faculty.fullName === state.selectedFaculty);
+      if (selectedFacultyData?.status !== 'AVAILABLE') {
+        state.setAlertTitle('Faculty Unavailable');
+        state.setAlertMessage('The faculty is currently unavailable. Your request has been cancelled.');
+        state.setAlertButtons([{
+          text: 'OK',
+          onPress: () => state.setIsAlertModalVisible(false),
+        }]);
+        state.setIsAlertModalVisible(true);
+        return;
+      }
+  
+      state.setIsLoading(true);
+      try {
+        const facultyQuery = query(
+          collection(db, 'student'),
+          where('fullName', '==', state.selectedFaculty),
+          where('userType', '==', 'FACULTY')
+        );
+       
+        const facultySnapshot = await getDocs(facultyQuery);
+        if (!facultySnapshot.empty) {
+          const facultyDoc = facultySnapshot.docs[0];
+          const facultyData = facultyDoc.data();
+         
+          // If queue is empty, send notification to faculty
+          if (facultyData.numOnQueue === 0) {
+            sendNotificationToFaculty(facultyData.phoneNumber);
+            sendEmailNotification(
+              'template_jbfj8p6',
+              facultyData.email,
+              facultyData.fullName
+            );
+          }
+         
+          await updateDoc(doc(db, 'student', facultyDoc.id), {
+            numOnQueue: increment(1)
+          });
+        }
+  
+        const ticketRef = doc(db, 'ticketNumberCounter', 'ticket');
+        const ticketSnap = await getDoc(ticketRef);
+       
+        if (ticketSnap.exists()) {
+          const currentNumber = ticketSnap.data().ticketNum;
+          const newNumber = currentNumber + 1;
+         
+          await updateDoc(ticketRef, {
+            ticketNum: newNumber
+          });
+  
+          // Update user document
+          await updateDoc(userRef, {
+            userTicketNumber: newNumber,
+            faculty: state.selectedFaculty,
+            concern: state.selectedConcern,
+            otherConcern: state.otherConcern,
+            specificDetails: state.specificDetails,
+            proofOfPaymentImage: state.proofOfPaymentImage,
+            requestDate: new Date(),    
+            status: 'waiting'
+          });
+         
+          // Force refresh the display by triggering state updates
+          state.setTicketNumber(newNumber);
+          state.setIsRequested(true);
+          state.setCurrentStudent(prev => ({
+            ...prev,
+            faculty: state.selectedFaculty || null  // Ensure null fallback
+          }));
+        }
+      } catch (error) {
+        console.log('Error updating ticket number:', error);
+        Alert.alert('Error', 'Failed to create ticket request');
+      } finally {
+        state.setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error checking no-show count:", error);
+      Alert.alert('Error', 'Failed to process your request. Please try again.');
+      state.setIsLoading(false);
+    }
+  };
+  
     
       const handleDone = async () => {
         const currentUser = auth.currentUser;

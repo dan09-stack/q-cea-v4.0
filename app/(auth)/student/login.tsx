@@ -156,6 +156,16 @@ export default function Login() {
    
     setIsLoading(true);
     try {
+      const studentSnapshot = await db.collection('students')
+      .where('email', '==', email)
+      .get();
+    
+    if (studentSnapshot.empty) {
+      setErrorMessage('This email is not registered as a student. Please check your email or sign up.');
+      setErrorModalVisible(true);
+      setIsLoading(false);
+      return;
+    }
       await auth.signInWithEmailAndPassword(email, password);
       
       // Reset login attempts and lockout multiplier on successful login
