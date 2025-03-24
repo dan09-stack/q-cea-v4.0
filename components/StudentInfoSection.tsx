@@ -17,6 +17,8 @@ interface StudentInfoSectionProps {
   viewPaymentProof: () => void;
   handleTransferClick: () => void;
   handleNext: () => void;
+  handleNextNotArrived: () => void;
+  handleAddCommentNotArrived: () => void; 
 }
 
 export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
@@ -25,7 +27,9 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
   allTickets,
   viewPaymentProof,
   handleTransferClick,
-  handleNext
+  handleNext,
+  handleNextNotArrived,
+  handleAddCommentNotArrived, 
 }) => {
   const [countdown, setCountdown] = useState<number>(120); // 3 minutes = 180 seconds
   const [timerActive, setTimerActive] = useState<boolean>(false);
@@ -77,10 +81,11 @@ export const StudentInfoSection: React.FC<StudentInfoSectionProps> = ({
   // Third useEffect - handles when countdown reaches zero
   useEffect(() => {
     if (countdown === 0 && timeoutRef.current) {
-      handleNext();
+      handleNextNotArrived();
+      handleAddCommentNotArrived();
       timeoutRef.current = false;
     }
-  }, [countdown, handleNext]);
+  }, [countdown, handleNextNotArrived, handleAddCommentNotArrived]);
   // Format seconds to MM:SS
   const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);

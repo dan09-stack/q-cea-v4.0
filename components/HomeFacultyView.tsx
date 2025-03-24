@@ -23,6 +23,7 @@ interface FacultyViewProps {
   };
   handleBack: () => void;
   handleNext: () => void;
+  handleNextNotArrived: () => void;
   updateTickets?: (tickets: string[]) => void; // Added prop for updating tickets
 }
 
@@ -84,8 +85,12 @@ export const FacultyView = ({
   const handleNext = () => {
     setNextClickTime(new Date());
     originalHandleNext();
+    handleAddComment();
   };
-  
+  const handleNextNotArrived = () => {
+    setNextClickTime(new Date());
+    originalHandleNext();
+  };
   const currentTicketNumber = allTickets[currentTicketIndex] 
     ? `${ticketStudentData.program}-${allTickets[currentTicketIndex]}` 
     : '';
@@ -441,6 +446,65 @@ export const FacultyView = ({
       setIsSaving(false);
     }
   };
+  const handleAddCommentNotArrived = async () => {
+    // if (!comment.trim()) {
+    //   Alert.alert('Error', 'Please enter a comment');
+    //   return;
+    // }
+  
+    if (!currentTicketNumber) {
+      Alert.alert('Error', 'No active ticket to comment on');
+      return;
+    }
+    if (ticketStudentData.name == null) {
+      return;
+    }
+  
+    setIsSaving(true);
+    try {
+      // Calculate duration since next was clicked
+      const saveTime = new Date();
+      const duration = ticketLoadTime ? (saveTime.getTime() - ticketLoadTime.getTime()) / 1000 : 0;
+      const commentData = {
+        ticketNumber: currentTicketNumber,
+        studentName: ticketStudentData.name,
+        comment: "Student did not arrive within the allocated time.",
+        concern: ticketStudentData.concern || null,
+        specificDetails: ticketStudentData.specificDetails || null,
+        otherConcern: ticketStudentData.otherConcern || null,
+        timestamp: serverTimestamp(),
+        duration: duration, // Duration in seconds
+        durationFormatted: formatDuration(duration), 
+        faculty: facultyName,
+        createdAt: saveTime.toISOString()
+      };
+      
+      const docRef = await addDoc(collection(db, 'ticketComments'), commentData);
+      
+      // Add the new comment to the local state with duration information
+      const newComment = {
+        id: docRef.id,
+        comment: "Student did not arrive within the allocated time.",
+        timestamp: { toDate: () => saveTime },
+        duration: duration,
+        durationFormatted: formatDuration(duration),
+        faculty: facultyName
+      };
+      
+      setComments([newComment, ...comments]);
+      
+      // setModalMessage('Comment saved successfully');
+      // setIsModalVisible(true);
+      setComment(''); // Clear the comment field
+
+      setTicketLoadTime(new Date());
+    } catch (error) {
+      console.error('Error saving comment:', error);
+      Alert.alert('Error', 'Failed to save comment. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
   
   const formatDuration = (seconds: number): string => {
     if (!seconds) return 'N/A';
@@ -704,12 +768,14 @@ export const FacultyView = ({
             marginTop: 10
           }}>
             <StudentInfoSection  
-            handleNext={handleNext} 
+              handleNext={handleNext} 
+              handleNextNotArrived={handleNextNotArrived}
               isSmallScreen={isSmallScreen}
               ticketStudentData={ticketStudentData}
               allTickets={allTickets}
               viewPaymentProof={viewPaymentProof}
               handleTransferClick={handleTransferClick}
+              handleAddCommentNotArrived={handleAddCommentNotArrived}
             />
             <CommentSection 
               isSmallScreen={isSmallScreen}
@@ -727,9 +793,8 @@ export const FacultyView = ({
           <View style={styles.buttonContainer}>
             <CustomButton title="BACK" onPress={handleBack} color="white" disabled={currentTicketIndex === 0} />
             <CustomButton title="NEXT" onPress={() => {
-              handleAddComment();
-  handleNext();
-}} color={colors.accentColor} />
+                handleNext();
+              }} color={colors.accentColor} />
   </View>
         </View>
       </ScrollView>

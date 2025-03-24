@@ -28,6 +28,7 @@ export default function Home() {
   const textColor = getContrastTextColor(colors.backgroundColor);
   const [proofOfPaymentImage, setProofOfPaymentImage] = useState<string | null>(null);
 
+  
   // Create gradient colors
   const gradientColors = [
     colors.backgroundColor,
@@ -629,6 +630,177 @@ export default function Home() {
     state.setCurrentTicketIndex(newIndex);
     await updateFacultyTicketIndex(newIndex);
   };
+  const handleNextNotArrived = async () => {
+    if (state.allTickets.length === 0) {
+      state.setAlertTitle('Queue Status');
+      state.setAlertMessage('No ticket on queue');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
+      state.setIsAlertModalVisible(true);
+      return;
+    }
+    const newIndex = state.currentTicketIndex < state.allTickets.length - 1 ? state.currentTicketIndex + 1 : state.currentTicketIndex;
+    
+    // Get the next ticket number (the one after newIndex)
+    const nextTicketNumber = state.allTickets[newIndex + 1];
+    if (nextTicketNumber) {
+      const studentQuery = query(
+        collection(db, 'student'),
+        where('userTicketNumber', '==', parseInt(nextTicketNumber))
+      );
+      
+      const querySnapshot = await getDocs(studentQuery);
+      if (!querySnapshot.empty) {
+        const studentData = querySnapshot.docs[0].data();
+        sendNotificationToStudent(studentData.phoneNumber);
+        
+        // Send email notification
+       sendEmailNotification(
+          'template_v5us19b',
+          studentData.email,
+          studentData.fullName
+        );
+      }
+      
+    }
+    
+    if (newIndex === state.currentTicketIndex && state.currentTicketIndex === state.allTickets.length - 1) {
+      state.setAlertTitle('Queue Status');
+      state.setAlertMessage('No ticket in queue. Would you like to finish the consultation?');
+      state.setAlertButtons([
+        {
+          text: 'No',
+          onPress: () => state.setIsAlertModalVisible(false),
+          color: Colors.light.tint
+        },
+        {
+          text: 'Yes',
+          onPress: async () => {
+            try {
+              const currentUser = auth.currentUser;
+              let facultyName = '';
+
+              if (currentUser) {
+                // Get faculty name from Firestore
+                const userDoc = await getDoc(doc(db, 'student', currentUser.uid));
+                if (userDoc.exists()) {
+                  facultyName = userDoc.data().fullName || '';
+                }
+                // Update faculty's numOnQueue to 0
+                const userRef = doc(db, 'student', currentUser.uid);
+                await updateDoc(userRef, {
+                  numOnQueue: 0
+                });
+              }
+              // Get all waiting students in queues
+              const studentsCollectionRef = collection(db, 'student');
+              const waitingStudentsQuery = query(
+                studentsCollectionRef,
+                where('faculty', '==', facultyName),
+                where('userType', 'in', ['STUDENT', 'VISITOR']),
+                where('status', '==', 'waiting'),
+              );
+              
+              const waitingStudentsSnapshot = await getDocs(waitingStudentsQuery);
+              
+              // Batch update to cancel all queues
+              if (!waitingStudentsSnapshot.empty) {
+                const batch = writeBatch(db);
+                
+                waitingStudentsSnapshot.docs.forEach((docSnapshot) => {
+                  const studentRef = doc(db, 'student', docSnapshot.id);
+                  batch.update(studentRef, {
+                    status: 'Not Arrived',
+                    userTicketNumber: null,
+                    faculty: null,
+                    concern: null,
+                    otherConcern: null,
+                    requestDate: null,
+                    queuePosition: null,
+                    notArrived: increment(1), 
+                  });
+                });
+                
+                await batch.commit();
+                state.setIsAlertModalVisible(false);
+                
+                // Show confirmation after completion
+                setTimeout(() => {
+                  state.setAlertTitle('Success');
+                  state.setAlertMessage(`Completed ${waitingStudentsSnapshot.size} queues successfully`);
+                  state.setAlertButtons([{
+                    text: 'OK',
+                    onPress: () => state.setIsAlertModalVisible(false),
+                    color: Colors.light.tint
+                  }]);
+                  state.setIsAlertModalVisible(true);
+                }, 500);
+              } else {
+                state.setIsAlertModalVisible(false);
+                
+                // Show info message
+                setTimeout(() => {
+                  state.setAlertTitle('Info');
+                  state.setAlertMessage('No active queues to cancel');
+                  state.setAlertButtons([{
+                    text: 'OK',
+                    onPress: () => state.setIsAlertModalVisible(false),
+                  }]);
+                  state.setIsAlertModalVisible(true);
+                }, 500);
+              }
+            } catch (error) {
+              console.error('Error cancelling all queues:', error);
+              state.setIsAlertModalVisible(false);
+              
+              // Show error message
+              setTimeout(() => {
+                state.setAlertTitle('Error');
+                state.setAlertMessage('Failed to cancel all queues');
+                state.setAlertButtons([{
+                  text: 'OK',
+                  onPress: () => state.setIsAlertModalVisible(false),
+                }]);
+                state.setIsAlertModalVisible(true);
+              }, 500);
+            }
+          },
+          color: '#FF3B30' // Red color for destructive action
+        }
+      ]);
+      state.setIsAlertModalVisible(true);
+      return;
+    }
+  
+    
+
+    const ticketToSave = state.allTickets[newIndex];
+    if (!ticketToSave) {
+      state.setAlertTitle('Queue Status');
+      state.setAlertMessage('No ticket on queue');
+      state.setAlertButtons([{
+        text: 'OK',
+        onPress: () => state.setIsAlertModalVisible(false),
+      }]);
+      state.setIsAlertModalVisible(true);
+      return;
+    }
+
+    const numberOnly = parseInt(ticketToSave.replace('CPE-', ''));
+    
+    const currentUser = auth.currentUser;
+    if (currentUser && state.userType === 'FACULTY' && ticketToSave) {
+      const userRef = doc(db, 'student', currentUser.uid);
+      await updateDoc(userRef, {
+        displayedTicket: numberOnly,
+      });
+    }
+    
+    state.setCurrentTicketIndex(newIndex);
+    await updateFacultyTicketIndex(newIndex);
+  };
 
   const handleBack = async () => {
     if (state.currentTicketIndex === 0) return;
@@ -922,6 +1094,7 @@ const isLargeScreen = width >= 768;
               ticketStudentData={state.ticketStudentData}
               handleBack={handleBack}
               handleNext={handleNext}
+              handleNextNotArrived={handleNextNotArrived}
             />
           ) : (
             <StudentView 
