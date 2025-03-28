@@ -156,12 +156,12 @@ export default function Login() {
    
     setIsLoading(true);
     try {
-      const studentSnapshot = await db.collection('students')
+      const studentSnapshot = await db.collection('student')
       .where('email', '==', email)
       .get();
     
     if (studentSnapshot.empty) {
-      setErrorMessage('This email is not registered as a student. Please check your email or sign up.');
+      setErrorMessage('This email is not registered. Please check your email or sign up.');
       setErrorModalVisible(true);
       setIsLoading(false);
       return;

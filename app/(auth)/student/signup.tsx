@@ -105,7 +105,7 @@ export default function Signup(): JSX.Element {
     }
     const idValidation = validateIdNumber(idNumber);
     if (!idValidation.isValid) {
-      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX for students or UP-xx-xxx-F for faculty');
+      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX for students ');
       setErrorModalVisible(true);
       return;
     }
