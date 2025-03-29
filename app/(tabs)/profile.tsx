@@ -10,6 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { EditProfileModal } from '../components/profile/EditProfileModal';
+
 interface UserData {
   fullName: string;
   email: string;
@@ -38,6 +39,7 @@ export default function Profile(): JSX.Element {
     program: '',
     phoneNumber: ''
   });
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
@@ -125,33 +127,51 @@ export default function Profile(): JSX.Element {
   const handleUpdateProfile = async () => {
     try {
       const user = auth.currentUser;
-      if (user) {
-        // Update user profile in Firestore
-        await db.collection('student').doc(user.uid).update({
-          fullName: editableData.fullName,
-          email: editableData.email,
-          idNumber: editableData.idNumber,
-          program: editableData.program,
-          phoneNumber: editableData.phoneNumber,
-        });
-
-        // Update email in Firebase Auth if changed
-        if (editableData.email !== userData.email) {
-          await user.updateEmail(editableData.email);
-        }
-
-        // Update password if provided
-        if (newPassword) {
-          await user.updatePassword(newPassword);
-        }
-
-        // Update local state
-        setUserData(editableData);
-        setModalVisible(false);
-        setNewPassword('');
-        alert('Profile updated successfully!');
+      if (!user) {
+        alert("No authenticated user found.");
+        return;
       }
-    }  catch (error: unknown) {
+  
+      const fullNameRegex = /^[A-Za-z]+, [A-Za-z]+( [A-Za-z]+)*$/;
+      const idNumberRegex = /^UP-\d{2}-\d{3}-\d$|^UP-\d{4}-\d{5,6}$/;
+      const phoneRegex = /^(\+63|0)9\d{9}$/;
+  
+      const { fullName, email, idNumber, program, phoneNumber } = editableData;
+  
+      if (!fullNameRegex.test(fullName)) {
+        alert("Invalid full name format. Use: 'LastName, FirstName [MiddleName]'");
+        return;
+      }
+      if (!idNumberRegex.test(idNumber)) {
+        alert("Invalid ID number format. Use: 'UP-XX-XXX-X' or 'UP-XXXX-XXXXX/UP-XXXX-XXXXXX'");
+        return;
+      }
+      if (!phoneRegex.test(phoneNumber)) {
+        alert("Invalid phone number. Use: '+639XXXXXXXXX' or '09XXXXXXXXX'");
+        return;
+      }
+  
+      await db.collection('student').doc(user.uid).update({
+        fullName,
+        email,
+        idNumber,
+        program,
+        phoneNumber,
+      });
+  
+      if (editableData.email !== userData.email) {
+        await user.updateEmail(editableData.email);
+      }
+  
+      if (newPassword) {
+        await user.updatePassword(newPassword);
+      }
+  
+      setUserData(editableData);
+      setModalVisible(false);
+      setNewPassword('');
+      alert('Profile updated successfully!');
+    } catch (error: unknown) {
       if (error instanceof Error) {
         alert('Error updating profile: ' + error.message);
       } else {
