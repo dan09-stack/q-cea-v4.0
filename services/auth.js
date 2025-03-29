@@ -106,7 +106,7 @@ export const handleSignup = async ({
       email,
       userType: "STUDENT",
       isVerified: userType === 'FACULTY' ? false : true,
-      status: userType === 'FACULTY' ? false : true
+      status: ''
     });
 
     await sendEmailVerification(user);

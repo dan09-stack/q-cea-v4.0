@@ -10,35 +10,7 @@ import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
 import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 import { db } from '@/firebaseConfig';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
-const validateIdNumber = (idNumber: string): { isValid: boolean; format: 'student' | 'faculty' | null } => {
-  // Check if ID number matches the student format 03-XXXX-XXXXXX
-  const studentIdRegex = /^03-\d{4}-\d{5,6}$/;
-  if (studentIdRegex.test(idNumber)) {
-    return { isValid: true, format: 'student' };
-  }
-  
-  // Check if ID number matches the faculty format UP-xx-xxx-F
-  const facultyIdRegex = /^UP-\d{2}-\d{3}-F$/i;
-  if (facultyIdRegex.test(idNumber)) {
-    return { isValid: true, format: 'faculty' };
-  }
-  
-  // If neither format matches
-  return { isValid: false, format: null };
-};
 
-
-const validatePhoneNumber = (phoneNumber: string): boolean => {
-  // Check if phone number is in the format 09XXXXXXXXX or +63XXXXXXXXX
-  const phoneRegex = /^(09\d{9}|\+63\d{10})$/;
-  return phoneRegex.test(phoneNumber);
-};
-
-const validateEmail = (email: string): boolean => {
-  // Basic email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -55,9 +27,41 @@ export default function Signup(): JSX.Element {
   const [errorMessage, setErrorMessage] = useState('');
   const [isChecked, setIsChecked] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
-
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  
   const [showPassword, setShowPassword] = useState<boolean>(false);
-
+  const validateIdNumber = (idNumber: string): { isValid: boolean; format: 'student' | 'faculty' | null } => {
+    const studentIdRegex = /^03-\d{4}-\d{5,6}$/;
+    if (studentIdRegex.test(idNumber)) {
+      return { isValid: true, format: 'student' };
+    }
+    const facultyIdRegex = /^UP-\d{2}-\d{3}-F$/i;
+    if (facultyIdRegex.test(idNumber)) {
+      return { isValid: true, format: 'faculty' };
+    }
+    
+    return { isValid: false, format: null };
+  };
+  
+  
+  const validatePhoneNumber = (phoneNumber: string): boolean => {
+    const phoneRegex = /^(09\d{9}|\+63\d{10})$/;
+    return phoneRegex.test(phoneNumber);
+  };
+  
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+  const validateFullName = (name: string): boolean => {
+    const nameRegex = /^[A-Za-z]{2,}(?: [A-Za-z-]+)*, [A-Za-z-]{2,}(?: [A-Za-z-]+)*(?: [A-Z]\.?(?:[A-Z]\.)?)?$/;
+    return nameRegex.test(name);
+  };
+  const validatePasswordsMatch = (password: string, confirmPassword: string): boolean => {
+    return password === confirmPassword;
+  };
+  
   const ErrorModal = () => (
     <Modal
       animationType="fade"
@@ -91,6 +95,36 @@ export default function Signup(): JSX.Element {
     setSelectedProgram(course);
     setModalVisible(false);
   };
+  const validatePassword = (password: string): { isValid: boolean; message: string } => {
+    // Check minimum length
+    if (password.length < 8) {
+      return { isValid: false, message: 'Password must be at least 8 characters long' };
+    }
+    
+    // Check for at least one uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one uppercase letter' };
+    }
+    
+    // Check for at least one lowercase letter
+    if (!/[a-z]/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one lowercase letter' };
+    }
+    
+    // Check for at least one number
+    if (!/\d/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one number' };
+    }
+    
+    // Check for at least one special character
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return { isValid: false, message: 'Password must contain at least one special character' };
+    }
+    
+    // If all checks pass
+    return { isValid: true, message: '' };
+  };
+  
   
   const onSignup = async () => {
     if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
@@ -98,8 +132,8 @@ export default function Signup(): JSX.Element {
       setErrorModalVisible(true);
       return;
     }
-    if (!fullName.includes(',')) {
-      setErrorMessage('Full Name should be in format: Last Name, First Name MI');
+    if (!validateFullName(fullName)) {
+      setErrorMessage('Full Name should be in format: Last Name, First Name MI.');
       setErrorModalVisible(true);
       return;
     }
@@ -131,18 +165,25 @@ export default function Signup(): JSX.Element {
       setErrorModalVisible(true);
       return;
     }
-    if (password.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long');
-      setErrorModalVisible(true);
-      return;
-    }
-    
-    
     if (!email.includes('@')) {
       setErrorMessage('Please enter a valid email address');
       setErrorModalVisible(true);
       return;
     }
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setErrorMessage(passwordValidation.message);
+      setErrorModalVisible(true);
+      return;
+    }
+    
+    if (!validatePasswordsMatch(password, confirmPassword)) {
+      setErrorMessage('Passwords do not match');
+      setErrorModalVisible(true);
+      return;
+    }
+    
+   
   
    try {
     const usersRef = collection(db, 'student');
@@ -262,7 +303,6 @@ export default function Signup(): JSX.Element {
               placeholder="03-XXXX-XXXXXX"
               value={idNumber}
               onChangeText={setIdNumber}
-              keyboardType="numeric"
             />
           </View>
 
@@ -323,7 +363,35 @@ export default function Signup(): JSX.Element {
                 />
               </TouchableOpacity>
             </View>
+            <Text style={styles.passwordHelperText}>
+              Password must be at least 8 characters long and include uppercase, lowercase, 
+              number, and special character.
+            </Text>
           </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry={!showConfirmPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity 
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={styles.eyeIconButton}
+              >
+                <Ionicons
+                  name={showConfirmPassword ? "eye-outline" : "eye-off-outline"}
+                  size={24}
+                  color="white"
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+
 
           <Modal
             animationType="fade"
@@ -404,6 +472,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     marginVertical: 50
+  },
+  passwordHelperText: {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 12,
+    marginTop: 5,
   },
   passwordContainer: {
     flexDirection: 'row',

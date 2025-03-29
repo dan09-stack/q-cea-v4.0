@@ -231,27 +231,13 @@ export const StudentView = ({
       return;
     }
     // Check if user is in cooldown period
-    const now = Date.now();
+
     
     if (selectedConcern === 'Enrollment' && !proofOfPaymentImage) {
       Alert.alert('Missing Information', 'Please upload proof of payment for enrollment concerns');
       return;
     }
     
-    if (lastRequestTime && now - lastRequestTime < COOLDOWN_PERIOD) {
-      const remainingTime = Math.ceil((COOLDOWN_PERIOD - (now - lastRequestTime)) / 1000);
-      setCooldownRemaining(remainingTime);
-      setCooldownModalVisible(true);
-      return;
-    }
-    if (dailyLimitReached) {
-      Alert.alert(
-        'Daily Limit Reached',
-        `You've reached the maximum of ${DAILY_REQUEST_LIMIT} requests for today. Please try again tomorrow.`,
-        [{ text: 'OK', style: 'default' }]
-      );
-      return;
-    }
     // Show confirmation modal
     setConfirmModalVisible(true);
   };
@@ -261,8 +247,7 @@ export const StudentView = ({
     
     // Set and store the current time as last request time
     const now = Date.now();
-    setLastRequestTime(now);
-    
+
     try {
       await AsyncStorage.setItem('lastRequestTime', now.toString());
       
