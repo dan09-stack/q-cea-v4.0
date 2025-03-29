@@ -154,7 +154,7 @@ export default function Signup(): JSX.Element {
     
     // Validate phone number
     if (!validatePhoneNumber(phoneNumber)) {
-      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +63XXXXXXXXX)');
+      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +639XXXXXXXXX)');
       setErrorModalVisible(true);
       return;
     }
@@ -300,7 +300,7 @@ export default function Signup(): JSX.Element {
             <Text style={styles.inputLabel}>ID Number</Text>
             <TextInput
               style={styles.input}
-              placeholder="03-XXXX-XXXXXX"
+              placeholder="03-XXXX-XXXXXX or 03-XXXX-XXXXX"
               value={idNumber}
               onChangeText={setIdNumber}
             />

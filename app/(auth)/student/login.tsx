@@ -166,8 +166,17 @@ export default function Login() {
       setIsLoading(false);
       return;
     }
-      await auth.signInWithEmailAndPassword(email, password);
-      
+    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const user = userCredential.user;
+    if (!user?.emailVerified) {
+      await db.collection('student').doc(user?.uid).update({
+        isVerified: false
+      });
+    } else {
+      await db.collection('student').doc(user?.uid).update({
+        isVerified: true
+      });
+    }
       // Reset login attempts and lockout multiplier on successful login
       await resetLockoutState();
 

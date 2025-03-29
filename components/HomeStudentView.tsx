@@ -332,7 +332,7 @@ export const StudentView = ({
               <View style={styles.buttonContainer}>
                 <CustomButton 
                   title={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? "DONE" : "CANCEL"} 
-                  onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleCancel : handleCancel} 
+                  onPress={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? handleDone : handleCancel} 
                   color={userTicketNumber <= currentDisplayedTicket || currentDisplayedTicket === null ? colors.accentColor : "#c8c4c4"} 
 
 />

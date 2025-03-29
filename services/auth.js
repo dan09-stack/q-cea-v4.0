@@ -105,7 +105,7 @@ export const handleSignup = async ({
       program,
       email,
       userType: "STUDENT",
-      isVerified: userType === 'FACULTY' ? false : true,
+      isVerified:false,
       status: ''
     });
 

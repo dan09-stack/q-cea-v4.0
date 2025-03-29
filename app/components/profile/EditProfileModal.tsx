@@ -278,6 +278,7 @@ export function EditProfileModal({
 }
 
 const styles = StyleSheet.create({
+  
   pickerContainer: {
     borderWidth: 1,
     borderColor: '#ddd',

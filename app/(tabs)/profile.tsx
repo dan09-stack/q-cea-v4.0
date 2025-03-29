@@ -301,14 +301,20 @@ export default function Profile(): JSX.Element {
             }, 0);
           } else {
             setIsVerified(true);
-            const userDoc = await db.collection('student').doc(user.uid).get();
-            if (userDoc.exists) {
-              const data = userDoc.data() as UserData;
-              setUserData(data);
-              setEditableData(data);
-              setIsActive(data.status === 'AVAILABLE');
-              setUserType(data.userType || '');
-            }
+            // Set up a real-time listener instead of a one-time fetch
+            const unsubscribe = db.collection('student').doc(user.uid)
+              .onSnapshot((doc) => {
+                if (doc.exists) {
+                  const data = doc.data() as UserData;
+                  setUserData(data);
+                  setEditableData(data);
+                  setIsActive(data.status === 'AVAILABLE');
+                  setUserType(data.userType || '');
+                }
+              });
+              
+            // Return the unsubscribe function for cleanup
+            return () => unsubscribe();
           }
         } else {
           setTimeout(() => {
@@ -322,6 +328,7 @@ export default function Profile(): JSX.Element {
   
     fetchUserData();
   }, []);
+  
   
   const handleUpdateProfile = async (): Promise<boolean> => {
     try {

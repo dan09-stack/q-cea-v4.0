@@ -983,36 +983,49 @@ export default function Home() {
   };
   
     
-      const handleDone = async () => {
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const userRef = doc(db, 'student', currentUser.uid);
-          const userDoc = await getDoc(userRef);
-          const facultyName = userDoc.data()?.faculty;
-    
-          if (facultyName) {
-            const facultyQuery = query(
-              collection(db, 'student'),
-              where('fullName', '==', facultyName),
-              where('userType', '==', 'FACULTY')
-            );
-            
-            const facultySnapshot = await getDocs(facultyQuery);
-            if (!facultySnapshot.empty) {
-              const facultyDoc = facultySnapshot.docs[0];
-              const currentQueueCount = facultyDoc.data().numOnQueue || 0;
-              
-              if (currentQueueCount > 0) {
-                await updateDoc(doc(db, 'student', facultyDoc.id), {
-                  numOnQueue: currentQueueCount - 1
-                });
-              }
-            }
+  const handleDone = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        // Get the faculty name before updating user status
+        const userRef = doc(db, 'student', currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        const facultyName = userDoc.data()?.faculty;
+
+        // Find and update faculty's numOnQueue
+        if (facultyName) {
+          const facultyQuery = query(
+            collection(db, 'student'),
+            where('fullName', '==', facultyName),
+            where('userType', '==', 'FACULTY')
+          );
+          
+          const facultySnapshot = await getDocs(facultyQuery);
+          if (!facultySnapshot.empty) {
+            const facultyDoc = facultySnapshot.docs[0];
+            await updateDoc(doc(db, 'student', facultyDoc.id), {
+              numOnQueue: increment(-1)
+            });
           }
         }
-        
-        router.push('/rating');
-      };
+
+        // Update user status
+        await updateDoc(userRef, {
+          status: 'done',
+          userTicketNumber: null,
+          faculty: null,
+          concern: null,
+          otherConcern: null,
+          specificDetails: null,
+          proofOfPaymentImage: null,
+        });
+      }
+      state.setIsRequested(false);
+    } catch (error) {
+      console.error('Error cancelling ticket:', error);
+      Alert.alert('Error', 'Failed to cancel ticket');
+    }
+  };
     
       const handleCancel = async () => {
         try {
