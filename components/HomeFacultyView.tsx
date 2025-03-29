@@ -136,7 +136,7 @@ const handleNextNotArrived = async () => {
   }
   
   originalHandleNext();
-  handleAddCommentNotArrived();
+  
 };
 
   const currentTicketNumber = allTickets[currentTicketIndex] 
@@ -473,7 +473,7 @@ const handleNextNotArrived = async () => {
       // Add the new comment to the local state with duration information
       const newComment = {
         id: docRef.id,
-        comment: comment,
+        comment: "Done -"+comment,
         timestamp: { toDate: () => saveTime },
         duration: duration,
         durationFormatted: formatDuration(duration),

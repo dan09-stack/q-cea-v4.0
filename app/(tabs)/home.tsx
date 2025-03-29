@@ -458,7 +458,23 @@ export default function Home() {
 
     updateQueueNumber();
   }, [state.userTicketNumber, state.currentDisplayedTicket]);
-
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    
+    const userRef = doc(db, 'student', currentUser.uid);
+    const unsubscribe = onSnapshot(userRef, (doc) => {
+      if (doc.exists()) {
+        const userData = doc.data();
+        state.setCurrentStudent(prevState => ({
+          ...prevState,
+          name: userData.fullName || ''
+        }));
+      }
+    });
+    
+    return () => unsubscribe();
+  }, []);
   // Handler functions
   const handleNext = async () => {
     if (state.allTickets.length === 0) {

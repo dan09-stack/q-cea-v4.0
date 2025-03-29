@@ -471,6 +471,7 @@ export default function Profile(): JSX.Element {
                   newPassword={newPassword}
                   setNewPassword={setNewPassword}
                   handleUpdateProfile={handleUpdateProfile}
+                  userType={userType}
                 />
                 <ScheduleModal
                   modalVisible={scheduleModalVisible}
