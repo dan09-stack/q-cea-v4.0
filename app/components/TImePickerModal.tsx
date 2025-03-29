@@ -4,17 +4,36 @@ import { Picker } from '@react-native-picker/picker';
 import { CustomButton } from '@/components/ui/CustomButton';
 import { useTheme } from '@/contexts/ThemeContext';
 
-interface TimePickerModalProps {
-  selectedDay: string;
-  scheduleData: {
-    monday: { start: string; end: string };
-    tuesday: { start: string; end: string };
-    wednesday: { start: string; end: string };
-    thursday: { start: string; end: string };
-    friday: { start: string; end: string };
-    saturday: { start: string; end: string };
-
+interface ScheduleData {
+  monday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
   };
+  tuesday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  wednesday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  thursday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  friday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  saturday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+}
+
+interface TimePickerModalProps {
+  selectedDay: string; // Format: "day-timeframe" (e.g., "monday-am")
+  scheduleData: ScheduleData;
   updateTimeForSelectedDay: (
     startHour: number,
     startMinute: number,
@@ -34,37 +53,45 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
 }) => {
   const { colors } = useTheme();
 
-  // Parse the existing time for the selected day
-  const existingStartTime = scheduleData[selectedDay as keyof typeof scheduleData].start;
-  const existingEndTime = scheduleData[selectedDay as keyof typeof scheduleData].end;
+  // Parse the day and timeframe from the selectedDay string
+  const [day, timeFrame] = selectedDay.split('-');
+  
+  // Get the existing time for the selected day and timeframe
+  const existingStartTime = scheduleData[day as keyof typeof scheduleData][timeFrame as 'am' | 'pm'].start;
+  const existingEndTime = scheduleData[day as keyof typeof scheduleData][timeFrame as 'am' | 'pm'].end;
 
   const [startHour, setStartHour] = useState<number>(
     existingStartTime ? parseInt(existingStartTime.split(':')[0], 10) : 12
   );
   
   const [startMinute, setStartMinute] = useState<number>(
-    existingStartTime ? parseInt(existingStartTime.split(':')[1].split(' ')[0], 10) : 0
+    existingStartTime ? parseInt(existingStartTime.split(':')[1]?.split(' ')[0] || '0', 10) : 0
   );
   
   const [startPeriod, setStartPeriod] = useState<string>(
-    existingStartTime ? existingStartTime.split(' ')[1] : 'AM'
-  );
-  const [endMinute, setEndMinute] = useState<number>(
-    existingEndTime ? parseInt(existingEndTime.split(':')[1]?.split(' ')[0] || '0', 10) : 0
-  );
-  
-  const [endPeriod, setEndPeriod] = useState<string>(
-    existingEndTime ? existingEndTime.split(' ')[1] || 'AM' : 'AM'
+    existingStartTime ? existingStartTime.split(' ')[1] || 'AM' : timeFrame === 'am' ? 'AM' : 'PM'
   );
   
   const [endHour, setEndHour] = useState<number>(
     existingEndTime ? parseInt(existingEndTime.split(':')[0] || '12', 10) : 12
   );
+  
+  const [endMinute, setEndMinute] = useState<number>(
+    existingEndTime ? parseInt(existingEndTime.split(':')[1]?.split(' ')[0] || '0', 10) : 0
+  );
+  
+  const [endPeriod, setEndPeriod] = useState<string>(
+    existingEndTime ? existingEndTime.split(' ')[1] || 'AM' : timeFrame === 'am' ? 'AM' : 'PM'
+  );
+
+  // Format the display name for the selected day and time frame
+  const displayName = `${day.charAt(0).toUpperCase() + day.slice(1)} ${timeFrame.toUpperCase()}`;
+
   return (
     <Modal transparent={true} visible={!!selectedDay} animationType="fade">
       <View style={styles.modalOverlay}>
         <View style={[styles.modalView, { backgroundColor: colors.backgroundColor }]}>
-          <Text style={[styles.modalTitle, { color: colors.textColor }]}>Set Time for {selectedDay}</Text>
+          <Text style={[styles.modalTitle, { color: colors.textColor }]}>Set Time for {displayName}</Text>
 
           {/* Start Time Picker */}
           <View style={styles.timePickerContainer}>
@@ -194,7 +221,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     width: '90%',
     maxWidth: 400,
-  
   },
   modalTitle: {
     fontSize: 20,
@@ -206,7 +232,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
-    
   },
   timePickerGroup: {
     alignItems: 'center',

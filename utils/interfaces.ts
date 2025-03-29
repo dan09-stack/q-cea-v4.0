@@ -1,7 +1,36 @@
-
-
 // Define all interfaces in a separate file
 
+// Add this interface for the schedule data structure
+export interface ScheduleData {
+  monday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  tuesday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  wednesday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  thursday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  friday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  saturday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+  sunday: { 
+    am: { start: string; end: string }; 
+    pm: { start: string; end: string }; 
+  };
+}
 
 export interface FacultyItem {
   id: string;
@@ -9,15 +38,7 @@ export interface FacultyItem {
   status: 'AVAILABLE' | 'UNAVAILABLE';
   numOnQueue: number;
   userType?: string;
-  schedule?: {
-    monday: { start: string; end: string };
-    tuesday: { start: string; end: string };
-    wednesday: { start: string; end: string };
-    thursday: { start: string; end: string };
-    friday: { start: string; end: string };
-    saturday: { start: string; end: string };
-    sunday: { start: string; end: string };
-  };
+  schedule?: ScheduleData;
 }
 
 export interface StudentItem {
