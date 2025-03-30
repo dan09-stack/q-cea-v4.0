@@ -9,7 +9,8 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/
 import { getAuth } from 'firebase/auth';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { auth, db } from '@/firebaseConfig';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 interface StudentViewProps {
   numOnQueue?: number; 
   isCheckingRequest: boolean;
@@ -91,6 +92,8 @@ export const StudentView = ({
     const COOLDOWN_PERIOD = 1 * 60 * 1000;
     const [dailyRequestCount, setDailyRequestCount] = useState(0);
     const [dailyLimitReached, setDailyLimitReached] = useState(false);
+    const [dailyLimitModalVisible, setDailyLimitModalVisible] = useState(false);
+
     const DAILY_REQUEST_LIMIT = 10;
   // Function to pick an image from the gallery and upload to Firebase
   const pickImage = async () => {
@@ -221,6 +224,10 @@ export const StudentView = ({
   };
   
   const validateAndRequest = () => {
+    if (dailyLimitReached) {
+      setDailyLimitModalVisible(true);
+      return;
+    }
     if (!selectedFaculty) {
       Alert.alert('Missing Information', 'Please select a faculty member');
       return;
@@ -233,10 +240,10 @@ export const StudentView = ({
     // Check if user is in cooldown period
 
     
-    if (selectedConcern === 'Enrollment' && !proofOfPaymentImage) {
-      Alert.alert('Missing Information', 'Please upload proof of payment for enrollment concerns');
-      return;
-    }
+    // if (selectedConcern === 'Enrollment' && !proofOfPaymentImage) {
+    //   Alert.alert('Missing Information', 'Please upload proof of payment for enrollment concerns');
+    //   return;
+    // }
     
     // Show confirmation modal
     setConfirmModalVisible(true);
@@ -268,11 +275,25 @@ export const StudentView = ({
     
     // Process the request
     handleRequest();
-    
+    handleSubmitRating();
     // Show success modal after request is processed
     setSuccessModalVisible(true);
   };
-  
+  const handleSubmitRating = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await setDoc(doc(db, 'ratings', `${currentUser.uid}_${Date.now()}`), {
+          userId: currentUser.uid,
+          faculty: selectedFaculty,  
+          concern: selectedConcern,  
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
+  };
   // Format seconds to mm:ss
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -415,7 +436,7 @@ export const StudentView = ({
               )}
               
               {/* Upload Proof of Payment for Enrollment concern with Firebase storage */}
-              {selectedConcern === "Enrollment" && (
+              {/* {selectedConcern === "Enrollment" && (
                 <View style={{marginTop: 10}}>
                   <Text style={{fontSize: 16, fontWeight: 'bold', marginBottom: 5}}>
                     Upload Proof of Payment *
@@ -481,7 +502,7 @@ export const StudentView = ({
                     * Required for enrollment concerns
                   </Text>
                 </View>
-              )}
+              )} */}
               
               {/* General details field for all concerns */}
               <Text style={{fontSize: 16, fontWeight: 'bold', marginTop: 10}}>Specific Details</Text>
@@ -518,7 +539,7 @@ export const StudentView = ({
               <Modal
                 animationType="fade"
                 transparent={true}
-                visible={dailyLimitReached && !isRequested}
+                visible={dailyLimitModalVisible}
                 onRequestClose={() => {}}
               >
                 <View style={styles.modalContainer}>
@@ -539,7 +560,7 @@ export const StudentView = ({
                         borderRadius: 5,
                         alignSelf: 'center',
                       }}
-                      onPress={() => {}}
+                      onPress={() => setDailyLimitModalVisible(false)}
                     >
                       <Text style={{ color: 'white', fontWeight: 'bold' }}>I Understand</Text>
                     </TouchableOpacity>

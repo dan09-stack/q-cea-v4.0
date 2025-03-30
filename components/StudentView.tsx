@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
-import { FacultyItem } from '@/utils/interfaces';
+import { FacultyItem, ScheduleData } from '@/utils/interfaces';
 import { MaterialIcons } from '@expo/vector-icons';
+
+// Define the legacy schedule format type
+interface LegacyScheduleItem {
+  start: string;
+  end: string;
+}
+
+interface LegacySchedule {
+  [key: string]: LegacyScheduleItem;
+}
 
 interface StudentViewProps {
   facultyData: FacultyItem[];
@@ -35,13 +45,46 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
         onPress={() => setSelectedFaculty(item)}
       >
         <Image
-          source={require('@/assets/time.png')} 
-          style={{ width: 24, height: 24 }} 
+          source={require('@/assets/time.png')}
+          style={{ width: 24, height: 24 }}
           resizeMode="contain"
         />
       </TouchableOpacity>
     </View>
   );
+
+  // Helper function to check if a time frame has data
+  const hasTimeFrameData = (timeFrame: { start: string; end: string } | undefined) => {
+    return timeFrame && timeFrame.start && timeFrame.end;
+  };
+
+  // Helper function to format time frame display
+  const formatTimeFrame = (timeFrame: { start: string; end: string } | undefined) => {
+    if (hasTimeFrameData(timeFrame)) {
+      return `${timeFrame!.start} - ${timeFrame!.end}`;
+    }
+    return "Unavailable";
+  };
+
+  // Helper function to determine if the schedule is in the new format
+  const isNewScheduleFormat = (schedule: any): schedule is ScheduleData => {
+    if (!schedule || typeof schedule !== 'object') return false;
+    
+    // Check if at least one day has the new format structure
+    return Object.values(schedule).some(
+      (day: any) => day && typeof day === 'object' && ('am' in day || 'pm' in day)
+    );
+  };
+
+  // Helper function to check if a legacy schedule item has data
+  const hasLegacyScheduleData = (item: any): item is LegacyScheduleItem => {
+    return item && typeof item === 'object' && 'start' in item && 'end' in item && 
+           typeof item.start === 'string' && typeof item.end === 'string' &&
+           item.start.trim() !== '' && item.end.trim() !== '';
+  };
+
+  // Get days of the week in order
+  const daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
   return (
     <View style={styles.listContainer}>
@@ -65,47 +108,94 @@ export const StudentView = ({ facultyData, filteredFacultyData, styles }: Studen
       {/* Schedule Modal */}
       {selectedFaculty && (
         <Modal transparent={true} visible={!!selectedFaculty} onRequestClose={() => setSelectedFaculty(null)}>
-        <View style={styleslocal.modalOverlay}>
-          <View style={styleslocal.modalView}>
-            <View style={styleslocal.modalHeader}>
-              <Text style={styleslocal.modalTitle}>{selectedFaculty.name} {'\n'}
-                Availability</Text>
-              <TouchableOpacity
-                style={styleslocal.closeButton}
-                onPress={() => setSelectedFaculty(null)}
-              >
-                <MaterialIcons name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            <View style={styleslocal.scheduleContainer}>
-            {Object.entries(selectedFaculty.schedule || {})
-              // Filter out days without schedule data
-              .filter(([_, time]) => time && (time.start || time.end))
-              .sort(([dayA], [dayB]) => {
-                const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-                return daysOrder.indexOf(dayA.toLowerCase()) - daysOrder.indexOf(dayB.toLowerCase());
-              })
-              .map(([day, time]) => (
-                <View key={day} style={styleslocal.scheduleRow}>
-                  <Text style={styleslocal.scheduleDay}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
-                  <Text style={styleslocal.scheduleTime}>
-                    {`${time.start} - ${time.end}`}
-                  </Text>
-                </View>
-              ))}
-
-            {/* Display a message if no schedule is set */}
-            {Object.keys(selectedFaculty.schedule || {}).length === 0 || 
-            !Object.values(selectedFaculty.schedule || {}).some(time => time && (time.start || time.end)) ? (
-              <View style={styleslocal.noScheduleContainer}>
-                <Text style={styleslocal.noScheduleText}>No schedule set</Text>
+          <View style={styleslocal.modalOverlay}>
+            <View style={styleslocal.modalView}>
+              <View style={styleslocal.modalHeader}>
+                <Text style={styleslocal.modalTitle}>
+                  {selectedFaculty.name} {'\n'}
+                  Availability
+                </Text>
+                <TouchableOpacity
+                  style={styleslocal.closeButton}
+                  onPress={() => setSelectedFaculty(null)}
+                >
+                  <MaterialIcons name="close" size={24} color="#333" />
+                </TouchableOpacity>
               </View>
-            ) : null}
+              
+              {selectedFaculty.schedule && isNewScheduleFormat(selectedFaculty.schedule) ? (
+                // Display schedule in new format (with AM/PM) as a table
+                <View style={styleslocal.scheduleContainer}>
+                  {/* Table Header */}
+                  <View style={styleslocal.tableHeader}>
+                    <Text style={[styleslocal.tableHeaderCell, { flex: 2 }]}>Day</Text>
+                    <Text style={[styleslocal.tableHeaderCell, { flex: 3 }]}>AM</Text>
+                    <Text style={[styleslocal.tableHeaderCell, { flex: 3 }]}>PM</Text>
+                  </View>
+                  
+                  {/* Table Rows */}
+                  {daysOfWeek.map(day => {
+                    const daySchedule = selectedFaculty.schedule?.[day as keyof ScheduleData];
+                    if (!daySchedule) return null;
+                    
+                    return (
+                      <View key={day} style={styleslocal.tableRow}>
+                        <Text style={[styleslocal.tableCell, { flex: 2, fontWeight: 'bold' }]}>
+                          {day.charAt(0).toUpperCase() + day.slice(1)}
+                        </Text>
+                        <Text style={[
+                          styleslocal.tableCell, 
+                          { 
+                            flex: 3,
+                            color: hasTimeFrameData(daySchedule.am) ? 'black' : '#888'
+                          }
+                        ]}>
+                          {formatTimeFrame(daySchedule.am)}
+                        </Text>
+                        <Text style={[
+                          styleslocal.tableCell, 
+                          { 
+                            flex: 3,
+                            color: hasTimeFrameData(daySchedule.pm) ? 'black' : '#888'
+                          }
+                        ]}>
+                          {formatTimeFrame(daySchedule.pm)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                // Display schedule in old format
+                <View style={styleslocal.scheduleContainer}>
+                  <Text style={styleslocal.legacyScheduleTitle}>Schedule</Text>
+                  {selectedFaculty.schedule && Object.entries(selectedFaculty.schedule as LegacySchedule)
+                    .filter(([_, time]) => hasLegacyScheduleData(time))
+                    .sort(([dayA], [dayB]) => {
+                      return daysOfWeek.indexOf(dayA.toLowerCase()) - daysOfWeek.indexOf(dayB.toLowerCase());
+                    })
+                    .map(([day, time]) => (
+                      <View key={day} style={styleslocal.scheduleRow}>
+                        <Text style={styleslocal.scheduleDay}>{day.charAt(0).toUpperCase() + day.slice(1)}</Text>
+                        <Text style={styleslocal.scheduleTime}>
+                          {`${time.start} - ${time.end}`}
+                        </Text>
+                      </View>
+                    ))}
+                    
+                  {/* Display a message if no schedule is set */}
+                  {!selectedFaculty.schedule || 
+                   Object.keys(selectedFaculty.schedule).length === 0 ||
+                   !Object.entries(selectedFaculty.schedule as LegacySchedule).some(([_, time]) => hasLegacyScheduleData(time)) ? (
+                    <View style={styleslocal.noScheduleContainer}>
+                      <Text style={styleslocal.noScheduleText}>No schedule set</Text>
+                    </View>
+                  ) : null}
+                </View>
+              )}
             </View>
           </View>
-        </View>
-      </Modal>
-      
+        </Modal>
       )}
     </View>
   );
@@ -178,13 +268,13 @@ const styleslocal = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     position: "absolute",
-    top: 0, 
-    left: 0, 
-    right: 0, 
-    bottom: 0, 
-    width: "100%", 
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", 
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -192,11 +282,12 @@ const styleslocal = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
     padding: 20,
-    width: 300, 
+    width: 380, // Increased width for better table display
     maxHeight: "80%",
     justifyContent: "center",
     alignItems: "center",
-  },modalHeader: {
+  },
+  modalHeader: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -213,6 +304,37 @@ const styleslocal = StyleSheet.create({
   scheduleContainer: {
     width: '100%',
     marginBottom: 16,
+  },
+  // Table styles
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f0f0',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    marginBottom: 5,
+  },
+  tableHeaderCell: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  tableCell: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  // Legacy format styles
+  legacyScheduleTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
   },
   scheduleRow: {
     flexDirection: 'row',

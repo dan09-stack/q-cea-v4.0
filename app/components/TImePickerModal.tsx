@@ -1,20 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import { CustomButton } from '@/components/ui/CustomButton';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface TimePickerModalProps {
   selectedDay: string;
-  scheduleData: {
-    monday: { start: string; end: string };
-    tuesday: { start: string; end: string };
-    wednesday: { start: string; end: string };
-    thursday: { start: string; end: string };
-    friday: { start: string; end: string };
-    saturday: { start: string; end: string };
-
-  };
+  scheduleData: any;
   updateTimeForSelectedDay: (
     startHour: number,
     startMinute: number,
@@ -32,143 +23,174 @@ const TimePickerModal: React.FC<TimePickerModalProps> = ({
   updateTimeForSelectedDay,
   closeModal,
 }) => {
-  const { colors } = useTheme();
-
-  // Parse the existing time for the selected day
-  const existingStartTime = scheduleData[selectedDay as keyof typeof scheduleData].start;
-  const existingEndTime = scheduleData[selectedDay as keyof typeof scheduleData].end;
-
-  const [startHour, setStartHour] = useState<number>(
-    existingStartTime ? parseInt(existingStartTime.split(':')[0], 10) : 12
-  );
+  // Parse the selected day and time frame (e.g., "monday-am")
+  const [day, timeFrame] = selectedDay ? selectedDay.split('-') : ['', ''];
   
-  const [startMinute, setStartMinute] = useState<number>(
-    existingStartTime ? parseInt(existingStartTime.split(':')[1].split(' ')[0], 10) : 0
-  );
+  // Safely access the schedule data with fallbacks
+  const daySchedule = scheduleData[day as keyof typeof scheduleData] || { am: { start: '', end: '' }, pm: { start: '', end: '' } };
+  const timeFrameData = daySchedule[timeFrame as 'am' | 'pm'] || { start: '', end: '' };
   
-  const [startPeriod, setStartPeriod] = useState<string>(
-    existingStartTime ? existingStartTime.split(' ')[1] : 'AM'
-  );
-  const [endMinute, setEndMinute] = useState<number>(
-    existingEndTime ? parseInt(existingEndTime.split(':')[1]?.split(' ')[0] || '0', 10) : 0
-  );
+  // Parse existing time values or set defaults
+  const parseTimeString = (timeString: string) => {
+    if (!timeString) return { hour: 8, minute: 0, period: 'AM' };
+    
+    const match = timeString.match(/(\d+):(\d+)\s+(AM|PM)/i);
+    if (match) {
+      return {
+        hour: parseInt(match[1], 10),
+        minute: parseInt(match[2], 10),
+        period: match[3].toUpperCase(),
+      };
+    }
+    return { hour: 8, minute: 0, period: 'AM' };
+  };
   
-  const [endPeriod, setEndPeriod] = useState<string>(
-    existingEndTime ? existingEndTime.split(' ')[1] || 'AM' : 'AM'
-  );
+  const startTime = parseTimeString(timeFrameData.start);
+  const endTime = parseTimeString(timeFrameData.end);
   
-  const [endHour, setEndHour] = useState<number>(
-    existingEndTime ? parseInt(existingEndTime.split(':')[0] || '12', 10) : 12
-  );
+  // State for time picker values
+  const [startHour, setStartHour] = useState(startTime.hour);
+  const [startMinute, setStartMinute] = useState(startTime.minute);
+  const [startPeriod, setStartPeriod] = useState(startTime.period);
+  
+  const [endHour, setEndHour] = useState(endTime.hour);
+  const [endMinute, setEndMinute] = useState(endTime.minute);
+  const [endPeriod, setEndPeriod] = useState(endTime.period);
+  
+  // Generate hour options (1-12)
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  
+  // Generate minute options (0-59)
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
+  
+  const handleSave = () => {
+    updateTimeForSelectedDay(
+      startHour,
+      startMinute,
+      startPeriod,
+      endHour,
+      endMinute,
+      endPeriod
+    );
+    closeModal();
+  };
+  
+  const handleClear = () => {
+    updateTimeForSelectedDay(0, 0, 'AM', 0, 0, 'AM');
+    closeModal();
+  };
+  
   return (
-    <Modal transparent={true} visible={!!selectedDay} animationType="fade">
+    <Modal
+      visible={true}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={closeModal}
+    >
       <View style={styles.modalOverlay}>
-        <View style={[styles.modalView, { backgroundColor: colors.backgroundColor }]}>
-          <Text style={[styles.modalTitle, { color: colors.textColor }]}>Set Time for {selectedDay}</Text>
-
-          {/* Start Time Picker */}
+        <View style={styles.modalView}>
+          <Text style={styles.modalTitle}>
+            Set {timeFrame.toUpperCase()} Time for {day.charAt(0).toUpperCase() + day.slice(1)}
+          </Text>
+          
           <View style={styles.timePickerContainer}>
-            <Text style={[styles.timeLabel, { color: colors.textColor }]}>Start Time</Text>
-            <View style={styles.timePickerGroup}>
-              <Text style={[styles.timeLabel, { color: colors.textColor }]}>HH</Text>
-              <Picker
-                style={[styles.timePicker, { backgroundColor: colors.backgroundColor, color: colors.textColor }]}
-                selectedValue={startHour}
-                onValueChange={(value: number) => setStartHour(value)}
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Picker.Item key={i} label={String(i + 1).padStart(2, '0')} value={i + 1} />
-                ))}
-              </Picker>
+            <View style={styles.timeSection}>
+              <Text style={styles.timeLabel}>Start Time</Text>
+              <View style={styles.pickerRow}>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={startHour}
+                    onValueChange={(value) => setStartHour(value)}
+                    style={styles.picker}
+                  >
+                    {hours.map((hour) => (
+                      <Picker.Item key={`start-hour-${hour}`} label={hour.toString()} value={hour} />
+                    ))}
+                  </Picker>
+                </View>
+                
+                <Text style={styles.pickerSeparator}>:</Text>
+                
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={startMinute}
+                    onValueChange={(value) => setStartMinute(value)}
+                    style={styles.picker}
+                  >
+                    {minutes.map((minute) => (
+                      <Picker.Item 
+                        key={`start-minute-${minute}`} 
+                        label={minute.toString().padStart(2, '0')} 
+                        value={minute} 
+                      />
+                    ))}
+                  </Picker>
+                </View>
+                
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={startPeriod}
+                    onValueChange={(value) => setStartPeriod(value)}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="AM" value="AM" />
+                    <Picker.Item label="PM" value="PM" />
+                  </Picker>
+                </View>
+              </View>
             </View>
-
-            <Text style={[styles.separator, { color: colors.textColor }]}>:</Text>
-
-            <View style={styles.timePickerGroup}>
-              <Text style={[styles.timeLabel, { color: colors.textColor }]}>MM</Text>
-              <Picker
-                style={[styles.timePicker, { backgroundColor: colors.backgroundColor, color: colors.textColor }]}
-                selectedValue={startMinute}
-                onValueChange={(value: number) => setStartMinute(value)}
-              >
-                {Array.from({ length: 60 }, (_, i) => (
-                  <Picker.Item key={i} label={String(i).padStart(2, '0')} value={i} />
-                ))}
-              </Picker>
-            </View>
-
-            <View style={styles.timePickerGroup}>
-              <Text style={[styles.timeLabel, { color: colors.textColor }]}>Period</Text>
-              <Picker
-                style={[styles.periodPicker, { backgroundColor: colors.backgroundColor, color: colors.textColor }]}
-                selectedValue={startPeriod}
-                onValueChange={(value: string) => setStartPeriod(value)}
-              >
-                <Picker.Item label="AM" value="AM" />
-                <Picker.Item label="PM" value="PM" />
-              </Picker>
+            
+            <View style={styles.timeSection}>
+              <Text style={styles.timeLabel}>End Time</Text>
+              <View style={styles.pickerRow}>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={endHour}
+                    onValueChange={(value) => setEndHour(value)}
+                    style={styles.picker}
+                  >
+                    {hours.map((hour) => (
+                      <Picker.Item key={`end-hour-${hour}`} label={hour.toString()} value={hour} />
+                    ))}
+                  </Picker>
+                </View>
+                
+                <Text style={styles.pickerSeparator}>:</Text>
+                
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={endMinute}
+                    onValueChange={(value) => setEndMinute(value)}
+                    style={styles.picker}
+                  >
+                    {minutes.map((minute) => (
+                      <Picker.Item 
+                        key={`end-minute-${minute}`} 
+                        label={minute.toString().padStart(2, '0')} 
+                        value={minute} 
+                      />
+                    ))}
+                  </Picker>
+                </View>
+                
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={endPeriod}
+                    onValueChange={(value) => setEndPeriod(value)}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="AM" value="AM" />
+                    <Picker.Item label="PM" value="PM" />
+                  </Picker>
+                </View>
+              </View>
             </View>
           </View>
-
-          {/* End Time Picker */}
-          <View style={styles.timePickerContainer}>
-            <Text style={[styles.timeLabel, { color: colors.textColor }]}>End Time</Text>
-            <View style={styles.timePickerGroup}>
-              <Text style={[styles.timeLabel, { color: colors.textColor }]}>HH</Text>
-              <Picker
-                style={[styles.timePicker, { backgroundColor: colors.backgroundColor, color: colors.textColor }]}
-                selectedValue={endHour}
-                onValueChange={(value: number) => setEndHour(value)}
-              >
-                {Array.from({ length: 12 }, (_, i) => (
-                  <Picker.Item key={i} label={String(i + 1).padStart(2, '0')} value={i + 1} />
-                ))}
-              </Picker>
-            </View>
-
-            <Text style={[styles.separator, { color: colors.textColor }]}>:</Text>
-
-            <View style={styles.timePickerGroup}>
-              <Text style={[styles.timeLabel, { color: colors.textColor }]}>MM</Text>
-              <Picker
-                style={[styles.timePicker, { backgroundColor: colors.backgroundColor, color: colors.textColor }]}
-                selectedValue={endMinute}
-                onValueChange={(value: number) => setEndMinute(value)}
-              >
-                {Array.from({ length: 60 }, (_, i) => (
-                  <Picker.Item key={i} label={String(i).padStart(2, '0')} value={i} />
-                ))}
-              </Picker>
-            </View>
-
-            <View style={styles.timePickerGroup}>
-              <Text style={[styles.timeLabel, { color: colors.textColor }]}>Period</Text>
-              <Picker
-                style={[styles.periodPicker, { backgroundColor: colors.backgroundColor, color: colors.textColor }]}
-                selectedValue={endPeriod}
-                onValueChange={(value: string) => setEndPeriod(value)}
-              >
-                <Picker.Item label="AM" value="AM" />
-                <Picker.Item label="PM" value="PM" />
-              </Picker>
-            </View>
-          </View>
-
-          {/* Save and Close Buttons */}
+          
           <View style={styles.buttonContainer}>
-            <CustomButton
-              title="Save"
-              onPress={() => {
-                updateTimeForSelectedDay(startHour, startMinute, startPeriod, endHour, endMinute, endPeriod);
-                closeModal();
-              }}
-              color={colors.accentColor}
-            />
-            <CustomButton
-              title="Close"
-              onPress={closeModal}
-              color="#045657"
-            />
+            <CustomButton title="Save" onPress={handleSave} color="#008000" />
+            <CustomButton title="Clear" onPress={handleClear} color="#FF0000" />
+            <CustomButton title="Cancel" onPress={closeModal} color="#333333" />
           </View>
         </View>
       </View>
@@ -184,54 +206,60 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
+    backgroundColor: 'white',
     borderRadius: 20,
-    padding: 25,
+    padding: 20,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
     width: '90%',
-    maxWidth: 400,
-  
+    maxWidth: 500,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
   },
   timePickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-    
+    width: '100%',
   },
-  timePickerGroup: {
-    alignItems: 'center',
+  timeSection: {
+    marginBottom: 20,
   },
   timeLabel: {
-    fontSize: 14,
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
-  timePicker: {
-    width: 60,
-    height: 50,
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  periodPicker: {
-    width: 60,
-    height: 50,
-  },
-  separator: {
-    fontSize: 20,
+  pickerContainer: {
+    width: 80,
+    height: 150,
     marginHorizontal: 5,
+  },
+  picker: {
+    height: 150,
+  },
+  pickerSeparator: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
     width: '100%',
+    marginTop: 20,
   },
 });
 
