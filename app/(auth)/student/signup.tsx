@@ -11,7 +11,6 @@ import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundC
 import { db } from '@/firebaseConfig';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
 
-
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
   const [idNumber, setIdNumber] = useState<string>('');
@@ -29,8 +28,19 @@ export default function Signup(): JSX.Element {
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
-  
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  
+  // Add validation errors state
+  const [validationErrors, setValidationErrors] = useState<{
+    fullName?: string;
+    idNumber?: string;
+    phoneNumber?: string;
+    program?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
+
   const validateIdNumber = (idNumber: string): { isValid: boolean; format: 'student' | 'faculty' | null } => {
     const studentIdRegex = /^03-\d{4}-\d{5,6}$/;
     if (studentIdRegex.test(idNumber)) {
@@ -40,28 +50,29 @@ export default function Signup(): JSX.Element {
     if (facultyIdRegex.test(idNumber)) {
       return { isValid: true, format: 'faculty' };
     }
-    
+   
     return { isValid: false, format: null };
   };
-  
-  
+ 
   const validatePhoneNumber = (phoneNumber: string): boolean => {
-    const phoneRegex = /^(09\d{9}|\+63\d{10})$/;
+    const phoneRegex = /^09\d{9}$/;
     return phoneRegex.test(phoneNumber);
   };
-  
+ 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+  
   const validateFullName = (name: string): boolean => {
-    const nameRegex = /^[A-Za-z]{2,}(?: [A-Za-z-]+)*, [A-Za-z-]{2,}(?: [A-Za-z-]+)*(?: [A-Z]\.?(?:[A-Z]\.)?)?$/;
+    const nameRegex = /^[A-Za-z]{2,}(?: [A-Za-z-]+)*(, )[A-Za-z-]{2,}(?: [A-Za-z-]+)*( [A-Z]\.?)?$/;
     return nameRegex.test(name);
   };
+
   const validatePasswordsMatch = (password: string, confirmPassword: string): boolean => {
     return password === confirmPassword;
   };
-  
+
   const ErrorModal = () => (
     <Modal
       animationType="fade"
@@ -71,17 +82,18 @@ export default function Signup(): JSX.Element {
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={[styles.modalTitle, { textAlign: 'center',  }]}>Error</Text>
+          <Text style={[styles.modalTitle, { textAlign: 'center', color: '#d32f2f' }]}>Error</Text>
           <Text style={[styles.modalItemText, { textAlign: 'center', marginBottom: 20 }]}>{errorMessage}</Text>
-          <CustomButton 
-            title="OK" 
+          <CustomButton
+            title="OK"
             onPress={() => setErrorModalVisible(false)}
+            color="#d32f2f"
           />
         </View>
       </View>
     </Modal>
   );
-  
+ 
   const courses = [
     { label: "B.S. Architecture", value: "ARCH" },
     { label: "B.S. Civil Engineering", value: "CE" },
@@ -94,140 +106,158 @@ export default function Signup(): JSX.Element {
   const selectCourse = (course: string) => {
     setSelectedProgram(course);
     setModalVisible(false);
+    // Clear any program validation error when a course is selected
+    if (validationErrors.program) {
+      setValidationErrors(prev => ({ ...prev, program: undefined }));
+    }
   };
+  
   const validatePassword = (password: string): { isValid: boolean; message: string } => {
     // Check minimum length
     if (password.length < 8) {
       return { isValid: false, message: 'Password must be at least 8 characters long' };
     }
-    
+   
     // Check for at least one uppercase letter
     if (!/[A-Z]/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one uppercase letter' };
     }
-    
+   
     // Check for at least one lowercase letter
     if (!/[a-z]/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one lowercase letter' };
     }
-    
+   
     // Check for at least one number
     if (!/\d/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one number' };
     }
-    
+   
     // Check for at least one special character
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
       return { isValid: false, message: 'Password must contain at least one special character' };
     }
-    
+   
     // If all checks pass
     return { isValid: true, message: '' };
   };
-  
-  
+ 
   const onSignup = async () => {
-    if (!fullName || !email || !password || !idNumber || !phoneNumber || !selectedProgram) {
-      setErrorMessage('Please fill in all fields');
-      setErrorModalVisible(true);
-      return;
+    // Reset validation errors
+    setValidationErrors({});
+    setErrorMessage('');
+    // Create a new errors object
+    const errors: any = {};
+    let hasErrors = false;
+
+    // Validate all fields
+    if (!fullName) {
+      errors.fullName = 'Full name is required';
+      hasErrors = true;
+    } else if (!validateFullName(fullName)) {
+      errors.fullName = 'Format should be: Last Name, First Name (MI optional)';
+      hasErrors = true;
     }
-    if (!validateFullName(fullName)) {
-      setErrorMessage('Full Name should be in format: Last Name, First Name MI.');
-      setErrorModalVisible(true);
-      return;
-    }
+
     const idValidation = validateIdNumber(idNumber);
-    if (!idValidation.isValid) {
-      setErrorMessage('ID Number should be in format: 03-XXXX-XXXXXX for students ');
-      setErrorModalVisible(true);
-      return;
+    if (!idNumber) {
+      errors.idNumber = 'ID number is required';
+      hasErrors = true;
+    } else if (!idValidation.isValid) {
+      errors.idNumber = 'Format should be: 03-XXXX-XXXXXX for students';
+      hasErrors = true;
+    } else if (idValidation.format === 'faculty') {
+      errors.idNumber = 'This ID format is for faculty members. Please use a valid student ID.';
+      hasErrors = true;
     }
 
-    // If it's a faculty ID but this is a student signup form
-    if (idValidation.format === 'faculty') {
-      setErrorMessage('The ID format UP-xx-xxx-F is for faculty members. Please go to admin to register or enter a valid student ID (03-XXXX-XXXXXX).');
-      setErrorModalVisible(true);
-      return;
+    if (!phoneNumber) {
+      errors.phoneNumber = 'Phone number is required';
+      hasErrors = true;
+    } else if (!validatePhoneNumber(phoneNumber)) {
+      errors.phoneNumber = 'Enter a valid phone number (e.g., 09XXXXXXXXX)';
+      hasErrors = true;
     }
 
-    
-    // Validate phone number
-    if (!validatePhoneNumber(phoneNumber)) {
-      setErrorMessage('Please enter a valid phone number (e.g., 09XXXXXXXXX or +639XXXXXXXXX)');
-      setErrorModalVisible(true);
-      return;
+    if (!selectedProgram) {
+      errors.program = 'Please select your program';
+      hasErrors = true;
     }
-    
-    // Validate email format
+
     if (!validateEmail(email)) {
-      setErrorMessage('Please enter a valid email address');
-      setErrorModalVisible(true);
-      return;
+      errors.email = 'Please enter a valid email address';
+      hasErrors = true;
     }
+    
     if (!email.includes('@')) {
       setErrorMessage('Please enter a valid email address');
       setErrorModalVisible(true);
       return;
     }
+    
     const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setErrorMessage(passwordValidation.message);
+    if (!password) {
+      errors.password = 'Password is required';
+      hasErrors = true;
+    } else if (!passwordValidation.isValid) {
+      errors.password = passwordValidation.message;
+      hasErrors = true;
+    }
+
+    if (!confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+      hasErrors = true;
+    } else if (!validatePasswordsMatch(password, confirmPassword)) {
+      errors.confirmPassword = 'Passwords do not match';
+      hasErrors = true;
+    }
+
+    if (!isChecked) {
+      setErrorMessage('Please agree to the Data Privacy Policy');
       setErrorModalVisible(true);
       return;
     }
-    
-    if (!validatePasswordsMatch(password, confirmPassword)) {
-      setErrorMessage('Passwords do not match');
-      setErrorModalVisible(true);
+
+    // If there are validation errors, show them inline and return
+    if (hasErrors) {
+      setValidationErrors(errors);
       return;
     }
-    
-   
-  
-   try {
-    const usersRef = collection(db, 'student');
-    
-    
-    
-    // Check ID number existence
-    const idQuery = query(usersRef, where('idNumber', '==', idNumber));
-    const idSnapshot = await getDocs(idQuery);
-    
-    if (!idSnapshot.empty) {
-      setErrorMessage('This ID number is already registered. Please use a different ID number or contact support.');
-      setErrorModalVisible(true);
-      return;
-    }
-    
-    // Check phone number existence
-    const phoneQuery = query(usersRef, where('phoneNumber', '==', phoneNumber));
-    const phoneSnapshot = await getDocs(phoneQuery);
-    
-    if (!phoneSnapshot.empty) {
-      setErrorMessage('This phone number is already registered. Please use a different phone number.');
-      setErrorModalVisible(true);
-      return;
-    }
-    // Check email existence
-    const emailQuery = query(usersRef, where('email', '==', email));
+
+    setIsLoading(true);
+
+    try {
+      const usersRef = collection(db, 'student');
+      
+      // Check ID number existence
+      const idQuery = query(usersRef, where('idNumber', '==', idNumber));
+      const idSnapshot = await getDocs(idQuery);
+      
+      if (!idSnapshot.empty) {
+        setErrorMessage('This ID number is already registered. Please use a different ID number or contact support.');
+        setErrorModalVisible(true);
+        return;
+      }
+      
+      // Check phone number existence
+      const phoneQuery = query(usersRef, where('phoneNumber', '==', phoneNumber));
+      const phoneSnapshot = await getDocs(phoneQuery);
+      
+      if (!phoneSnapshot.empty) {
+        setErrorMessage('This phone number is already registered. Please use a different phone number.');
+        setErrorModalVisible(true);
+        return;
+      }
+      
+      // Check email existence
+      const emailQuery = query(usersRef, where('email', '==', email));
     const emailSnapshot = await getDocs(emailQuery);
     
     if (!emailSnapshot.empty) {
-      setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      setErrorModalVisible(true);
-      return;
+      throw new Error('This email is already registered. Please log in or use a different email.');
     }
-  } catch (error) {
-    console.error("Error checking user data existence:", error);
-    setErrorMessage('Error checking user information. Please try again later.');
-    setErrorModalVisible(true);
-    return;
-  }
 
-    setIsLoading(true);
-  
-    try {
+      // If all checks pass, proceed with signup
       await handleSignup({
         userType,
         fullName,
@@ -238,13 +268,18 @@ export default function Signup(): JSX.Element {
         router,
         program: selectedProgram,
       });
+
+      // Show success message
+      Alert.alert(
+        "Account Created",
+        "Your account has been created successfully. Please check your email to verify your account.",
+        [
+          { text: "OK", onPress: () => router.push('/student/login') }
+        ]
+      );
+
     } catch (error: any) {
       // Enhanced error handling with specific messages
-      if (error.code === 'auth/email-already-in-use') {
-        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-      } else if (error.code === 'auth/invalid-email') {
-        setErrorMessage('The email address is not valid.');
-      }
       if (error.code === 'auth/email-already-in-use') {
         setErrorMessage('This email is already registered. Please use a different email or try logging in.');
       } else if (error.code === 'auth/invalid-email') {
@@ -257,7 +292,7 @@ export default function Signup(): JSX.Element {
         // If the error has a message property, use it
         setErrorMessage(error.message);
       } else {
-        // Fallback error message 
+        // Fallback error message
         setErrorMessage('Something went wrong. Please try again later.');
       }
       setErrorModalVisible(true);
@@ -265,11 +300,10 @@ export default function Signup(): JSX.Element {
       setIsLoading(false);
     }
   };
-  
+ 
   return (
     <GradientBackgroundContainer style={styles.background}>
       <View style={styles.centerContainer}>
-
         <ScrollView style={{
           width: '90%',
           maxWidth: 600,
@@ -283,76 +317,125 @@ export default function Signup(): JSX.Element {
           alignItems: 'center'
         }}>
           <View style={styles.blurBackground} />
-          
+         
           <ErrorModal />
           <Text style={styles.heading}>Signup</Text>
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Full Name</Text>
             <TextInput
-              style={styles.input}
-              placeholder="Last Name, First Name MI"
+              style={[styles.input, validationErrors.fullName && { borderColor: '#d32f2f' }]}
+              placeholder="Last Name, First Name (MI optional)"
               value={fullName}
-              onChangeText={setFullName}
+              onChangeText={(text) => {
+                setFullName(text);
+                if (validationErrors.fullName) {
+                  setValidationErrors(prev => ({ ...prev, fullName: undefined }));
+                }
+              }}
             />
+            {validationErrors.fullName && (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.fullName}
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>ID Number</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, validationErrors.idNumber && { borderColor: '#d32f2f' }]}
               placeholder="03-XXXX-XXXXXX or 03-XXXX-XXXXX"
               value={idNumber}
-              onChangeText={setIdNumber}
+              onChangeText={(text) => {
+                setIdNumber(text);
+                if (validationErrors.idNumber) {
+                  setValidationErrors(prev => ({ ...prev, idNumber: undefined }));
+                }
+              }}
             />
+            {validationErrors.idNumber && (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.idNumber}
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Phone Number</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, validationErrors.phoneNumber && { borderColor: '#d32f2f' }]}
               placeholder="Enter your phone number"
               value={phoneNumber}
-              onChangeText={setPhoneNumber}
+              onChangeText={(text) => {
+                setPhoneNumber(text);
+                if (validationErrors.phoneNumber) {
+                  setValidationErrors(prev => ({ ...prev, phoneNumber: undefined }));
+                }
+              }}
               keyboardType="phone-pad"
             />
+            {validationErrors.phoneNumber && (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.phoneNumber}
+              </Text>
+            )}
           </View>
-         
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Program</Text>
-            <TouchableOpacity 
-              style={styles.input}
+            <TouchableOpacity
+              style={[styles.input, validationErrors.program && { borderColor: '#d32f2f' }]}
               onPress={() => setModalVisible(true)}
             >
               <Text style={selectedProgram ? styles.selectedText : styles.placeholderText}>
                 {selectedProgram ? courses.find(c => c.value === selectedProgram)?.label : "Select Your Course"}
               </Text>
             </TouchableOpacity>
+            {validationErrors.program && (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.program}
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Email</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, validationErrors.email && { borderColor: '#d32f2f' }]}
               placeholder="Enter your email address"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (validationErrors.email) {
+                  setValidationErrors(prev => ({ ...prev, email: undefined }));
+                }
+              }}
               keyboardType="email-address"
               autoCapitalize="none"
             />
+            {validationErrors.email && (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.email}
+              </Text>
+            )}
           </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={[styles.passwordContainer, validationErrors.password && { borderColor: '#d32f2f' }]}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Enter your password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (validationErrors.password) {
+                    setValidationErrors(prev => ({ ...prev, password: undefined }));
+                  }
+                }}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeIconButton}
               >
@@ -363,23 +446,35 @@ export default function Signup(): JSX.Element {
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.passwordHelperText}>
-              Password must be at least 8 characters long and include uppercase, lowercase, 
-              number, and special character.
-            </Text>
+            {validationErrors.password ? (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.password}
+              </Text>
+            ) : (
+              <Text style={styles.passwordHelperText}>
+                Password must be at least 8 characters long and include uppercase, lowercase,
+                number, and special character.
+              </Text>
+            )}
           </View>
+
           <View style={styles.inputContainer}>
             <Text style={styles.inputLabel}>Confirm Password</Text>
-            <View style={styles.passwordContainer}>
+            <View style={[styles.passwordContainer, validationErrors.confirmPassword && { borderColor: '#d32f2f' }]}>
               <TextInput
                 style={styles.passwordInput}
                 placeholder="Confirm your password"
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={(text) => {
+                  setConfirmPassword(text);
+                  if (validationErrors.confirmPassword) {
+                    setValidationErrors(prev => ({ ...prev, confirmPassword: undefined }));
+                  }
+                }}
                 secureTextEntry={!showConfirmPassword}
                 autoCapitalize="none"
               />
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 style={styles.eyeIconButton}
               >
@@ -390,8 +485,12 @@ export default function Signup(): JSX.Element {
                 />
               </TouchableOpacity>
             </View>
+            {validationErrors.confirmPassword && (
+              <Text style={{ color: '#d32f2f', fontSize: 12, marginTop: 2 }}>
+                {validationErrors.confirmPassword}
+              </Text>
+            )}
           </View>
-
 
           <Modal
             animationType="fade"
@@ -623,7 +722,7 @@ const styles = StyleSheet.create({
   },
   background: {
     flex: 1,
-    backgroundColor: '#034041', 
+    backgroundColor: '#034041',
   },
   container: {
     width: '90%',
@@ -636,10 +735,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   blurBackground: {
-    ...StyleSheet.absoluteFillObject, 
-    borderRadius: 12, 
-    backdropFilter: 'blur(10px)', 
-    zIndex: -1, 
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
+    backdropFilter: 'blur(10px)',
+    zIndex: -1,
   },
   heading: {
     fontSize: 28,
@@ -711,3 +810,4 @@ const styles = StyleSheet.create({
     color: 'white',
   },
 });
+
