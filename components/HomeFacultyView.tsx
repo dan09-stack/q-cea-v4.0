@@ -193,12 +193,13 @@ const handleNextNotArrived = async () => {
     }, [transferModalVisible]);
     
     useEffect(() => {
-      if (ticketStudentData.name && !ticketLoadTime) {
+      // Reset the timer whenever the current ticket changes
+      if (allTickets[currentTicketIndex]) {
         setTicketLoadTime(new Date());
-      } else if (!ticketStudentData.name) {
+      } else {
         setTicketLoadTime(null);
       }
-    }, [ticketStudentData.name]);
+    }, [allTickets, currentTicketIndex]);
   // Add real-time listener for tickets
   useEffect(() => {
     // Only set up the listener if we need to
