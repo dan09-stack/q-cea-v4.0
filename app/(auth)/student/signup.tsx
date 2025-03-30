@@ -10,7 +10,7 @@ import { DataPrivacyPolicy } from '@/components/privacy/DataPrivacyPolicy';
 import { GradientBackgroundContainer } from '@/components/ui/GradientBackgroundContainer';
 import { db } from '@/firebaseConfig';
 import { getFirestore, collection, query, where, getDocs } from 'firebase/firestore';
-
+import { BlurView } from "expo-blur";
 
 export default function Signup(): JSX.Element {
   const [fullName, setFullName] = useState<string>('');
@@ -212,12 +212,13 @@ export default function Signup(): JSX.Element {
     // Check email existence
     const emailQuery = query(usersRef, where('email', '==', email));
     const emailSnapshot = await getDocs(emailQuery);
-    
-    if (!emailSnapshot.empty) {
-      setErrorMessage('This email is already registered. Please use a different email or try logging in.');
+
+    if (emailSnapshot.empty) {
+      setErrorMessage('This email is not registered. Please use an existing email.');
       setErrorModalVisible(true);
       return;
     }
+
   } catch (error) {
     console.error("Error checking user data existence:", error);
     setErrorMessage('Error checking user information. Please try again later.');
@@ -636,10 +637,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   blurBackground: {
-    ...StyleSheet.absoluteFillObject, 
-    borderRadius: 12, 
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 12,
     backdropFilter: 'blur(10px)', 
-    zIndex: -1, 
+    zIndex: -1,
   },
   heading: {
     fontSize: 28,
