@@ -184,14 +184,16 @@ export default function Signup(): JSX.Element {
       hasErrors = true;
     }
 
-    if (!email) {
-      errors.email = 'Email is required';
+    if (!validateEmail(email)) {
+      setErrorMessage('Please enter a valid email address');
       hasErrors = true;
-    } else if (!validateEmail(email)) {
-      errors.email = 'Enter a valid email address';
-      hasErrors = true;
+      return;
     }
-
+    if (!email.includes('@')) {
+      setErrorMessage('Please enter a valid email address');
+      hasErrors = true;
+      return;
+    }
     const passwordValidation = validatePassword(password);
     if (!password) {
       errors.password = 'Password is required';
@@ -248,12 +250,12 @@ export default function Signup(): JSX.Element {
       
       // Check email existence
       const emailQuery = query(usersRef, where('email', '==', email));
-      const emailSnapshot = await getDocs(emailQuery);
-      
-      if (!emailSnapshot.empty) {
-        setErrorMessage('This email is already registered. Please use a different email or try logging in.');
-        setErrorModalVisible(true);
-        return;
+    const emailSnapshot = await getDocs(emailQuery);
+
+    if (emailSnapshot.empty) {
+      setErrorMessage('This email is not registered. Please use an existing email.');
+      setErrorModalVisible(true);
+      return;
       }
 
       // If all checks pass, proceed with signup
