@@ -328,22 +328,43 @@ export default function Profile(): JSX.Element {
   };
 
   const toggleStatus = async (value: boolean) => {
-    setIsActive(value);
     try {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+  
+      // Fetch settings from Firestore
+      const settingsDoc = await db.collection('settings').doc('businessHours').get();
+      if (!settingsDoc.exists) {
+        console.error('Settings document not found.');
+        Alert.alert('Error', 'Settings not found.');
+        return;
+      }
+  
+      const { endHour, endMinute } = settingsDoc.data() || {};
+  
+      // Check if the current time has passed the end time
+      if (currentHour > endHour || (currentHour === endHour && currentMinute >= endMinute)) {
+        Alert.alert('Restriction', 'You can no longer toggle your status at this time.');
+        return;
+      }
+  
+      // Proceed with toggling if within allowed time
+      setIsActive(value);
       const user = auth.currentUser;
       if (user) {
         await db.collection('student').doc(user.uid).update({
-          status: value ? 'AVAILABLE' : 'UNAVAILABLE'
+          status: value ? 'AVAILABLE' : 'UNAVAILABLE',
         });
-        setUserData(prev => ({...prev, status: value ? 'AVAILABLE' : 'UNAVAILABLE'}));
+        setUserData((prev) => ({ ...prev, status: value ? 'AVAILABLE' : 'UNAVAILABLE' }));
       }
     } catch (error) {
       console.error('Error updating status:', error);
       Alert.alert('Error', 'Failed to update status. Please try again.');
-      setIsActive(!value);
+      setIsActive((prev) => !prev);
     }
   };
-
+  
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: "images",
