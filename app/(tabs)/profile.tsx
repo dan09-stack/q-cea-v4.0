@@ -87,14 +87,23 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
     if (selectedDay && selectedTimeFrame) {
       const startTime = `${startHour}:${String(startMinute).padStart(2, '0')} ${startPeriod}`;
       const endTime = `${endHour}:${String(endMinute).padStart(2, '0')} ${endPeriod}`;
-
-      setScheduleData({
-        ...scheduleData,
-        [selectedDay]: {
-          ...scheduleData[selectedDay as keyof typeof scheduleData],
-          [selectedTimeFrame]: { start: startTime, end: endTime },
-        },
-      });
+  
+      // Create a deep copy of the current schedule data
+      const updatedScheduleData = JSON.parse(JSON.stringify(scheduleData));
+      
+      // Ensure the day and timeframe objects exist
+      if (!updatedScheduleData[selectedDay]) {
+        updatedScheduleData[selectedDay] = { am: { start: '', end: '' }, pm: { start: '', end: '' } };
+      }
+      
+      if (!updatedScheduleData[selectedDay][selectedTimeFrame]) {
+        updatedScheduleData[selectedDay][selectedTimeFrame] = { start: '', end: '' };
+      }
+      
+      // Update the time values
+      updatedScheduleData[selectedDay][selectedTimeFrame] = { start: startTime, end: endTime };
+      
+      setScheduleData(updatedScheduleData);
     }
   };
 
@@ -117,7 +126,21 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
       if (user) {
         const userDoc = await db.collection('student').doc(user.uid).get();
         if (userDoc.exists && userDoc.data()?.schedule) {
-          setScheduleData(userDoc.data()?.schedule);
+          // Ensure the fetched schedule has all required properties
+          const fetchedSchedule = userDoc.data()?.schedule;
+          
+          // Create a complete schedule object with default values
+          const completeSchedule = {
+            monday: { am: { start: "", end: "" }, pm: { start: "", end: "" } },
+            tuesday: { am: { start: "", end: "" }, pm: { start: "", end: "" } },
+            wednesday: { am: { start: "", end: "" }, pm: { start: "", end: "" } },
+            thursday: { am: { start: "", end: "" }, pm: { start: "", end: "" } },
+            friday: { am: { start: "", end: "" }, pm: { start: "", end: "" } },
+            saturday: { am: { start: "", end: "" }, pm: { start: "", end: "" } },
+            ...fetchedSchedule // Override defaults with fetched values
+          };
+          
+          setScheduleData(completeSchedule);
         }
       }
     };
@@ -150,68 +173,78 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({
           </View>
           
           <ScrollView style={[styles.modalScroll, { width: '100%' }]}>
-            {Object.keys(scheduleData)
-              .sort((dayA, dayB) => {
-                const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                return daysOrder.indexOf(dayA) - daysOrder.indexOf(dayB);
-              })
-              .map((day) => (
-                <View key={day} style={styles.tableRow}>
-                  <View style={styles.dayColumn}>
-                    <Text style={styles.dayText}>
-                      {day.charAt(0).toUpperCase() + day.slice(1)}
-                    </Text>
-                  </View>
-                  
-                  {/* AM Time Slot */}
-                  <View style={styles.timeColumn}>
-                    <TouchableOpacity
-                      style={[
-                        styles.timeSlotButton,
-                        {
-                          backgroundColor: scheduleData[day as keyof typeof scheduleData].am.start ? '#e6f7ff' : '#f5f5f5'
-                        }
-                      ]}
-                      onPress={() => handleTimeFrameSelect(day, 'am')}
-                    >
-                      <Text style={[
-                        styles.timeSlotText,
-                        {
-                          color: scheduleData[day as keyof typeof scheduleData].am.start ? 'black' : '#888'
-                        }
-                      ]}>
-                        {scheduleData[day as keyof typeof scheduleData].am.start
-                          ? formatTimeDisplay(scheduleData[day as keyof typeof scheduleData].am)
-                          : "Tap to set"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  
-                  {/* PM Time Slot */}
-                  <View style={styles.timeColumn}>
-                    <TouchableOpacity
-                      style={[
-                        styles.timeSlotButton,
-                        {
-                          backgroundColor: scheduleData[day as keyof typeof scheduleData].pm.start ? '#e6f7ff' : '#f5f5f5'
-                        }
-                      ]}
-                      onPress={() => handleTimeFrameSelect(day, 'pm')}
-                    >
-                      <Text style={[
-                        styles.timeSlotText,
-                        {
-                          color: scheduleData[day as keyof typeof scheduleData].pm.start ? 'black' : '#888'
-                        }
-                      ]}>
-                        {scheduleData[day as keyof typeof scheduleData].pm.start
-                          ? formatTimeDisplay(scheduleData[day as keyof typeof scheduleData].pm)
-                          : "Tap to set"}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+          {Object.keys(scheduleData)
+          .sort((dayA, dayB) => {
+            const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+            return daysOrder.indexOf(dayA) - daysOrder.indexOf(dayB);
+          })
+          .map((day) => {
+            const dayData = scheduleData[day as keyof typeof scheduleData];
+            // Safety check to ensure dayData exists
+            if (!dayData) return null;
+            
+            // Safety checks for AM and PM data
+            const amData = dayData.am || { start: "", end: "" };
+            const pmData = dayData.pm || { start: "", end: "" };
+            
+            return (
+              <View key={day} style={styles.tableRow}>
+                <View style={styles.dayColumn}>
+                  <Text style={styles.dayText}>
+                    {day.charAt(0).toUpperCase() + day.slice(1)}
+                  </Text>
                 </View>
-              ))}
+                
+                {/* AM Time Slot */}
+                <View style={styles.timeColumn}>
+                  <TouchableOpacity
+                    style={[
+                      styles.timeSlotButton,
+                      {
+                        backgroundColor: amData.start ? '#e6f7ff' : '#f5f5f5'
+                      }
+                    ]}
+                    onPress={() => handleTimeFrameSelect(day, 'am')}
+                  >
+                    <Text style={[
+                      styles.timeSlotText,
+                      {
+                        color: amData.start ? 'black' : '#888'
+                      }
+                    ]}>
+                      {amData.start
+                        ? formatTimeDisplay(amData)
+                        : "Tap to set"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {/* PM Time Slot */}
+                <View style={styles.timeColumn}>
+                  <TouchableOpacity
+                    style={[
+                      styles.timeSlotButton,
+                      {
+                        backgroundColor: pmData.start ? '#e6f7ff' : '#f5f5f5'
+                      }
+                    ]}
+                    onPress={() => handleTimeFrameSelect(day, 'pm')}
+                  >
+                    <Text style={[
+                      styles.timeSlotText,
+                      {
+                        color: pmData.start ? 'black' : '#888'
+                      }
+                    ]}>
+                      {pmData.start
+                        ? formatTimeDisplay(pmData)
+                        : "Tap to set"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })}
           </ScrollView>
 
           <View style={styles.buttonContainer}>
