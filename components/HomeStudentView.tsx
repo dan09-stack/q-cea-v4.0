@@ -9,7 +9,8 @@ import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/
 import { getAuth } from 'firebase/auth';
 import { MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { auth, db } from '@/firebaseConfig';
+import { doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 interface StudentViewProps {
   numOnQueue?: number; 
   isCheckingRequest: boolean;
@@ -274,11 +275,25 @@ export const StudentView = ({
     
     // Process the request
     handleRequest();
-    
+    handleSubmitRating();
     // Show success modal after request is processed
     setSuccessModalVisible(true);
   };
-  
+  const handleSubmitRating = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await setDoc(doc(db, 'ratings', `${currentUser.uid}_${Date.now()}`), {
+          userId: currentUser.uid,
+          faculty: selectedFaculty,  
+          concern: selectedConcern,  
+          timestamp: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+    }
+  };
   // Format seconds to mm:ss
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
