@@ -1,7 +1,7 @@
 import { Animated, Easing, ImageBackground, Platform, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import { auth, db } from '@/firebaseConfig';
-import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, query, where, orderBy, limit, increment, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { homeStyles as styles } from '@/constants/home.styles';
 import { router } from 'expo-router';
 import { Alert } from 'react-native';
@@ -973,7 +973,7 @@ export default function Home() {
             otherConcern: state.otherConcern,
             specificDetails: state.specificDetails,
             proofOfPaymentImage: state.proofOfPaymentImage,
-            requestDate: new Date(),    
+            requestDate: serverTimestamp(),   
             status: 'waiting'
           });
          
