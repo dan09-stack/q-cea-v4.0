@@ -52,50 +52,52 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
   };
 
   return (
-      <View style={styles.container}>
-        <Image source={require('../../../assets/password.png')} style={styles.reset} />
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={modalVisible}
-          onRequestClose={() => setModalVisible(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={[styles.modalText, isSuccess ? styles.successText : styles.errorText]}>
-                {modalMessage}
-              </Text>
-              <TouchableOpacity 
-                style={styles.modalButton} 
-                onPress={handleModalClose}
-              >
-                <Text style={styles.modalButtonText}>OK</Text>
-              </TouchableOpacity>
+      <View style={styles.background}>
+        <View style={styles.container}>
+          <Image source={require('../../../assets/password.png')} style={styles.reset} />
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={modalVisible}
+            onRequestClose={() => setModalVisible(false)}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={[styles.modalText, isSuccess ? styles.successText : styles.errorText]}>
+                  {modalMessage}
+                </Text>
+                <TouchableOpacity 
+                  style={styles.modalButton} 
+                  onPress={handleModalClose}
+                >
+                  <Text style={styles.modalButtonText}>OK</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
 
-        <Text style={styles.heading}>RESET PASSWORD</Text>
-        <Text style={styles.instructions}>
-          Enter your email address below to receive a password reset link.
-        </Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          editable={!isLoading}
-        />
-        {isLoading ? (
-          <ActivityIndicator size="large" color="#2c6b2f" />
-        ) : (
-          <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
-        )}
-        <TouchableOpacity onPress={() => router.replace('/student/login')} style={styles.backLink}>
-          <Text style={styles.backLinkText}>Back to Login</Text>
-        </TouchableOpacity>
+          <Text style={styles.heading}>RESET PASSWORD</Text>
+          <Text style={styles.instructions}>
+            Enter your email address below to receive a password reset link.
+          </Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!isLoading}
+          />
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#2c6b2f" />
+          ) : (
+            <CustomButton title="Send Reset Link" onPress={handlePasswordReset} />
+          )}
+          <TouchableOpacity onPress={() => router.replace('/student/login')} style={styles.backLink}>
+            <Text style={styles.backLinkText}>Back to Login</Text>
+          </TouchableOpacity>
+        </View>
       </View>
   );
 }
@@ -103,46 +105,50 @@ export default function ForgotPassword({ navigation }: ForgotPasswordProps) {
 const styles = StyleSheet.create({
   background: {
     flex: 1,
+    backgroundColor: '#530000',
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    height: '100%',
   },
   container: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '90%',
+    maxWidth: 600,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 20,
-    width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 10,
-    flex: 1,
-},
+    borderRadius: 12,
+    alignItems: 'center',
+    borderColor: 'white',
+    borderWidth: 1,
+  },
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 5,
     marginTop: 0,
+    color: 'white',
   },
   instructions: {
     textAlign: 'center',
     fontSize: 16,
     marginBottom: 20,
-    color: '#666',
+    color: 'white',
   },
   input: {
     width: '100%',
     height: 45,
-    borderColor: '#000',
-    borderWidth: 1,
+    borderColor: 'white',
+    borderWidth: 2,
     marginBottom: 15,
     paddingLeft: 10,
     borderRadius: 5,
+    color: 'white',
   },
   backLink: {
     marginTop: 15,
   },
   backLinkText: {
     fontSize: 14,
+    color: 'white',
   },
   modalOverlay: {
     flex: 1,
@@ -181,7 +187,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   reset: {
-      width: 100,
-      height: 100,
+    width: 100,
+    height: 100,
   },
 });
