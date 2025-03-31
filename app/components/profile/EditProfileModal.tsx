@@ -103,7 +103,7 @@ export function EditProfileModal({
       });
       
       if (duplicatePhoneFound) {
-        showError("A student with this phone number already exists");
+        showError("A user with this phone number already exists");
         return true;
       }
       
@@ -125,7 +125,7 @@ export function EditProfileModal({
   
   // Validation functions
   const validatePhoneNumber = (phoneNumber: string): boolean => {
-    const phoneRegex = /^(09\d{9}|\+63\d{10})$/;
+    const phoneRegex = /^09\d{9}$/;
     return phoneRegex.test(phoneNumber);
   };
 
@@ -238,7 +238,7 @@ export function EditProfileModal({
   useEffect(() => {
     if (editableData.phoneNumber) {
       if (!validatePhoneNumber(editableData.phoneNumber)) {
-        setPhoneNumberError('Please enter a valid phone number (09XXXXXXXXX or +63XXXXXXXXXX)');
+        setPhoneNumberError('Please enter a valid phone number (09XXXXXXXXX)');
       } else {
         setPhoneNumberError('');
       }
